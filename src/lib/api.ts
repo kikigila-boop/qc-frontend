@@ -1,13 +1,8 @@
 import axios from 'axios'
 
-// Always force HTTPS — Vercel env var might be set with http:// by mistake
-const _rawUrl =
-  process.env.NEXT_PUBLIC_API_URL ||
-  'https://qc-backend-production-2c7a.up.railway.app'
-const BASE_URL = _rawUrl.replace(/^http:\/\//, 'https://')
-
+// Use relative URL so requests go through Vercel rewrite (server-side proxy, no CORS)
 const api = axios.create({
-  baseURL: `${BASE_URL}/api/v1`,
+  baseURL: '/api/v1',
   headers: { 'Content-Type': 'application/json' },
   timeout: 15000,
 })
