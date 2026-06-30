@@ -4,26 +4,67 @@ import TopBar from '@/components/layout/TopBar'
 import BottomNav from '@/components/layout/BottomNav'
 import { LogOut, Bell, BellOff, User } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import api from '@/lib/api'
 
 export default function ProfilePage() {
   const { user, logout } = useAuth()
   const [notifStatus, setNotifStatus] = useState<'default' | 'granted' | 'denied'>('default')
+  const [subscribing, setSubscribing] = useState(false)
 
   useEffect(() => {
     if ('Notification' in window) setNotifStatus(Notification.permission as any)
   }, [])
 
   const requestNotification = async () => {
-    const permission = await Notification.requestPermission()
-    setNotifStatus(permission as any)
-    if (permission === 'granted' && 'serviceWorker' in navigator) {
-      const reg = await navigator.serviceWorker.ready
-      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+    if (subscribing) return
+    setSubscribing(true)
+    try {
+      const permission = await Notification.requestPermission()
+      setNotifStatus(permission as any)
+      if (permission !== 'granted') return
+
+      if (!('serviceWorker' in navigator)) return
+
+      // Get VAPID public key from backend
+      const { data } = await api.get('/push/vapid-public-key')
+      const vapidKey = data.publicKey
       if (!vapidKey) return
-      await reg.pushManager.subscribe({
+
+      const reg = await navigator.serviceWorker.ready
+      const subscription = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(vapidKey),
       })
+
+      const sub = subscription.toJSON()
+      await api.post('/push/subscribe', {
+        endpoint: sub.endpoint,
+        keys: { p256dh: sub.keys?.p256dh, auth: sub.keys?.auth },
+      })
+
+      setNotifStatus('granted')
+    } catch (err) {
+      console.error('Push subscription error:', err)
+    } finally {
+      setSubscribing(false)
+    }
+  }
+
+  const disableNotification = async () => {
+    try {
+      if (!('serviceWorker' in navigator)) return
+      const reg = await navigator.serviceWorker.ready
+      const subscription = await reg.pushManager.getSubscription()
+      if (!subscription) return
+
+      const sub = subscription.toJSON()
+      await api.delete('/push/unsubscribe', {
+        data: { endpoint: sub.endpoint, keys: { p256dh: sub.keys?.p256dh, auth: sub.keys?.auth } },
+      })
+      await subscription.unsubscribe()
+      setNotifStatus('default')
+    } catch (err) {
+      console.error('Unsubscribe error:', err)
     }
   }
 
@@ -58,15 +99,33 @@ export default function ProfilePage() {
               <div>
                 <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Push Notification</p>
                 <p className="text-xs text-slate-500">
-                  {notifStatus === 'granted' ? 'Aktif' : notifStatus === 'denied' ? 'Diblokir di browser' : 'Belum diaktifkan'}
+                  {notifStatus === 'granted'
+                    ? 'Aktif — notif akan muncul otomatis'
+                    : notifStatus === 'denied'
+                    ? 'Diblokir di browser settings'
+                    : 'Belum diaktifkan'}
                 </p>
               </div>
             </div>
-            {notifStatus !== 'granted' && notifStatus !== 'denied' && (
-              <button onClick={requestNotification} className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white">
-                Aktifkan
-              </button>
-            )}
+            <div className="flex gap-2">
+              {notifStatus !== 'granted' && notifStatus !== 'denied' && (
+                <button
+                  onClick={requestNotification}
+                  disabled={subscribing}
+                  className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
+                >
+                  {subscribing ? 'Mendaftar…' : 'Aktifkan'}
+                </button>
+              )}
+              {notifStatus === 'granted' && (
+                <button
+                  onClick={disableNotification}
+                  className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:text-slate-400"
+                >
+                  Nonaktifkan
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -80,7 +139,10 @@ export default function ProfilePage() {
           ))}
         </div>
 
-        <button onClick={logout} className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 dark:border-red-900/30 dark:text-red-400">
+        <button
+          onClick={logout}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 dark:border-red-900/30 dark:text-red-400"
+        >
           <LogOut size={16} /> Keluar
         </button>
       </main>
