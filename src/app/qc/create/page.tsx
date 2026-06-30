@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import api from '@/lib/api'
@@ -42,6 +42,7 @@ export default function CreateQCPage() {
   const router = useRouter()
   const [success, setSuccess] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const formRef = useRef<HTMLFormElement>(null)
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<CreateForm>({
     defaultValues: { status: 'QC Process', qc_result: 'PASS' }
@@ -49,6 +50,11 @@ export default function CreateQCPage() {
 
   // ── Guard after all hooks ──
   if (authLoading || !user) return null
+
+  const onError = () => {
+    // Scroll to top of form so user can see validation errors
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   const onSubmit = async (data: CreateForm) => {
     setSubmitError('')
@@ -93,7 +99,7 @@ export default function CreateQCPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form ref={formRef} onSubmit={handleSubmit(onSubmit, onError)} className="space-y-4">
           <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900">
             <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Informasi Konten</p>
             <div className="space-y-3">
@@ -148,6 +154,14 @@ export default function CreateQCPage() {
               </FIELD>
             </div>
           </div>
+
+          {/* Validation error summary */}
+          {Object.keys(errors).length > 0 && (
+            <div className="flex items-center gap-2 rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+              <AlertCircle size={16} className="shrink-0" />
+              Ada field wajib yang belum diisi — scroll ke atas untuk melihat
+            </div>
+          )}
 
           <button
             type="submit"
