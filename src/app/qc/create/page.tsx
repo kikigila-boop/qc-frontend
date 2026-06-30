@@ -5,8 +5,9 @@ import { useForm } from 'react-hook-form'
 import api from '@/lib/api'
 import TopBar from '@/components/layout/TopBar'
 import BottomNav from '@/components/layout/BottomNav'
-import { Loader2, CheckCircle } from 'lucide-react'
+import { Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 import { useRoleGuard } from '@/hooks/useRoleGuard'
+import { useAuth } from '@/hooks/useAuth'
 
 interface CreateForm {
   title: string
@@ -35,26 +36,46 @@ const INPUT_CLS = "w-full rounded-xl border border-slate-200 bg-white px-4 py-2.
 const SELECT_CLS = INPUT_CLS
 
 export default function CreateQCPage() {
+  // ── All hooks must be called before any early return ──
   const { user, isLoading: authLoading } = useRoleGuard(['editor', 'admin'])
+  const { user: authUser } = useAuth()
   const router = useRouter()
   const [success, setSuccess] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
-  if (authLoading || !user) return null
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<CreateForm>({
     defaultValues: { status: 'QC Process', qc_result: 'PASS' }
   })
 
+  // ── Guard after all hooks ──
+  if (authLoading || !user) return null
+
   const onSubmit = async (data: CreateForm) => {
-    await api.post('/qc', {
-      ...data,
-      duration: data.duration || null,
-      cast: data.cast || null,
-      storage_location: data.storage_location || null,
-      notes: data.notes || null,
-    })
-    setSuccess(true)
-    reset()
-    setTimeout(() => { setSuccess(false); router.push('/qc/list') }, 1500)
+    setSubmitError('')
+    try {
+      await api.post('/qc', {
+        ...data,
+        editor_id: authUser?.id || null,
+        duration: data.duration || null,
+        cast: data.cast || null,
+        storage_location: data.storage_location || null,
+        notes: data.notes || null,
+      })
+      setSuccess(true)
+      reset()
+      setTimeout(() => { setSuccess(false); router.push('/qc/list') }, 1500)
+    } catch (e: any) {
+      const detail = e?.response?.data?.detail
+      if (Array.isArray(detail)) {
+        setSubmitError(detail.map((d: any) => d.msg || JSON.stringify(d)).join(', '))
+      } else if (typeof detail === 'string') {
+        setSubmitError(detail)
+      } else if (!e?.response) {
+        setSubmitError('Koneksi gagal — coba lagi')
+      } else {
+        setSubmitError('Gagal menyimpan (status: ' + e?.response?.status + ')')
+      }
+    }
   }
 
   return (
@@ -64,6 +85,11 @@ export default function CreateQCPage() {
         {success && (
           <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400">
             <CheckCircle size={16} /> Data QC berhasil disimpan!
+          </div>
+        )}
+        {submitError && (
+          <div className="mb-4 flex items-center gap-2 rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+            <AlertCircle size={16} /> {submitError}
           </div>
         )}
 
