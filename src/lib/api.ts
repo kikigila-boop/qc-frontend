@@ -1,16 +1,15 @@
 import axios from 'axios'
 
-// Call backend directly — more reliable than Vercel rewrite proxy.
-// NEXT_PUBLIC_API_URL is available on client (NEXT_PUBLIC_ prefix).
-// CORS is already configured on the backend for qc-frontend-xi.vercel.app.
+// Hardcoded Railway URL as fallback — ensures API calls always reach the backend
+// even if NEXT_PUBLIC_API_URL env var is missing from the build.
 const BASE_URL =
-  (typeof window !== 'undefined'
-    ? process.env.NEXT_PUBLIC_API_URL
-    : process.env.NEXT_PUBLIC_API_URL) || ''
+  process.env.NEXT_PUBLIC_API_URL ||
+  'https://qc-backend-production-2c7a.up.railway.app'
 
 const api = axios.create({
   baseURL: `${BASE_URL}/api/v1`,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 15000,
 })
 
 api.interceptors.request.use((config) => {
