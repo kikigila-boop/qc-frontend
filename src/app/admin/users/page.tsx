@@ -83,7 +83,16 @@ export default function AdminUsersPage() {
       await api.post('/users/', form)
       closeModal(); load()
     } catch (e: any) {
-      setError(e?.response?.data?.detail || 'Gagal membuat user')
+      const detail = e?.response?.data?.detail
+      if (Array.isArray(detail)) {
+        setError(detail.map((d: any) => d.msg || JSON.stringify(d)).join(', '))
+      } else if (typeof detail === 'string') {
+        setError(detail)
+      } else if (!e?.response) {
+        setError('Koneksi gagal — coba lagi')
+      } else {
+        setError('Gagal membuat user (status: ' + e?.response?.status + ')')
+      }
     } finally { setSaving(false) }
   }
 
@@ -94,7 +103,16 @@ export default function AdminUsersPage() {
       await api.patch(`/users/${selected.id}`, { name: form.name, role: form.role })
       closeModal(); load()
     } catch (e: any) {
-      setError(e?.response?.data?.detail || 'Gagal mengupdate user')
+      const detail = e?.response?.data?.detail
+      if (Array.isArray(detail)) {
+        setError(detail.map((d: any) => d.msg || JSON.stringify(d)).join(', '))
+      } else if (typeof detail === 'string') {
+        setError(detail)
+      } else if (!e?.response) {
+        setError('Koneksi gagal — coba lagi')
+      } else {
+        setError('Gagal mengupdate user (status: ' + e?.response?.status + ')')
+      }
     } finally { setSaving(false) }
   }
 
@@ -105,7 +123,16 @@ export default function AdminUsersPage() {
       await api.post(`/users/${selected.id}/reset-password`, { new_password: newPassword })
       closeModal()
     } catch (e: any) {
-      setError(e?.response?.data?.detail || 'Gagal reset password')
+      const detail = e?.response?.data?.detail
+      if (Array.isArray(detail)) {
+        setError(detail.map((d: any) => d.msg || JSON.stringify(d)).join(', '))
+      } else if (typeof detail === 'string') {
+        setError(detail)
+      } else if (!e?.response) {
+        setError('Koneksi gagal — coba lagi')
+      } else {
+        setError('Gagal reset password (status: ' + e?.response?.status + ')')
+      }
     } finally { setSaving(false) }
   }
 
