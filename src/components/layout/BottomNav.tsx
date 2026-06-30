@@ -1,19 +1,23 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, ListVideo, PlusCircle, Inbox, User } from 'lucide-react'
+import { LayoutDashboard, ListVideo, PlusCircle, Inbox, User, ShieldCheck } from 'lucide-react'
 import clsx from 'clsx'
-
-const NAV = [
-  { href: '/dashboard',  label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/qc/list',    label: 'QC List',   icon: ListVideo },
-  { href: '/qc/create',  label: 'Tambah',    icon: PlusCircle },
-  { href: '/cms',        label: 'CMS',       icon: Inbox },
-  { href: '/profile',    label: 'Profil',    icon: User },
-]
+import { useAuth } from '@/hooks/useAuth'
 
 export default function BottomNav() {
   const path = usePathname()
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'admin'
+
+  const NAV = [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/qc/list',   label: 'QC List',   icon: ListVideo },
+    { href: '/qc/create', label: 'Tambah',    icon: PlusCircle },
+    { href: '/cms',       label: 'CMS',       icon: Inbox },
+    ...(isAdmin ? [{ href: '/admin/users', label: 'Users', icon: ShieldCheck }] : []),
+    { href: '/profile',   label: 'Profil',    icon: User },
+  ]
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 safe-bottom">
