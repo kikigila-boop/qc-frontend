@@ -50,6 +50,14 @@ export interface QCContentDetail extends QCContent {
   histories: QCHistory[]
 }
 
+export interface EditorStat {
+  editor_name: string
+  total: number
+  pass_count: number
+  not_pass_count: number
+  done_ingest: number
+}
+
 export interface DashboardStats {
   total: number
   qc_process: number
@@ -60,6 +68,10 @@ export interface DashboardStats {
   weekly_progress: { week_label: string; count: number }[]
   monthly_progress: { month_label: string; count: number }[]
   by_status: { status: string; count: number }[]
+  revised: number
+  pass_rate: number
+  avg_turnaround_days: number | null
+  by_editor: EditorStat[]
 }
 
 export const STATUS_COLORS: Record<StatusEnum, string> = {
