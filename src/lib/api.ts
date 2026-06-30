@@ -17,10 +17,6 @@ api.interceptors.request.use((config) => {
     const token = localStorage.getItem('qc_token')
     if (token) config.headers.Authorization = `Bearer ${token}`
   }
-  // Add trailing slash to avoid FastAPI 301 redirect (redirect breaks CORS preflight)
-  if (config.url && !config.url.endsWith('/') && !config.url.includes('?')) {
-    config.url = config.url + '/'
-  }
   return config
 })
 
