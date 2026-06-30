@@ -22,15 +22,17 @@ export default function QCDetailPage() {
   const [advancing, setAdvancing] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
 
-  const nextStatus = item
-    ? STATUS_ORDER[STATUS_ORDER.indexOf(item.status) + 1] ?? null
-    : null
+  const currentIdx = item ? STATUS_ORDER.indexOf(item.status) : -1
+  const nextStatus = item ? STATUS_ORDER[currentIdx + 1] ?? null : null
+  // When at QC Done, also offer direct jump to Ready To Ingest (skip Uploading)
+  const canJumpToReady = item?.status === 'QC Done'
 
-  const advanceStatus = async () => {
-    if (!nextStatus || !item) return
+  const advanceStatus = async (targetStatus?: string) => {
+    const target = targetStatus ?? nextStatus
+    if (!target || !item) return
     setAdvancing(true)
     try {
-      await api.patch(`/qc/${id}/status`, { new_status: nextStatus })
+      await api.patch(`/qc/${id}/status`, { new_status: target })
       mutate(`/qc/${id}`)
     } finally {
       setAdvancing(false)
@@ -111,14 +113,26 @@ export default function QCDetailPage() {
 
         {/* Advance Status — editor/admin only */}
         {canAdvance && nextStatus && item.status !== 'Done Ingest' && item.status !== 'Revised' && (
-          <button
-            onClick={advanceStatus}
-            disabled={advancing}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
-          >
-            {advancing ? <Loader2 size={18} className="animate-spin" /> : <ArrowRight size={18} />}
-            Lanjut ke: {nextStatus}
-          </button>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => advanceStatus()}
+              disabled={advancing}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
+            >
+              {advancing ? <Loader2 size={18} className="animate-spin" /> : <ArrowRight size={18} />}
+              Lanjut ke: {nextStatus}
+            </button>
+            {canJumpToReady && (
+              <button
+                onClick={() => advanceStatus('Ready To Ingest')}
+                disabled={advancing}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-purple-300 bg-purple-50 py-3 text-sm font-semibold text-purple-700 transition hover:bg-purple-100 disabled:opacity-60 dark:border-purple-700 dark:bg-purple-900/20 dark:text-purple-300"
+              >
+                <ArrowRight size={16} />
+                Tandai Ready To Ingest (skip Uploading)
+              </button>
+            )}
+          </div>
         )}
 
         {/* Activity Log */}
