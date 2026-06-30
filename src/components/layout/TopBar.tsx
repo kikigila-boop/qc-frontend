@@ -1,7 +1,8 @@
 'use client'
 import { useAuth } from '@/hooks/useAuth'
-import { Bell, Moon, Sun } from 'lucide-react'
+import { Moon, Sun } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import NotificationBell from './NotificationBell'
 
 export default function TopBar({ title }: { title: string }) {
   const { user } = useAuth()
@@ -40,9 +41,7 @@ export default function TopBar({ title }: { title: string }) {
           >
             {dark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-          <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800">
-            <Bell size={18} />
-          </button>
+          <NotificationBell />
         </div>
       </div>
     </header>
