@@ -6,6 +6,7 @@ import { QCContent } from '@/types'
 import TopBar from '@/components/layout/TopBar'
 import BottomNav from '@/components/layout/BottomNav'
 import { useAuth } from '@/hooks/useAuth'
+import { useRoleGuard } from '@/hooks/useRoleGuard'
 import { CheckCheck, Search, Loader2, Inbox } from 'lucide-react'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
@@ -13,7 +14,7 @@ import { id as localeId } from 'date-fns/locale'
 const fetcher = (url: string) => api.get(url).then(r => r.data)
 
 export default function CMSPage() {
-  const { user } = useAuth()
+  const { user, isLoading: authLoading } = useRoleGuard(['cms', 'admin'], '/dashboard')
   const [search, setSearch] = useState('')
   const [ingesting, setIngesting] = useState<string | null>(null)
   const [operatorName, setOperatorName] = useState(user?.name ?? '')
@@ -25,6 +26,8 @@ export default function CMSPage() {
     `/cms/queue?${params.toString()}`, fetcher, { refreshInterval: 20000 }
   )
   const { data: countData } = useSWR('/cms/queue/count', fetcher, { refreshInterval: 20000 })
+
+  if (authLoading || !user) return null
 
   const doIngest = async (qcid: string) => {
     if (!operatorName.trim()) {

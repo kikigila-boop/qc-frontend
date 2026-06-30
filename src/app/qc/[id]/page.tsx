@@ -10,11 +10,14 @@ import StatusBadge from '@/components/ui/StatusBadge'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import { ArrowRight, Loader2, ChevronDown } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
 
 const fetcher = (url: string) => api.get(url).then(r => r.data)
 
 export default function QCDetailPage() {
   const { id } = useParams()
+  const { user } = useAuth()
+  const canAdvance = user?.role === 'editor' || user?.role === 'admin'
   const { data: item, isLoading } = useSWR<QCContentDetail>(`/qc/${id}`, fetcher)
   const [advancing, setAdvancing] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
@@ -98,10 +101,16 @@ export default function QCDetailPage() {
               <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{item.notes}</p>
             </div>
           )}
+          {item.revised_notes && (
+            <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800/40 dark:bg-amber-900/20">
+              <p className="text-xs font-semibold text-amber-600 dark:text-amber-400">Catatan Revisi (CMS)</p>
+              <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">{item.revised_notes}</p>
+            </div>
+          )}
         </div>
 
-        {/* Advance Status */}
-        {nextStatus && item.status !== 'Done Ingest' && (
+        {/* Advance Status — editor/admin only */}
+        {canAdvance && nextStatus && item.status !== 'Done Ingest' && item.status !== 'Revised' && (
           <button
             onClick={advanceStatus}
             disabled={advancing}

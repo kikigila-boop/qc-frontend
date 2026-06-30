@@ -6,6 +6,7 @@ import api from '@/lib/api'
 import TopBar from '@/components/layout/TopBar'
 import BottomNav from '@/components/layout/BottomNav'
 import { Loader2, CheckCircle } from 'lucide-react'
+import { useRoleGuard } from '@/hooks/useRoleGuard'
 
 interface CreateForm {
   title: string
@@ -34,8 +35,11 @@ const INPUT_CLS = "w-full rounded-xl border border-slate-200 bg-white px-4 py-2.
 const SELECT_CLS = INPUT_CLS
 
 export default function CreateQCPage() {
+  const { user, isLoading: authLoading } = useRoleGuard(['editor', 'admin'])
   const router = useRouter()
   const [success, setSuccess] = useState(false)
+
+  if (authLoading || !user) return null
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<CreateForm>({
     defaultValues: { status: 'QC Process', qc_result: 'PASS' }
   })

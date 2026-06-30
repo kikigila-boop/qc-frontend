@@ -10,14 +10,15 @@ export default function BottomNav() {
   const { user } = useAuth()
   const isAdmin = user?.role === 'admin'
   const isEditor = user?.role === 'editor' || isAdmin
+  const isCMS = user?.role === 'cms' || isAdmin
 
   const NAV = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/qc/list',   label: 'QC List',   icon: ListVideo },
-    { href: '/qc/create', label: 'Tambah',    icon: PlusCircle },
-    { href: '/cms',       label: 'CMS',       icon: Inbox },
-    ...(isEditor ? [{ href: '/revised', label: 'Revised', icon: RotateCcw }] : []),
-    ...(isAdmin ? [{ href: '/admin/users', label: 'Users', icon: ShieldCheck }] : []),
+    ...(isEditor ? [{ href: '/qc/create', label: 'Tambah', icon: PlusCircle }] : []),
+    ...(isCMS    ? [{ href: '/cms',       label: 'CMS',    icon: Inbox      }] : []),
+    ...(isEditor ? [{ href: '/revised',   label: 'Revised', icon: RotateCcw }] : []),
+    ...(isAdmin  ? [{ href: '/admin/users', label: 'Users', icon: ShieldCheck }] : []),
     { href: '/profile',   label: 'Profil',    icon: User },
   ]
 

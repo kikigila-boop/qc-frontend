@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import api from '@/lib/api'
 import { QCContent } from '@/types'
-import { useAuth } from '@/hooks/useAuth'
+import { useRoleGuard } from '@/hooks/useRoleGuard'
 import TopBar from '@/components/layout/TopBar'
 import BottomNav from '@/components/layout/BottomNav'
 import { AlertTriangle, ChevronRight, Loader2, CheckCircle2 } from 'lucide-react'
@@ -23,15 +23,8 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function RevisedQueuePage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, isLoading: authLoading } = useRoleGuard(['editor', 'admin'], '/cms')
   const router = useRouter()
-
-  // Only editors and admins should see this page
-  useEffect(() => {
-    if (!authLoading && user?.role === 'cms') {
-      router.replace('/cms')
-    }
-  }, [user, authLoading, router])
 
   const { data: items, isLoading, mutate } = useSWR<QCContent[]>(
     '/qc?status=Revised&page_size=100',

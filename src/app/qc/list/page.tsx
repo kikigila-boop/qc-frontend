@@ -11,7 +11,7 @@ import { Search, Filter, ChevronRight, Loader2 } from 'lucide-react'
 
 const fetcher = (url: string) => api.get(url).then(r => r.data)
 
-const STATUSES: StatusEnum[] = ['QC Process','QC Done','Uploading','Ready To Ingest','Done Ingest']
+const STATUSES: StatusEnum[] = ['QC Process','QC Done','Uploading','Ready To Ingest','Done Ingest','Revised']
 
 export default function QCListPage() {
   const [search, setSearch] = useState('')
