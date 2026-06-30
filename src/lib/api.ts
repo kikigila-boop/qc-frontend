@@ -1,10 +1,10 @@
 import axios from 'axios'
 
-// Hardcoded Railway URL as fallback — ensures API calls always reach the backend
-// even if NEXT_PUBLIC_API_URL env var is missing from the build.
-const BASE_URL =
+// Always force HTTPS — Vercel env var might be set with http:// by mistake
+const _rawUrl =
   process.env.NEXT_PUBLIC_API_URL ||
   'https://qc-backend-production-2c7a.up.railway.app'
+const BASE_URL = _rawUrl.replace(/^http:\/\//, 'https://')
 
 const api = axios.create({
   baseURL: `${BASE_URL}/api/v1`,
