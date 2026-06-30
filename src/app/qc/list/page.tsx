@@ -7,7 +7,8 @@ import { QCContent, StatusEnum } from '@/types'
 import TopBar from '@/components/layout/TopBar'
 import BottomNav from '@/components/layout/BottomNav'
 import StatusBadge from '@/components/ui/StatusBadge'
-import { Search, Filter, ChevronRight, Loader2 } from 'lucide-react'
+import { Search, Filter, ChevronRight, Loader2, Download } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
 
 const fetcher = (url: string) => api.get(url).then(r => r.data)
 
@@ -18,12 +19,39 @@ export default function QCListPage() {
   const [status, setStatus] = useState<StatusEnum | ''>('')
   const [result, setResult] = useState<'PASS' | 'NOT PASS' | ''>('')
   const [showFilter, setShowFilter] = useState(false)
+  const [exporting, setExporting] = useState<'excel' | 'pdf' | null>(null)
+  const { user } = useAuth()
 
   const params = new URLSearchParams()
   if (search) params.set('search', search)
   if (status) params.set('status', status)
   if (result) params.set('qc_result', result)
   params.set('page_size', '50')
+
+  const doExport = async (format: 'excel' | 'pdf') => {
+    setExporting(format)
+    try {
+      const exportParams = new URLSearchParams()
+      if (search) exportParams.set('search', search)
+      if (status) exportParams.set('status', status)
+      if (result) exportParams.set('qc_result', result)
+      const token = localStorage.getItem('qc_token')
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/export/${format}?${exportParams.toString()}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      const blob = await res.blob()
+      const ext = format === 'excel' ? 'xlsx' : 'pdf'
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `QC_Export_${new Date().toISOString().slice(0,10)}.${ext}`
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setExporting(null)
+    }
+  }
 
   const { data: items, isLoading } = useSWR<QCContent[]>(
     `/qc?${params.toString()}`, fetcher, { refreshInterval: 15000 }
@@ -57,6 +85,29 @@ export default function QCListPage() {
               <Filter size={15} />
               Filter
             </button>
+            {/* Export dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => doExport('excel')}
+                disabled={exporting !== null}
+                title="Export Excel"
+                className="flex items-center gap-1 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-60 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
+              >
+                {exporting === 'excel' ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
+                XLS
+              </button>
+            </div>
+            <div className="relative">
+              <button
+                onClick={() => doExport('pdf')}
+                disabled={exporting !== null}
+                title="Export PDF"
+                className="flex items-center gap-1 rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100 disabled:opacity-60 dark:border-red-700 dark:bg-red-900/20 dark:text-red-400"
+              >
+                {exporting === 'pdf' ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
+                PDF
+              </button>
+            </div>
           </div>
 
           {showFilter && (
