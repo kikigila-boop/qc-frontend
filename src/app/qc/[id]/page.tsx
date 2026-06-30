@@ -17,7 +17,8 @@ const fetcher = (url: string) => api.get(url).then(r => r.data)
 export default function QCDetailPage() {
   const { id } = useParams()
   const { user } = useAuth()
-  const canAdvance = user?.role === 'editor' || user?.role === 'admin'
+  const canAdvance = user?.role === 'editor' || user?.role === 'admin' || user?.role === 'cms'
+  const canDoneIngest = user?.role === 'cms' || user?.role === 'admin'
   const { data: item, isLoading } = useSWR<QCContentDetail>(`/qc/${id}`, fetcher)
   const [advancing, setAdvancing] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
@@ -112,7 +113,8 @@ export default function QCDetailPage() {
         </div>
 
         {/* Advance Status — editor/admin only */}
-        {canAdvance && nextStatus && item.status !== 'Done Ingest' && item.status !== 'Revised' && (
+        {canAdvance && nextStatus && item.status !== 'Done Ingest' && item.status !== 'Revised'
+          && (nextStatus !== 'Done Ingest' || canDoneIngest) && (
           <div className="flex flex-col gap-2">
             <button
               onClick={() => advanceStatus()}
