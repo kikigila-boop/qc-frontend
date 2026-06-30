@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, ListVideo, PlusCircle, Inbox, User, ShieldCheck } from 'lucide-react'
+import { LayoutDashboard, ListVideo, PlusCircle, Inbox, User, ShieldCheck, RotateCcw } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -9,12 +9,14 @@ export default function BottomNav() {
   const path = usePathname()
   const { user } = useAuth()
   const isAdmin = user?.role === 'admin'
+  const isEditor = user?.role === 'editor' || isAdmin
 
   const NAV = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/qc/list',   label: 'QC List',   icon: ListVideo },
     { href: '/qc/create', label: 'Tambah',    icon: PlusCircle },
     { href: '/cms',       label: 'CMS',       icon: Inbox },
+    ...(isEditor ? [{ href: '/revised', label: 'Revised', icon: RotateCcw }] : []),
     ...(isAdmin ? [{ href: '/admin/users', label: 'Users', icon: ShieldCheck }] : []),
     { href: '/profile',   label: 'Profil',    icon: User },
   ]

@@ -6,6 +6,7 @@ export type StatusEnum =
   | 'Uploading'
   | 'Ready To Ingest'
   | 'Done Ingest'
+  | 'Revised'
 
 export interface User {
   id: number
@@ -28,6 +29,7 @@ export interface QCContent {
   status: StatusEnum
   editor_name: string
   editor_id: number | null
+  revised_notes: string | null
   ingest_by: string | null
   ingest_at: string | null
   qc_date: string
@@ -66,6 +68,7 @@ export const STATUS_COLORS: Record<StatusEnum, string> = {
   'Uploading':      'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
   'Ready To Ingest':'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
   'Done Ingest':    'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+  'Revised':        'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
 }
 
 export const STATUS_ORDER: StatusEnum[] = [
