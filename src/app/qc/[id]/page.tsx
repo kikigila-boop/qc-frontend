@@ -9,7 +9,7 @@ import BottomNav from '@/components/layout/BottomNav'
 import StatusBadge from '@/components/ui/StatusBadge'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
-import { ArrowRight, Loader2, ChevronDown, RotateCcw, X } from 'lucide-react'
+import { ArrowRight, Loader2, ChevronDown, RefreshCw, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 const fetcher = (url: string) => api.get(url).then(r => r.data)
@@ -139,7 +139,7 @@ export default function QCDetailPage() {
         {/* Revised alert banner */}
         {item.status === 'Revised' && (
           <div className="flex items-start gap-2 rounded-2xl border border-red-200 bg-red-50 p-3 dark:border-red-800/40 dark:bg-red-900/20">
-            <RotateCcw size={15} className="mt-0.5 shrink-0 text-red-500" />
+            <RefreshCw size={15} className="mt-0.5 shrink-0 text-red-500" />
             <div>
               <p className="text-sm font-semibold text-red-700 dark:text-red-400">Konten Perlu Direvisi</p>
               {item.revised_notes && (
@@ -235,7 +235,7 @@ export default function QCDetailPage() {
               onClick={() => setShowReviseModal(true)}
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 dark:border-red-800/40 dark:bg-red-900/20 dark:text-red-400"
             >
-              <RotateCcw size={16} />
+              <RefreshCw size={16} />
               {cmsReviseVisible && !editorReviseVisible ? 'Kembalikan untuk Revisi (CMS)' : 'Tandai Perlu Revisi'}
             </button>
           )}

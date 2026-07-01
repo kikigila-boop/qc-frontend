@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import api from '@/lib/api'
 import TopBar from '@/components/layout/TopBar'
 import BottomNav from '@/components/layout/BottomNav'
-import { Loader2, CheckCircle, AlertCircle, Layers, Link2 } from 'lucide-react'
+import { Loader2, CheckCircle, AlertCircle, Layers, Link } from 'lucide-react'
 import { useRoleGuard } from '@/hooks/useRoleGuard'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -36,56 +36,45 @@ const FIELD = ({ label, error, required, children, hint }: any) => (
 const INPUT_CLS = "w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
 const SELECT_CLS = INPUT_CLS
 
-// ─── Episode mode types ───────────────────────────────────────────────────
 type EpMode = 'individual' | 'grouped' | 'combined'
 
-interface EpisodeResult {
-  labels: string[]   // e.g. ["1","2",...] or ["1-2","3-4",...] or ["1-2"]
-  isBulk: boolean
-}
+interface EpisodeResult { labels: string[]; isBulk: boolean }
 
 function parseEpisodeInput(raw: string, mode: EpMode, groupBy: number): EpisodeResult | null {
   const trimmed = raw.trim()
+  if (!trimmed) return null
   const rangeMatch = trimmed.match(/^(\d+)\s*-\s*(\d+)$/)
   const isRange = !!rangeMatch
 
   if (mode === 'combined') {
-    // Single entry — label is exactly what the user typed
-    if (!trimmed) return null
     return { labels: [trimmed], isBulk: false }
   }
-
   if (mode === 'individual') {
     if (isRange) {
       const start = parseInt(rangeMatch![1], 10)
       const end = parseInt(rangeMatch![2], 10)
       if (start > end || end - start > 999) return null
-      return {
-        labels: Array.from({ length: end - start + 1 }, (_, i) => String(start + i)),
-        isBulk: true,
-      }
+      return { labels: Array.from({ length: end - start + 1 }, (_, i) => String(start + i)), isBulk: true }
     }
     if (/^\d+$/.test(trimmed)) return { labels: [trimmed], isBulk: false }
     return null
   }
-
   if (mode === 'grouped') {
     if (!isRange) {
-      // Single number in grouped mode — just create one entry
       if (/^\d+$/.test(trimmed)) return { labels: [trimmed], isBulk: false }
       return null
     }
     const start = parseInt(rangeMatch![1], 10)
     const end = parseInt(rangeMatch![2], 10)
-    if (start > end || end - start > 999 || groupBy < 2) return null
+    const g = Math.max(1, groupBy)
+    if (start > end || end - start > 999) return null
     const labels: string[] = []
-    for (let i = start; i <= end; i += groupBy) {
-      const to = Math.min(i + groupBy - 1, end)
+    for (let i = start; i <= end; i += g) {
+      const to = Math.min(i + g - 1, end)
       labels.push(i === to ? String(i) : `${i}-${to}`)
     }
     return { labels, isBulk: labels.length > 1 }
   }
-
   return null
 }
 
@@ -99,6 +88,7 @@ export default function CreateQCPage() {
   const [episodeWatch, setEpisodeWatch] = useState('')
   const [epMode, setEpMode] = useState<EpMode>('individual')
   const [groupBy, setGroupBy] = useState(2)
+  const [groupByInput, setGroupByInput] = useState('2')
   const formRef = useRef<HTMLFormElement>(null)
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<CreateForm>({
@@ -110,9 +100,7 @@ export default function CreateQCPage() {
   const parsed = episodeWatch.trim() ? parseEpisodeInput(episodeWatch, epMode, groupBy) : null
   const isBulk = parsed?.isBulk ?? false
 
-  const onError = () => {
-    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
+  const onError = () => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
   const onSubmit = async (data: CreateForm) => {
     setSubmitError('')
@@ -120,21 +108,16 @@ export default function CreateQCPage() {
 
     const result = parseEpisodeInput(data.episode, epMode, groupBy)
     if (!result) {
-      setSubmitError('Format episode tidak valid. Gunakan angka (5) atau range (1-15).')
+      setSubmitError('Format episode tidak valid. Contoh: 5 atau 1-15')
       return
     }
 
     const base = {
-      title: data.title,
-      season: data.season,
-      qc_result: data.qc_result,
-      editor_name: data.editor_name,
-      editor_id: authUser?.id || null,
-      status: data.status,
-      duration: data.duration || null,
-      cast: data.cast || null,
-      storage_location: data.storage_location || null,
-      notes: data.notes || null,
+      title: data.title, season: data.season,
+      qc_result: data.qc_result, editor_name: data.editor_name,
+      editor_id: authUser?.id || null, status: data.status,
+      duration: data.duration || null, cast: data.cast || null,
+      storage_location: data.storage_location || null, notes: data.notes || null,
     }
 
     try {
@@ -169,14 +152,13 @@ export default function CreateQCPage() {
 
   const isSaving = isSubmitting || bulkProgress !== null
 
-  // Preview text
   const previewText = () => {
-    if (!parsed) return null
-    if (parsed.labels.length === 1) return null
+    if (!parsed || parsed.labels.length <= 1) return null
     if (epMode === 'grouped') {
-      return `Bulk grouped: ${parsed.labels.length} entry — ${parsed.labels[0]}, ${parsed.labels[1]}${parsed.labels.length > 2 ? `, … ${parsed.labels[parsed.labels.length - 1]}` : ''}`
+      const sample = parsed.labels.slice(0, 3).join(', ')
+      return `${parsed.labels.length} entry: ${sample}${parsed.labels.length > 3 ? `, … ${parsed.labels[parsed.labels.length-1]}` : ''}`
     }
-    return `Bulk: ${parsed.labels.length} episode — Ep ${parsed.labels[0]} s/d ${parsed.labels[parsed.labels.length - 1]}`
+    return `${parsed.labels.length} episode: Ep ${parsed.labels[0]} s/d ${parsed.labels[parsed.labels.length-1]}`
   }
   const preview = previewText()
 
@@ -197,13 +179,11 @@ export default function CreateQCPage() {
         {bulkProgress && (
           <div className="mb-4 rounded-xl bg-brand-50 p-3 dark:bg-brand-900/20">
             <p className="mb-1.5 text-sm font-medium text-brand-700 dark:text-brand-300">
-              Menyimpan episode {bulkProgress.current}/{bulkProgress.total}...
+              Menyimpan {bulkProgress.current}/{bulkProgress.total}...
             </p>
             <div className="h-2 w-full overflow-hidden rounded-full bg-brand-100 dark:bg-brand-800">
-              <div
-                className="h-full rounded-full bg-brand-600 transition-all duration-300"
-                style={{ width: `${(bulkProgress.current / bulkProgress.total) * 100}%` }}
-              />
+              <div className="h-full rounded-full bg-brand-600 transition-all duration-300"
+                style={{ width: `${(bulkProgress.current / bulkProgress.total) * 100}%` }} />
             </div>
           </div>
         )}
@@ -215,7 +195,6 @@ export default function CreateQCPage() {
               <FIELD label="Judul" required error={errors.title?.message}>
                 <input {...register('title', { required: 'Wajib diisi' })} placeholder="Nama drama / film" className={INPUT_CLS} />
               </FIELD>
-
               <FIELD label="Season" required error={errors.season?.message}>
                 <input {...register('season', { required: 'Wajib' })} placeholder="1" className={INPUT_CLS} />
               </FIELD>
@@ -225,66 +204,69 @@ export default function CreateQCPage() {
                 <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
                   Mode Episode <span className="text-red-500">*</span>
                 </label>
-                <div className="mb-2 grid grid-cols-3 gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800">
+                <div className="mb-2 grid grid-cols-3 gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800">
                   {([
-                    { key: 'individual', label: 'Individual', desc: '1 entry / eps' },
-                    { key: 'grouped', label: 'Grouped', desc: 'N eps per entry' },
-                    { key: 'combined', label: 'Menyambung', desc: 'Satu entry gabungan' },
+                    { key: 'individual', label: 'Individual', desc: '1 eps / entry' },
+                    { key: 'grouped',    label: 'Grouped',    desc: 'N eps / entry' },
+                    { key: 'combined',   label: 'Menyambung', desc: 'File gabungan' },
                   ] as const).map(m => (
-                    <button
-                      key={m.key}
-                      type="button"
-                      onClick={() => setEpMode(m.key)}
+                    <button key={m.key} type="button" onClick={() => setEpMode(m.key)}
                       className={`rounded-lg px-2 py-2 text-center transition ${
                         epMode === m.key
                           ? 'bg-white shadow-sm text-brand-700 font-semibold dark:bg-slate-700 dark:text-brand-400'
-                          : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
-                      }`}
-                    >
+                          : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>
                       <div className="text-xs font-medium">{m.label}</div>
                       <div className="mt-0.5 text-[10px] opacity-70">{m.desc}</div>
                     </button>
                   ))}
                 </div>
 
-                {/* Mode-specific hints + grouped options */}
                 {epMode === 'individual' && (
-                  <p className="mb-1.5 text-xs text-slate-400">Satu angka (5) atau range (1-90) → tiap eps jadi entry sendiri</p>
+                  <p className="mb-2 text-xs text-slate-400">Satu angka (5) atau range (1-90) — tiap eps jadi entry sendiri</p>
                 )}
                 {epMode === 'grouped' && (
-                  <div className="mb-2">
-                    <p className="mb-1.5 text-xs text-slate-400">Range (1-90) dibagi per grup → e.g. "1-2", "3-4", dst</p>
-                    <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Jumlah eps per entry</label>
-                    <select
-                      value={groupBy}
-                      onChange={e => setGroupBy(Number(e.target.value))}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                    >
-                      {[2,3,4,5,6,10].map(n => <option key={n} value={n}>{n} eps per entry</option>)}
-                    </select>
+                  <div className="mb-2 space-y-2">
+                    <p className="text-xs text-slate-400">Range (1-90) dibagi per grup — misal "1-2", "3-4", dst</p>
+                    <div className="flex items-center gap-2">
+                      <label className="shrink-0 text-xs font-medium text-slate-600 dark:text-slate-400">Eps per entry:</label>
+                      <input
+                        type="number"
+                        min={1}
+                        value={groupByInput}
+                        onChange={e => {
+                          setGroupByInput(e.target.value)
+                          const n = parseInt(e.target.value, 10)
+                          if (n >= 1) setGroupBy(n)
+                        }}
+                        className="w-20 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-center dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                        placeholder="2"
+                      />
+                      <span className="text-xs text-slate-400">eps</span>
+                    </div>
                   </div>
                 )}
                 {epMode === 'combined' && (
                   <div className="mb-2 flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-2 dark:bg-amber-900/20">
-                    <Link2 size={12} className="shrink-0 text-amber-600" />
-                    <p className="text-xs text-amber-700 dark:text-amber-300">Satu entry dengan label episode persis seperti yang kamu tulis — cocok untuk file gabungan dari source</p>
+                    <Link size={12} className="shrink-0 text-amber-600" />
+                    <p className="text-xs text-amber-700 dark:text-amber-300">Satu entry dengan label persis seperti yang ditulis — untuk file gabungan dari source</p>
                   </div>
                 )}
 
                 <FIELD label="Episode" required error={errors.episode?.message}>
                   <input
-                    {...register('episode', { required: 'Wajib' })}
+                    {...register('episode', {
+                      required: 'Wajib',
+                      onChange: e => setEpisodeWatch(e.target.value)
+                    })}
                     placeholder={epMode === 'combined' ? '1-2 atau 5-6' : epMode === 'grouped' ? '1-90' : '5 atau 1-90'}
                     className={INPUT_CLS}
-                    onChange={e => setEpisodeWatch(e.target.value)}
                   />
                 </FIELD>
 
-                {/* Preview */}
                 {preview && (
                   <div className="mt-1.5 flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 dark:border-brand-700 dark:bg-brand-900/20">
                     <Layers size={13} className="shrink-0 text-brand-600 dark:text-brand-400" />
-                    <p className="text-xs text-brand-700 dark:text-brand-300 font-medium">{preview}</p>
+                    <p className="text-xs font-medium text-brand-700 dark:text-brand-300">{preview}</p>
                   </div>
                 )}
               </div>
@@ -320,12 +302,8 @@ export default function CreateQCPage() {
                 </select>
               </FIELD>
               <FIELD label="Catatan QC (opsional)">
-                <textarea
-                  {...register('notes')}
-                  rows={3}
-                  placeholder="Catatan tambahan..."
-                  className={`${INPUT_CLS} resize-none`}
-                />
+                <textarea {...register('notes')} rows={3} placeholder="Catatan tambahan..."
+                  className={`${INPUT_CLS} resize-none`} />
               </FIELD>
             </div>
           </div>
@@ -333,15 +311,12 @@ export default function CreateQCPage() {
           {Object.keys(errors).length > 0 && (
             <div className="flex items-center gap-2 rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
               <AlertCircle size={16} className="shrink-0" />
-              Ada field wajib yang belum diisi — scroll ke atas untuk melihat
+              Ada field wajib yang belum diisi
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
-          >
+          <button type="submit" disabled={isSaving}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60">
             {isSaving && <Loader2 size={18} className="animate-spin" />}
             {isSaving
               ? (bulkProgress ? `Menyimpan ${bulkProgress.current}/${bulkProgress.total}...` : 'Menyimpan...')
