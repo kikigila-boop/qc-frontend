@@ -20,6 +20,7 @@ interface CreateForm {
   cast: string
   storage_location: string
   notes: string
+  qc_date: string
 }
 
 const FIELD = ({ label, error, required, children, hint }: any) => (
@@ -92,7 +93,7 @@ export default function CreateQCPage() {
   const formRef = useRef<HTMLFormElement>(null)
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<CreateForm>({
-    defaultValues: { status: 'QC Process', qc_result: 'PASS' }
+    defaultValues: { status: 'QC Process', qc_result: 'PASS', qc_date: new Date().toISOString().slice(0, 10) }
   })
 
   if (authLoading || !user) return null
@@ -118,6 +119,7 @@ export default function CreateQCPage() {
       editor_id: authUser?.id || null, status: data.status,
       duration: data.duration || null, cast: data.cast || null,
       storage_location: data.storage_location || null, notes: data.notes || null,
+      qc_date: data.qc_date ? new Date(data.qc_date).toISOString() : null,
     }
 
     try {
@@ -300,6 +302,14 @@ export default function CreateQCPage() {
                   <option value="QC Process">QC Process</option>
                   <option value="QC Done">QC Done</option>
                 </select>
+              </FIELD>
+              <FIELD label="Tanggal QC" required error={errors.qc_date?.message}
+                hint="Default hari ini jika dikosongkan">
+                <input
+                  type="date"
+                  {...register('qc_date')}
+                  className={INPUT_CLS}
+                />
               </FIELD>
               <FIELD label="Catatan QC (opsional)">
                 <textarea {...register('notes')} rows={3} placeholder="Catatan tambahan..."
