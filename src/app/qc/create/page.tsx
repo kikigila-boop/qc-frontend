@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import api from '@/lib/api'
@@ -21,6 +21,7 @@ interface CreateForm {
   storage_location: string
   notes: string
   qc_date: string
+  editor_id: number | null
 }
 
 const FIELD = ({ label, error, required, children, hint }: any) => (
@@ -90,11 +91,24 @@ export default function CreateQCPage() {
   const [epMode, setEpMode] = useState<EpMode>('individual')
   const [groupBy, setGroupBy] = useState(2)
   const [groupByInput, setGroupByInput] = useState('2')
+  const [editors, setEditors] = useState<{ id: number; name: string }[]>([])
   const formRef = useRef<HTMLFormElement>(null)
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<CreateForm>({
-    defaultValues: { status: 'QC Process', qc_result: 'PASS', qc_date: new Date().toISOString().slice(0, 10) }
+  const { register, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<CreateForm>({
+    defaultValues: { status: 'QC Process', qc_result: 'PASS', qc_date: new Date().toISOString().slice(0, 10), editor_id: null }
   })
+
+  useEffect(() => {
+    api.get('/users/editors').then(r => {
+      setEditors(r.data)
+      // auto-select the logged-in user if they're in the list
+      const me = r.data.find((e: any) => e.id === authUser?.id)
+      if (me) {
+        setValue('editor_name', me.name)
+        setValue('editor_id', me.id)
+      }
+    }).catch(() => {})
+  }, [authUser])
 
   if (authLoading || !user) return null
 
@@ -116,7 +130,7 @@ export default function CreateQCPage() {
     const base = {
       title: data.title, season: data.season,
       qc_result: data.qc_result, editor_name: data.editor_name,
-      editor_id: authUser?.id || null, status: data.status,
+      editor_id: data.editor_id || authUser?.id || null, status: data.status,
       duration: data.duration || null, cast: data.cast || null,
       storage_location: data.storage_location || null, notes: data.notes || null,
       qc_date: data.qc_date ? new Date(data.qc_date).toISOString() : null,
@@ -295,7 +309,20 @@ export default function CreateQCPage() {
                 </select>
               </FIELD>
               <FIELD label="Nama Editor" required error={errors.editor_name?.message}>
-                <input {...register('editor_name', { required: 'Wajib diisi' })} placeholder="Muhammad Rifqi" className={INPUT_CLS} />
+                <select
+                  {...register('editor_name', { required: 'Wajib diisi' })}
+                  className={SELECT_CLS}
+                  onChange={e => {
+                    const selected = editors.find(ed => ed.name === e.target.value)
+                    setValue('editor_name', e.target.value)
+                    setValue('editor_id', selected?.id ?? null)
+                  }}
+                >
+                  <option value="">-- Pilih Editor --</option>
+                  {editors.map(ed => (
+                    <option key={ed.id} value={ed.name}>{ed.name}</option>
+                  ))}
+                </select>
               </FIELD>
               <FIELD label="Status" required>
                 <select {...register('status')} className={SELECT_CLS}>
