@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import api from '@/lib/api'
 import TopBar from '@/components/layout/TopBar'
 import BottomNav from '@/components/layout/BottomNav'
-import { Loader2, CheckCircle, AlertCircle, Layers } from 'lucide-react'
+import { Loader2, CheckCircle, AlertCircle, Layers, Link2 } from 'lucide-react'
 import { useRoleGuard } from '@/hooks/useRoleGuard'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -36,20 +36,56 @@ const FIELD = ({ label, error, required, children, hint }: any) => (
 const INPUT_CLS = "w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
 const SELECT_CLS = INPUT_CLS
 
-/** Parse episode field. Returns array of episode strings.
- *  "1-15" → ["1","2",...,"15"]
- *  "5"    → ["5"]
- */
-function parseEpisodes(raw: string): string[] | null {
+// ─── Episode mode types ───────────────────────────────────────────────────
+type EpMode = 'individual' | 'grouped' | 'combined'
+
+interface EpisodeResult {
+  labels: string[]   // e.g. ["1","2",...] or ["1-2","3-4",...] or ["1-2"]
+  isBulk: boolean
+}
+
+function parseEpisodeInput(raw: string, mode: EpMode, groupBy: number): EpisodeResult | null {
   const trimmed = raw.trim()
   const rangeMatch = trimmed.match(/^(\d+)\s*-\s*(\d+)$/)
-  if (rangeMatch) {
-    const start = parseInt(rangeMatch[1], 10)
-    const end = parseInt(rangeMatch[2], 10)
-    if (start > end || end - start > 500) return null
-    return Array.from({ length: end - start + 1 }, (_, i) => String(start + i))
+  const isRange = !!rangeMatch
+
+  if (mode === 'combined') {
+    // Single entry — label is exactly what the user typed
+    if (!trimmed) return null
+    return { labels: [trimmed], isBulk: false }
   }
-  if (/^\d+$/.test(trimmed)) return [trimmed]
+
+  if (mode === 'individual') {
+    if (isRange) {
+      const start = parseInt(rangeMatch![1], 10)
+      const end = parseInt(rangeMatch![2], 10)
+      if (start > end || end - start > 999) return null
+      return {
+        labels: Array.from({ length: end - start + 1 }, (_, i) => String(start + i)),
+        isBulk: true,
+      }
+    }
+    if (/^\d+$/.test(trimmed)) return { labels: [trimmed], isBulk: false }
+    return null
+  }
+
+  if (mode === 'grouped') {
+    if (!isRange) {
+      // Single number in grouped mode — just create one entry
+      if (/^\d+$/.test(trimmed)) return { labels: [trimmed], isBulk: false }
+      return null
+    }
+    const start = parseInt(rangeMatch![1], 10)
+    const end = parseInt(rangeMatch![2], 10)
+    if (start > end || end - start > 999 || groupBy < 2) return null
+    const labels: string[] = []
+    for (let i = start; i <= end; i += groupBy) {
+      const to = Math.min(i + groupBy - 1, end)
+      labels.push(i === to ? String(i) : `${i}-${to}`)
+    }
+    return { labels, isBulk: labels.length > 1 }
+  }
+
   return null
 }
 
@@ -61,6 +97,8 @@ export default function CreateQCPage() {
   const [submitError, setSubmitError] = useState('')
   const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number } | null>(null)
   const [episodeWatch, setEpisodeWatch] = useState('')
+  const [epMode, setEpMode] = useState<EpMode>('individual')
+  const [groupBy, setGroupBy] = useState(2)
   const formRef = useRef<HTMLFormElement>(null)
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<CreateForm>({
@@ -69,8 +107,8 @@ export default function CreateQCPage() {
 
   if (authLoading || !user) return null
 
-  const episodes = parseEpisodes(episodeWatch)
-  const isBulk = episodes !== null && episodes.length > 1
+  const parsed = episodeWatch.trim() ? parseEpisodeInput(episodeWatch, epMode, groupBy) : null
+  const isBulk = parsed?.isBulk ?? false
 
   const onError = () => {
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -80,9 +118,9 @@ export default function CreateQCPage() {
     setSubmitError('')
     setBulkProgress(null)
 
-    const epList = parseEpisodes(data.episode)
-    if (!epList) {
-      setSubmitError('Format episode tidak valid. Gunakan angka (contoh: 5) atau range (contoh: 1-15)')
+    const result = parseEpisodeInput(data.episode, epMode, groupBy)
+    if (!result) {
+      setSubmitError('Format episode tidak valid. Gunakan angka (5) atau range (1-15).')
       return
     }
 
@@ -100,18 +138,15 @@ export default function CreateQCPage() {
     }
 
     try {
-      if (epList.length === 1) {
-        // Single episode
-        await api.post('/qc', { ...base, episode: epList[0] })
+      if (result.labels.length === 1) {
+        await api.post('/qc', { ...base, episode: result.labels[0] })
       } else {
-        // Bulk — create one by one, show progress
-        setBulkProgress({ current: 0, total: epList.length })
-        for (let i = 0; i < epList.length; i++) {
-          await api.post('/qc', { ...base, episode: epList[i] })
-          setBulkProgress({ current: i + 1, total: epList.length })
+        setBulkProgress({ current: 0, total: result.labels.length })
+        for (let i = 0; i < result.labels.length; i++) {
+          await api.post('/qc', { ...base, episode: result.labels[i] })
+          setBulkProgress({ current: i + 1, total: result.labels.length })
         }
       }
-
       setSuccess(true)
       reset()
       setEpisodeWatch('')
@@ -133,6 +168,17 @@ export default function CreateQCPage() {
   }
 
   const isSaving = isSubmitting || bulkProgress !== null
+
+  // Preview text
+  const previewText = () => {
+    if (!parsed) return null
+    if (parsed.labels.length === 1) return null
+    if (epMode === 'grouped') {
+      return `Bulk grouped: ${parsed.labels.length} entry — ${parsed.labels[0]}, ${parsed.labels[1]}${parsed.labels.length > 2 ? `, … ${parsed.labels[parsed.labels.length - 1]}` : ''}`
+    }
+    return `Bulk: ${parsed.labels.length} episode — Ep ${parsed.labels[0]} s/d ${parsed.labels[parsed.labels.length - 1]}`
+  }
+  const preview = previewText()
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -169,34 +215,79 @@ export default function CreateQCPage() {
               <FIELD label="Judul" required error={errors.title?.message}>
                 <input {...register('title', { required: 'Wajib diisi' })} placeholder="Nama drama / film" className={INPUT_CLS} />
               </FIELD>
-              <div className="grid grid-cols-2 gap-3">
-                <FIELD label="Season" required error={errors.season?.message}>
-                  <input {...register('season', { required: 'Wajib' })} placeholder="1" className={INPUT_CLS} />
-                </FIELD>
-                <FIELD
-                  label="Episode"
-                  required
-                  error={errors.episode?.message}
-                  hint={isBulk ? undefined : 'Bisa range, contoh: 1-15'}
-                >
+
+              <FIELD label="Season" required error={errors.season?.message}>
+                <input {...register('season', { required: 'Wajib' })} placeholder="1" className={INPUT_CLS} />
+              </FIELD>
+
+              {/* Episode mode selector */}
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Mode Episode <span className="text-red-500">*</span>
+                </label>
+                <div className="mb-2 grid grid-cols-3 gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800">
+                  {([
+                    { key: 'individual', label: 'Individual', desc: '1 entry / eps' },
+                    { key: 'grouped', label: 'Grouped', desc: 'N eps per entry' },
+                    { key: 'combined', label: 'Menyambung', desc: 'Satu entry gabungan' },
+                  ] as const).map(m => (
+                    <button
+                      key={m.key}
+                      type="button"
+                      onClick={() => setEpMode(m.key)}
+                      className={`rounded-lg px-2 py-2 text-center transition ${
+                        epMode === m.key
+                          ? 'bg-white shadow-sm text-brand-700 font-semibold dark:bg-slate-700 dark:text-brand-400'
+                          : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+                      }`}
+                    >
+                      <div className="text-xs font-medium">{m.label}</div>
+                      <div className="mt-0.5 text-[10px] opacity-70">{m.desc}</div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Mode-specific hints + grouped options */}
+                {epMode === 'individual' && (
+                  <p className="mb-1.5 text-xs text-slate-400">Satu angka (5) atau range (1-90) → tiap eps jadi entry sendiri</p>
+                )}
+                {epMode === 'grouped' && (
+                  <div className="mb-2">
+                    <p className="mb-1.5 text-xs text-slate-400">Range (1-90) dibagi per grup → e.g. "1-2", "3-4", dst</p>
+                    <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Jumlah eps per entry</label>
+                    <select
+                      value={groupBy}
+                      onChange={e => setGroupBy(Number(e.target.value))}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    >
+                      {[2,3,4,5,6,10].map(n => <option key={n} value={n}>{n} eps per entry</option>)}
+                    </select>
+                  </div>
+                )}
+                {epMode === 'combined' && (
+                  <div className="mb-2 flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-2 dark:bg-amber-900/20">
+                    <Link2 size={12} className="shrink-0 text-amber-600" />
+                    <p className="text-xs text-amber-700 dark:text-amber-300">Satu entry dengan label episode persis seperti yang kamu tulis — cocok untuk file gabungan dari source</p>
+                  </div>
+                )}
+
+                <FIELD label="Episode" required error={errors.episode?.message}>
                   <input
                     {...register('episode', { required: 'Wajib' })}
-                    placeholder="1 atau 1-15"
+                    placeholder={epMode === 'combined' ? '1-2 atau 5-6' : epMode === 'grouped' ? '1-90' : '5 atau 1-90'}
                     className={INPUT_CLS}
                     onChange={e => setEpisodeWatch(e.target.value)}
                   />
                 </FIELD>
-              </div>
 
-              {/* Bulk preview */}
-              {isBulk && episodes && (
-                <div className="flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 dark:border-brand-700 dark:bg-brand-900/20">
-                  <Layers size={14} className="shrink-0 text-brand-600 dark:text-brand-400" />
-                  <p className="text-xs text-brand-700 dark:text-brand-300">
-                    <span className="font-semibold">Bulk: {episodes.length} episode</span> — akan dibuat entry terpisah untuk Episode {episodes[0]} s/d {episodes[episodes.length - 1]}
-                  </p>
-                </div>
-              )}
+                {/* Preview */}
+                {preview && (
+                  <div className="mt-1.5 flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 dark:border-brand-700 dark:bg-brand-900/20">
+                    <Layers size={13} className="shrink-0 text-brand-600 dark:text-brand-400" />
+                    <p className="text-xs text-brand-700 dark:text-brand-300 font-medium">{preview}</p>
+                  </div>
+                )}
+              </div>
 
               <FIELD label="Duration (opsional)">
                 <input {...register('duration')} placeholder="45:30" className={INPUT_CLS} />
@@ -254,8 +345,8 @@ export default function CreateQCPage() {
             {isSaving && <Loader2 size={18} className="animate-spin" />}
             {isSaving
               ? (bulkProgress ? `Menyimpan ${bulkProgress.current}/${bulkProgress.total}...` : 'Menyimpan...')
-              : isBulk
-                ? `Simpan ${episodes!.length} Episode Sekaligus`
+              : isBulk && parsed
+                ? `Simpan ${parsed.labels.length} Entry Sekaligus`
                 : 'Simpan Data QC'}
           </button>
         </form>
