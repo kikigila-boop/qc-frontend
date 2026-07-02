@@ -9,20 +9,13 @@ import BottomNav from '@/components/layout/BottomNav'
 import StatusBadge from '@/components/ui/StatusBadge'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
-import { ArrowRight, Loader2, ChevronDown, RefreshCw, X } from 'lucide-react'
+import { ArrowRight, Loader2, ChevronDown, RefreshCw, X, AlertCircle } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 const fetcher = (url: string) => api.get(url).then(r => r.data)
 
-// ─── Revise Modal ─────────────────────────────────────────────────────────
-function ReviseModal({
-  onConfirm,
-  onClose,
-  loading,
-}: {
-  onConfirm: (notes: string) => void
-  onClose: () => void
-  loading: boolean
+function ReviseModal({ onConfirm, onClose, loading }: {
+  onConfirm: (notes: string) => void; onClose: () => void; loading: boolean
 }) {
   const [notes, setNotes] = useState('')
   return (
@@ -32,20 +25,17 @@ function ReviseModal({
           <h3 className="font-semibold text-slate-900 dark:text-white">Catatan Revisi</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
         </div>
-        <p className="mb-3 text-xs text-slate-500">Jelaskan alasan revisi agar tim terkait tahu apa yang harus diperbaiki.</p>
         <textarea
           value={notes}
           onChange={e => setNotes(e.target.value)}
           rows={4}
-          placeholder="Contoh: Subtitle Ep 3 belum ada, audio tidak sinkron..."
+          placeholder="Jelaskan apa yang perlu diperbaiki..."
           className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm focus:border-red-400 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white resize-none"
           autoFocus
         />
         <div className="mt-3 flex gap-2">
-          <button
-            onClick={onClose}
-            className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400"
-          >
+          <button onClick={onClose}
+            className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400">
             Batal
           </button>
           <button
@@ -67,41 +57,54 @@ export default function QCDetailPage() {
   const { user } = useAuth()
   const role = user?.role ?? ''
 
-  const canAdvance = role === 'editor' || role === 'admin' || role === 'cms'
-  const canDoneIngest = role === 'cms' || role === 'admin'
-
-  // Revise permissions
-  const canEditorRevise = (role === 'editor' || role === 'admin')
-  const canCmsRevise = role === 'cms' || role === 'admin'
-
   const { data: item, isLoading } = useSWR<QCContentDetail>(`/qc/${id}`, fetcher)
   const [advancing, setAdvancing] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const [showReviseModal, setShowReviseModal] = useState(false)
   const [revising, setRevising] = useState(false)
 
-  const currentIdx = item ? STATUS_ORDER.indexOf(item.status) : -1
-  const nextStatus = item ? STATUS_ORDER[currentIdx + 1] ?? null : null
-  const canJumpToReady = item?.status === 'QC Done'
-
+  // Advance through STATUS_ORDER
   const advanceStatus = async (targetStatus?: string) => {
-    const target = targetStatus ?? nextStatus
+    const currentIdx = item ? STATUS_ORDER.indexOf(item.status as StatusEnum) : -1
+    const target = targetStatus ?? (item ? STATUS_ORDER[currentIdx + 1] : null)
     if (!target || !item) return
     setAdvancing(true)
     try {
       await api.patch(`/qc/${id}/status`, { new_status: target })
       mutate(`/qc/${id}`)
+    } catch (err: any) {
+      alert(err?.response?.data?.detail || 'Gagal mengubah status.')
     } finally {
       setAdvancing(false)
     }
   }
 
+  // Editor re-submits: Need Revised → Ready To Ingest
+  const resubmit = async () => {
+    setAdvancing(true)
+    try {
+      await api.patch(`/qc/${id}/status`, { new_status: 'Ready To Ingest' })
+      mutate(`/qc/${id}`)
+    } catch (err: any) {
+      alert(err?.response?.data?.detail || 'Gagal mengirim ulang.')
+    } finally {
+      setAdvancing(false)
+    }
+  }
+
+  // CMS revise (via cms router, QCID-based) — only from detail page
   const handleRevise = async (notes: string) => {
+    if (!item?.qcid) return
     setRevising(true)
     try {
-      await api.patch(`/qc/${id}/revise`, { revised_notes: notes })
+      await api.patch(`/cms/item/${item.qcid}/revised`, {
+        operator_name: user?.name ?? 'CMS',
+        revised_notes: notes,
+      })
       mutate(`/qc/${id}`)
       setShowReviseModal(false)
+    } catch (err: any) {
+      alert(err?.response?.data?.detail || 'Gagal mengirim revisi.')
     } finally {
       setRevising(false)
     }
@@ -121,35 +124,79 @@ export default function QCDetailPage() {
 
   const fmt = (d: string) => format(new Date(d), 'dd MMM yyyy, HH:mm', { locale: localeId })
 
-  // Compute revise button visibility
-  const editorReviseVisible = canEditorRevise
+  const currentIdx = STATUS_ORDER.indexOf(item.status as StatusEnum)
+  const nextStatus = currentIdx >= 0 ? STATUS_ORDER[currentIdx + 1] ?? null : null
+
+  const isEditor = role === 'editor' || role === 'admin'
+  const isCMS = role === 'cms' || role === 'admin'
+
+  // Button visibility rules
+  const showAdvance = (role === 'editor' || role === 'cms' || role === 'admin')
+    && nextStatus
     && item.status !== 'Done Ingest'
+    && item.status !== 'Need Revised'
     && item.status !== 'Revised'
+    && !(nextStatus === 'Ingesting' && !isCMS)
+    && !(nextStatus === 'Done Ingest' && !isCMS)
 
-  const cmsReviseVisible = canCmsRevise
-    && (item.status === 'Ready To Ingest' || item.status === 'Done Ingest')
+  const showSkipToReady = item.status === 'QC Done' && isEditor
 
-  const showReviseBtn = editorReviseVisible || cmsReviseVisible
+  // Editor: re-submit after CMS revision request
+  const showResubmit = isEditor && item.status === 'Need Revised'
+
+  // Editor: backward compat for old "Revised" items
+  const showOldResubmit = isEditor && item.status === 'Revised'
+
+  // CMS: request revision while Ingesting
+  const showCmsRevise = isCMS && item.status === 'Ingesting'
 
   return (
     <div className="flex min-h-screen flex-col">
       <TopBar title="Detail QC" />
       <main className="flex-1 space-y-3 p-4 pb-nav">
 
-        {/* Revised alert banner */}
-        {item.status === 'Revised' && (
+        {/* Need Revised banner */}
+        {item.status === 'Need Revised' && (
           <div className="flex items-start gap-2 rounded-2xl border border-red-200 bg-red-50 p-3 dark:border-red-800/40 dark:bg-red-900/20">
-            <RefreshCw size={15} className="mt-0.5 shrink-0 text-red-500" />
+            <AlertCircle size={16} className="mt-0.5 shrink-0 text-red-500" />
             <div>
               <p className="text-sm font-semibold text-red-700 dark:text-red-400">Konten Perlu Direvisi</p>
               {item.revised_notes && (
                 <p className="mt-0.5 text-xs text-red-600 dark:text-red-300">{item.revised_notes}</p>
               )}
+              {isEditor && (
+                <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">
+                  Setelah diperbaiki, klik <strong>"Kirim ke Ready To Ingest"</strong> di bawah.
+                </p>
+              )}
             </div>
           </div>
         )}
 
-        {/* QCID + Title */}
+        {/* Backward compat: old Revised status */}
+        {item.status === 'Revised' && (
+          <div className="flex items-start gap-2 rounded-2xl border border-orange-200 bg-orange-50 p-3 dark:border-orange-800/40 dark:bg-orange-900/20">
+            <RefreshCw size={15} className="mt-0.5 shrink-0 text-orange-500" />
+            <div>
+              <p className="text-sm font-semibold text-orange-700 dark:text-orange-400">Konten Ditandai Revised</p>
+              {item.revised_notes && (
+                <p className="mt-0.5 text-xs text-orange-600 dark:text-orange-300">{item.revised_notes}</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Ingesting info for editor */}
+        {item.status === 'Ingesting' && isEditor && (
+          <div className="flex items-start gap-2 rounded-2xl border border-cyan-200 bg-cyan-50 p-3 dark:border-cyan-800/40 dark:bg-cyan-900/20">
+            <div className="h-2 w-2 mt-1.5 rounded-full bg-cyan-500 animate-pulse shrink-0" />
+            <p className="text-sm text-cyan-700 dark:text-cyan-400">
+              Konten sedang dalam proses ingesting oleh tim CMS.
+            </p>
+          </div>
+        )}
+
+        {/* Title card */}
         <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900">
           {item.qcid && (
             <span className="mb-2 inline-block rounded-lg bg-brand-50 px-3 py-1 font-mono text-sm font-bold text-brand-700 dark:bg-brand-900/20 dark:text-brand-400">
@@ -157,7 +204,7 @@ export default function QCDetailPage() {
             </span>
           )}
           <h2 className="text-lg font-bold text-slate-900 dark:text-white">{item.title}</h2>
-          <p className="text-sm text-slate-500">Season {item.season} &middot; Episode {item.episode}</p>
+          <p className="text-sm text-slate-500">Season {item.season} · Episode {item.episode}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <StatusBadge status={item.status} />
             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
@@ -170,7 +217,7 @@ export default function QCDetailPage() {
           </div>
         </div>
 
-        {/* Detail fields */}
+        {/* Info */}
         <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Informasi</p>
           {[
@@ -194,7 +241,7 @@ export default function QCDetailPage() {
               <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{item.notes}</p>
             </div>
           )}
-          {item.revised_notes && item.status !== 'Revised' && (
+          {item.revised_notes && item.status !== 'Need Revised' && item.status !== 'Revised' && (
             <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800/40 dark:bg-amber-900/20">
               <p className="text-xs font-semibold text-amber-600 dark:text-amber-400">Catatan Revisi Sebelumnya</p>
               <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">{item.revised_notes}</p>
@@ -204,33 +251,45 @@ export default function QCDetailPage() {
 
         {/* Action buttons */}
         <div className="flex flex-col gap-2">
-          {/* Advance Status — editor/admin/cms */}
-          {canAdvance && nextStatus && item.status !== 'Done Ingest' && item.status !== 'Revised'
-            && (nextStatus !== 'Done Ingest' || canDoneIngest) && (
-            <>
-              <button
-                onClick={() => advanceStatus()}
-                disabled={advancing}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
-              >
-                {advancing ? <Loader2 size={18} className="animate-spin" /> : <ArrowRight size={18} />}
-                Lanjut ke: {nextStatus}
-              </button>
-              {canJumpToReady && (
-                <button
-                  onClick={() => advanceStatus('Ready To Ingest')}
-                  disabled={advancing}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-purple-300 bg-purple-50 py-3 text-sm font-semibold text-purple-700 transition hover:bg-purple-100 disabled:opacity-60 dark:border-purple-700 dark:bg-purple-900/20 dark:text-purple-300"
-                >
-                  <ArrowRight size={16} />
-                  Tandai Ready To Ingest (skip Uploading)
-                </button>
-              )}
-            </>
+
+          {/* Normal advance */}
+          {showAdvance && (
+            <button
+              onClick={() => advanceStatus()}
+              disabled={advancing}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
+            >
+              {advancing ? <Loader2 size={18} className="animate-spin" /> : <ArrowRight size={18} />}
+              Lanjut ke: {nextStatus}
+            </button>
           )}
 
-          {/* Resubmit after Revised — editor/admin only */}
-          {(role === 'editor' || role === 'admin') && item.status === 'Revised' && (
+          {/* Skip to Ready To Ingest */}
+          {showSkipToReady && (
+            <button
+              onClick={() => advanceStatus('Ready To Ingest')}
+              disabled={advancing}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-purple-300 bg-purple-50 py-3 text-sm font-semibold text-purple-700 transition hover:bg-purple-100 disabled:opacity-60 dark:border-purple-700 dark:bg-purple-900/20 dark:text-purple-300"
+            >
+              <ArrowRight size={16} />
+              Tandai Ready To Ingest (skip Uploading)
+            </button>
+          )}
+
+          {/* Editor re-submit after Need Revised */}
+          {showResubmit && (
+            <button
+              onClick={resubmit}
+              disabled={advancing}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3.5 font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+            >
+              {advancing ? <Loader2 size={18} className="animate-spin" /> : <ArrowRight size={18} />}
+              Kirim ke Ready To Ingest
+            </button>
+          )}
+
+          {/* Backward compat: old Revised → QC Process */}
+          {showOldResubmit && (
             <button
               onClick={() => advanceStatus('QC Process')}
               disabled={advancing}
@@ -241,14 +300,14 @@ export default function QCDetailPage() {
             </button>
           )}
 
-          {/* Revise button */}
-          {showReviseBtn && (
+          {/* CMS: request revision while Ingesting */}
+          {showCmsRevise && (
             <button
               onClick={() => setShowReviseModal(true)}
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 dark:border-red-800/40 dark:bg-red-900/20 dark:text-red-400"
             >
               <RefreshCw size={16} />
-              {cmsReviseVisible && !editorReviseVisible ? 'Kembalikan untuk Revisi (CMS)' : 'Tandai Perlu Revisi'}
+              Kembalikan ke Editor (Revisi)
             </button>
           )}
         </div>
