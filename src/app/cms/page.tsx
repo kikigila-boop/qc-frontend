@@ -7,9 +7,45 @@ import TopBar from '@/components/layout/TopBar'
 import BottomNav from '@/components/layout/BottomNav'
 import { useAuth } from '@/hooks/useAuth'
 import { useRoleGuard } from '@/hooks/useRoleGuard'
-import { CheckCheck, Search, Loader2, Inbox } from 'lucide-react'
+import { CheckCheck, Search, Loader2, Inbox, RefreshCw, X } from 'lucide-react'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
+
+function ReviseModal({ onConfirm, onClose, loading }: {
+  onConfirm: (notes: string) => void; onClose: () => void; loading: boolean
+}) {
+  const [notes, setNotes] = useState('')
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
+      <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl dark:bg-slate-900">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="font-semibold text-slate-900 dark:text-white">Catatan Revisi</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
+        </div>
+        <p className="mb-3 text-xs text-slate-500">Jelaskan alasan revisi agar editor tahu apa yang harus diperbaiki.</p>
+        <textarea
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          rows={4}
+          placeholder="Contoh: Subtitle belum ada, audio tidak sinkron..."
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm focus:border-red-400 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white resize-none"
+          autoFocus
+        />
+        <div className="mt-3 flex gap-2">
+          <button onClick={onClose} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700">Batal</button>
+          <button
+            onClick={() => notes.trim() && onConfirm(notes.trim())}
+            disabled={!notes.trim() || loading}
+            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+          >
+            {loading && <Loader2 size={14} className="animate-spin" />}
+            Kembalikan Revisi
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const fetcher = (url: string) => api.get(url).then(r => r.data)
 
@@ -17,6 +53,8 @@ export default function CMSPage() {
   const { user, isLoading: authLoading } = useRoleGuard(['cms', 'admin'], '/dashboard')
   const [search, setSearch] = useState('')
   const [ingesting, setIngesting] = useState<string | null>(null)
+  const [revisingItem, setRevisingItem] = useState<QCContent | null>(null)
+  const [revising, setRevising] = useState(false)
   const [operatorName, setOperatorName] = useState(user?.name ?? '')
 
   const params = new URLSearchParams()
@@ -41,6 +79,19 @@ export default function CMSPage() {
       mutate('/cms/queue/count')
     } finally {
       setIngesting(null)
+    }
+  }
+
+  const doRevise = async (notes: string) => {
+    if (!revisingItem) return
+    setRevising(true)
+    try {
+      await api.patch(`/qc/${revisingItem.id}/revise`, { revised_notes: notes })
+      mutate(`/cms/queue?${params.toString()}`)
+      mutate('/cms/queue/count')
+      setRevisingItem(null)
+    } finally {
+      setRevising(false)
     }
   }
 
@@ -117,23 +168,39 @@ export default function CMSPage() {
                     S{item.season} E{item.episode} &middot; {item.editor_name} &middot; {fmt(item.updated_at)}
                   </p>
                 </div>
-                <button
-                  onClick={() => item.qcid && doIngest(item.qcid)}
-                  disabled={!item.qcid || ingesting === item.qcid}
-                  className="flex shrink-0 items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
-                >
-                  {ingesting === item.qcid
-                    ? <Loader2 size={14} className="animate-spin" />
-                    : <CheckCheck size={14} />
-                  }
-                  Ingest
-                </button>
+                <div className="flex shrink-0 flex-col gap-1.5">
+                  <button
+                    onClick={() => item.qcid && doIngest(item.qcid)}
+                    disabled={!item.qcid || ingesting === item.qcid}
+                    className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    {ingesting === item.qcid
+                      ? <Loader2 size={14} className="animate-spin" />
+                      : <CheckCheck size={14} />
+                    }
+                    Ingest
+                  </button>
+                  <button
+                    onClick={() => setRevisingItem(item)}
+                    className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100 dark:border-red-800/40 dark:bg-red-900/20 dark:text-red-400"
+                  >
+                    <RefreshCw size={12} />
+                    Revisi
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
       </main>
       <BottomNav />
+      {revisingItem && (
+        <ReviseModal
+          onConfirm={doRevise}
+          onClose={() => setRevisingItem(null)}
+          loading={revising}
+        />
+      )}
     </div>
   )
 }

@@ -26,7 +26,7 @@ const STAT_CARDS = [
 ]
 
 export default function DashboardPage() {
-  const { data, isLoading } = useSWR<DashboardStats>('/dashboard/stats', fetcher, { refreshInterval: 30000 })
+  const { data, isLoading, error } = useSWR<DashboardStats>('/dashboard/stats', fetcher, { refreshInterval: 30000 })
 
   const val = (key: string) => isLoading ? '—' : (data as any)?.[key] ?? 0
 
@@ -34,6 +34,11 @@ export default function DashboardPage() {
     <div className="flex min-h-screen flex-col">
       <TopBar title="Dashboard" />
       <main className="flex-1 space-y-4 p-4 pb-nav">
+        {error && (
+          <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:border-red-800/40 dark:text-red-400">
+            Gagal memuat data dashboard. Periksa koneksi atau coba refresh.
+          </div>
+        )}
 
         {/* Stat Cards */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
