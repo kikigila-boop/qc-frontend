@@ -90,6 +90,9 @@ export default function CMSPage() {
       mutate(`/cms/queue?${params.toString()}`)
       mutate('/cms/queue/count')
       setRevisingItem(null)
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail || 'Gagal mengirim revisi. Coba lagi.'
+      alert(msg)
     } finally {
       setRevising(false)
     }
