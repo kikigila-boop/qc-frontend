@@ -229,6 +229,18 @@ export default function QCDetailPage() {
             </>
           )}
 
+          {/* Resubmit after Revised — editor/admin only */}
+          {(role === 'editor' || role === 'admin') && item.status === 'Revised' && (
+            <button
+              onClick={() => advanceStatus('QC Process')}
+              disabled={advancing}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-3.5 font-semibold text-white transition hover:bg-amber-600 disabled:opacity-60"
+            >
+              {advancing ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
+              Kirim Ulang ke QC Process
+            </button>
+          )}
+
           {/* Revise button */}
           {showReviseBtn && (
             <button
