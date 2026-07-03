@@ -8,7 +8,7 @@ import BottomNav from '@/components/layout/BottomNav'
 import StatusBadge from '@/components/ui/StatusBadge'
 import { useRoleGuard } from '@/hooks/useRoleGuard'
 import { useAuth } from '@/hooks/useAuth'
-import { Package, Search, Loader2, RefreshCw, ChevronRight, AlertCircle, Inbox, CheckCircle2, ExternalLink, PlusCircle } from 'lucide-react'
+import { Package, Search, Loader2, RefreshCw, ChevronRight, AlertCircle, Inbox, CheckCircle2, ExternalLink, PlusCircle, FileText, CheckCheck, X } from 'lucide-react'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import Link from 'next/link'
@@ -29,7 +29,13 @@ export default function MaterialPage() {
   )
   const { data: counts } = useSWR('/material/queue/count', fetcher, { refreshInterval: 15000 })
   const [confirming, setConfirming] = useState<number | null>(null)
+  const [approvingReq, setApprovingReq] = useState<number | null>(null)
+  const [rejectingReq, setRejectingReq] = useState<number | null>(null)
+  const [rejectNotes, setRejectNotes] = useState<Record<number, string>>({})
+  const [showRejectBox, setShowRejectBox] = useState<number | null>(null)
+  const isAdmin = user?.role === 'admin'
   const { data: deliveries, isLoading: deliveriesLoading } = useSWR('/delivery/list', fetcher, { refreshInterval: 20000 })
+  const { data: requests } = useSWR('/request/list', fetcher, { refreshInterval: 20000 })
 
   if (authLoading || !user) return null
 
@@ -60,6 +66,29 @@ export default function MaterialPage() {
     } finally {
       setConfirming(null)
     }
+  }
+
+  const doApproveReq = async (id: number) => {
+    setApprovingReq(id)
+    try {
+      await api.patch(`/request/${id}/approve`)
+      mutate('/request/list')
+    } catch (err: any) {
+      alert(err?.response?.data?.detail || 'Gagal approve.')
+    } finally { setApprovingReq(null) }
+  }
+
+  const doRejectReq = async (id: number) => {
+    const notes = rejectNotes[id]?.trim()
+    if (!notes) { alert('Alasan penolakan wajib diisi'); return }
+    setRejectingReq(id)
+    try {
+      await api.patch(`/request/${id}/reject`, { rejection_notes: notes })
+      mutate('/request/list')
+      setShowRejectBox(null)
+    } catch (err: any) {
+      alert(err?.response?.data?.detail || 'Gagal reject.')
+    } finally { setRejectingReq(null) }
   }
 
   const ItemRow = ({ item }: { item: QCContent }) => (
@@ -184,6 +213,86 @@ export default function MaterialPage() {
                           <PlusCircle size={11} /> Tambah ke QC
                         </a>
                       )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Request Konten */}
+        {requests && requests.length > 0 && (
+          <div className="border-b border-slate-100 bg-purple-50 dark:border-slate-800 dark:bg-purple-900/10">
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-purple-100 dark:border-purple-800">
+              <FileText size={14} className="text-purple-600" />
+              <p className="text-xs font-semibold uppercase tracking-wider text-purple-700 dark:text-purple-400">
+                Request Konten ({requests.filter((r: any) => r.status === 'Pending').length} Pending)
+              </p>
+            </div>
+            <div className="divide-y divide-purple-100 dark:divide-purple-900/30">
+              {requests.slice(0, 10).map((r: any) => (
+                <div key={r.id} className="px-4 py-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-[10px] font-semibold rounded-full px-2 py-0.5 ${
+                          r.status === 'Pending'  ? 'bg-amber-200 text-amber-800' :
+                          r.status === 'Approved' ? 'bg-green-100 text-green-700' :
+                                                    'bg-red-100 text-red-700'}`}>
+                          {r.status}
+                        </span>
+                        {r.approved_by && <span className="text-[10px] text-slate-400">oleh {r.approved_by}</span>}
+                      </div>
+                      <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{r.requestor_name}</p>
+                      <p className="text-[11px] text-slate-500">{r.source_requestor} · {r.total_eps} episode</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">{r.requestor_need}</p>
+                      <div className="mt-1 space-y-0.5">
+                        {r.content_titles.slice(0, 2).map((t: string, i: number) => (
+                          <p key={i} className="text-[11px] text-slate-600 dark:text-slate-400">· {t}</p>
+                        ))}
+                        {r.content_titles.length > 2 && (
+                          <p className="text-[11px] text-slate-400">+{r.content_titles.length - 2} judul lainnya</p>
+                        )}
+                      </div>
+                      {r.status === 'Rejected' && r.rejection_notes && (
+                        <p className="mt-1 text-[11px] text-red-600 dark:text-red-400">Alasan: {r.rejection_notes}</p>
+                      )}
+                      {/* Reject input box */}
+                      {showRejectBox === r.id && isAdmin && (
+                        <div className="mt-2 space-y-1">
+                          <input
+                            value={rejectNotes[r.id] ?? ''}
+                            onChange={e => setRejectNotes(n => ({ ...n, [r.id]: e.target.value }))}
+                            placeholder="Alasan penolakan..."
+                            className="w-full rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs focus:outline-none focus:border-red-400"
+                          />
+                          <div className="flex gap-1">
+                            <button onClick={() => doRejectReq(r.id)} disabled={rejectingReq === r.id}
+                              className="flex items-center gap-1 rounded-lg bg-red-600 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-red-700 disabled:opacity-50">
+                              {rejectingReq === r.id ? <Loader2 size={11} className="animate-spin" /> : <X size={11} />} Konfirmasi Reject
+                            </button>
+                            <button onClick={() => setShowRejectBox(null)}
+                              className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] text-slate-500 hover:bg-slate-50">Batal</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="shrink-0 flex flex-col gap-1.5 min-w-[80px]">
+                      <a href={`/kirim/request/receipt/${r.token}`} target="_blank" rel="noreferrer"
+                        className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50 justify-center">
+                        <ExternalLink size={11} /> Receipt
+                      </a>
+                      {isAdmin && r.status === 'Pending' && (<>
+                        <button onClick={() => doApproveReq(r.id)} disabled={approvingReq === r.id}
+                          className="flex items-center gap-1 rounded-lg bg-green-600 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-green-700 disabled:opacity-50 justify-center">
+                          {approvingReq === r.id ? <Loader2 size={11} className="animate-spin" /> : <CheckCheck size={11} />} Approve
+                        </button>
+                        <button onClick={() => setShowRejectBox(showRejectBox === r.id ? null : r.id)}
+                          className="flex items-center gap-1 rounded-lg bg-red-50 border border-red-200 px-2.5 py-1.5 text-[11px] font-semibold text-red-600 hover:bg-red-100 justify-center">
+                          <X size={11} /> Reject
+                        </button>
+                      </>)}
                     </div>
                   </div>
                 </div>
