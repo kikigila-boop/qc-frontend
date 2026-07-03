@@ -7,7 +7,7 @@ import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
 import { Plus, Pencil, Key, UserX, UserCheck, X, Loader2 } from 'lucide-react'
 
-type Role = 'admin' | 'editor' | 'cms'
+type Role = 'admin' | 'editor' | 'cms' | 'material_handling'
 
 interface UserRow {
   id: number
@@ -22,6 +22,7 @@ const ROLE_COLORS: Record<Role, string> = {
   admin:  'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
   editor: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   cms:    'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  material_handling: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
 }
 
 type ModalMode = 'create' | 'edit' | 'reset' | null
@@ -280,6 +281,7 @@ export default function AdminUsersPage() {
                   >
                     <option value="editor">Editor</option>
                     <option value="cms">CMS</option>
+                    <option value="material_handling">Material Handling</option>
                     <option value="admin">Admin</option>
                   </select>
                 </div>
