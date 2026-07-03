@@ -31,6 +31,7 @@ export default function BottomNav() {
     ...(isAdmin ? [
       { href: '/qc/list',        label: 'QC List',    icon: ListVideo },
       { href: '/material',       label: 'Material',   icon: Package },
+      { href: '/logbook',        label: 'Log Book',   icon: BookOpen },
     ] : []),
     ...(isCMS ? [
       { href: '/qc/list',        label: 'QC List',    icon: ListVideo },
