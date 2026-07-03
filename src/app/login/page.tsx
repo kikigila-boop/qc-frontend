@@ -31,8 +31,8 @@ export default function LoginPage() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-600">
             <span className="text-2xl font-bold text-white">QC</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">OTT QC Manager</h1>
-          <p className="mt-1 text-sm text-slate-400">Content Operation System</p>
+          <h1 className="text-2xl font-bold text-white">Content Ops</h1>
+          <p className="mt-1 text-sm text-slate-400">Control Asset Management</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -80,7 +80,7 @@ export default function LoginPage() {
         </form>
 
         <p className="mt-6 text-center text-xs text-slate-500">
-          OTT QC Management System &copy; {new Date().getFullYear()}
+          Content Ops - Control Asset Management &copy; {new Date().getFullYear()}
         </p>
       </div>
     </div>

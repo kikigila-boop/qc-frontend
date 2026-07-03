@@ -131,7 +131,7 @@ export default function ProfilePage() {
 
         <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Tentang</p>
-          {[['Aplikasi', 'OTT QC Management System'], ['Versi', '1.0.0'], ['Mode', 'PWA']].map(([k, v]) => (
+          {[['Aplikasi', 'Content Ops - Control Asset Management'], ['Versi', '1.0.0'], ['Mode', 'PWA']].map(([k, v]) => (
             <div key={k} className="flex justify-between border-b border-slate-50 py-2 last:border-0 dark:border-slate-800">
               <span className="text-sm text-slate-500">{k}</span>
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{v}</span>

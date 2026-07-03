@@ -6,13 +6,13 @@ import Providers from '@/components/layout/Providers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'OTT QC Management',
+  title: 'Content Ops',
   description: 'Quality Control Management System for OTT Content Operation',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'QC Manager',
+    title: 'Content Ops',
   },
 }
 
