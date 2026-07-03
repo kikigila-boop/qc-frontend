@@ -13,6 +13,8 @@ import {
   RotateCcw, TrendingUp, Clock, User2,
 } from 'lucide-react'
 
+import { useAuth } from '@/hooks/useAuth'
+
 const fetcher = (url: string) => api.get(url).then(r => r.data)
 
 const STAT_CARDS = [
@@ -27,6 +29,8 @@ const STAT_CARDS = [
 
 export default function DashboardPage() {
   const { data, isLoading, error } = useSWR<DashboardStats>('/dashboard/stats', fetcher, { refreshInterval: 30000 })
+  const { user } = useAuth()
+  const showEditorStats = user?.role === 'admin' || user?.role === 'cms'
 
   const val = (key: string) => isLoading ? '—' : (data as any)?.[key] ?? 0
 
@@ -130,7 +134,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Per-editor breakdown */}
-        {data?.by_editor && data.by_editor.length > 0 && (
+        {showEditorStats && data?.by_editor && data.by_editor.length > 0 && (
           <div className="rounded-2xl bg-white shadow-sm dark:bg-slate-900">
             <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
               <User2 size={15} className="text-slate-500" />
