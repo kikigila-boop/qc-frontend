@@ -12,7 +12,7 @@ import { useAuth } from '@/hooks/useAuth'
 
 const fetcher = (url: string) => api.get(url).then(r => r.data)
 
-const STATUSES: StatusEnum[] = ['QC Process','QC Done','Uploading','Ready To Ingest','Done Ingest','Revised']
+const STATUSES: StatusEnum[] = ['Material Avail','QC Process','QC Done','Uploading','Ready To Ingest','Ingesting','Done Ingest','Need Revised','Material Revised','Revised']
 
 export default function QCListPage() {
   const [search, setSearch] = useState('')
@@ -169,8 +169,11 @@ export default function QCListPage() {
                       {item.title}
                     </p>
                   </div>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    S{item.season} E{item.episode} &middot; {item.editor_name}
+                  <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-slate-500">
+                    <span>S{item.season} E{item.episode}</span>
+                    {item.mh_name && <span className="text-teal-600 font-medium">MH: {item.mh_name}</span>}
+                    {item.editor_name && <span>{item.editor_name}</span>}
+                    {item.ingest_by && <span className="text-emerald-600 font-medium">Ingest: {item.ingest_by}</span>}
                   </p>
                   <div className="mt-1.5 flex items-center gap-2">
                     <StatusBadge status={item.status} />

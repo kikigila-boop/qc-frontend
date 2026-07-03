@@ -1,6 +1,7 @@
 export type QCResult = 'PASS' | 'NOT PASS'
 
 export type StatusEnum =
+  | 'Material Avail'
   | 'QC Process'
   | 'QC Done'
   | 'Uploading'
@@ -9,6 +10,7 @@ export type StatusEnum =
   | 'Done Ingest'
   | 'Revised'
   | 'Need Revised'
+  | 'Material Revised'
 
 export interface User {
   id: number
@@ -29,7 +31,8 @@ export interface QCContent {
   notes: string | null
   qc_result: QCResult
   status: StatusEnum
-  editor_name: string
+  mh_name: string | null
+  editor_name: string | null
   editor_id: number | null
   revised_notes: string | null
   ingest_by: string | null
@@ -85,6 +88,8 @@ export const STATUS_COLORS: Record<StatusEnum, string> = {
   'Done Ingest':    'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
   'Revised':        'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
   'Need Revised':   'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  'Material Revised':'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400',
+  'Material Avail':  'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400',
 }
 
 export const STATUS_ORDER: StatusEnum[] = [

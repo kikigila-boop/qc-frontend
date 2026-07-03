@@ -92,6 +92,20 @@ export default function QCDetailPage() {
     }
   }
 
+  // Editor: return content to MH (material has issues)
+  const returnToMH = async (notes: string) => {
+    setRevising(true)
+    try {
+      await api.patch(`/material/${id}/return-to-mh`, { notes })
+      mutate(`/qc/${id}`)
+      setShowReviseModal(false)
+    } catch (err: any) {
+      alert(err?.response?.data?.detail || 'Gagal mengembalikan ke MH.')
+    } finally {
+      setRevising(false)
+    }
+  }
+
   // CMS revise (via cms router, QCID-based) — only from detail page
   const handleRevise = async (notes: string) => {
     if (!item?.qcid) return
@@ -150,10 +164,24 @@ export default function QCDetailPage() {
   // CMS: request revision while Ingesting
   const showCmsRevise = isCMS && item.status === 'Ingesting'
 
+  // Editor: return material to MH (only when in early QC stages)
+  const showReturnToMH = isEditor && (item.status === 'QC Process' || item.status === 'QC Done')
+    && !!item.mh_name  // only if content was created by MH
+
   return (
     <div className="flex min-h-screen flex-col">
       <TopBar title="Detail QC" />
       <main className="flex-1 space-y-3 p-4 pb-nav">
+
+        {/* Material Avail banner — editor can claim */}
+        {item.status === 'Material Avail' && isEditor && (
+          <div className="flex items-start gap-2 rounded-2xl border border-teal-200 bg-teal-50 p-3 dark:border-teal-800/40 dark:bg-teal-900/20">
+            <AlertCircle size={16} className="mt-0.5 shrink-0 text-teal-500" />
+            <p className="text-sm text-teal-700 dark:text-teal-400">
+              Konten ini tersedia untuk di-QC. Kunjungi halaman <strong>Avail</strong> untuk mengambilnya.
+            </p>
+          </div>
+        )}
 
         {/* Need Revised banner */}
         {item.status === 'Need Revised' && (
@@ -221,7 +249,8 @@ export default function QCDetailPage() {
         <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Informasi</p>
           {[
-            ['Editor', item.editor_name],
+            ...(item.mh_name ? [['Input MH', item.mh_name]] : []),
+            ['Editor', item.editor_name || '-'],
             ['Duration', item.duration || '-'],
             ['Storage', item.storage_location || '-'],
             ['Cast', item.cast || '-'],
@@ -300,6 +329,17 @@ export default function QCDetailPage() {
             </button>
           )}
 
+          {/* Editor: return to MH — material has issues */}
+          {showReturnToMH && (
+            <button
+              onClick={() => setShowReviseModal(true)}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 dark:border-rose-800/40 dark:bg-rose-900/20 dark:text-rose-400"
+            >
+              <RefreshCw size={16} />
+              Kembalikan ke Material Handling
+            </button>
+          )}
+
           {/* CMS: request revision while Ingesting */}
           {showCmsRevise && (
             <button
@@ -361,7 +401,7 @@ export default function QCDetailPage() {
 
       {showReviseModal && (
         <ReviseModal
-          onConfirm={handleRevise}
+          onConfirm={showReturnToMH ? returnToMH : handleRevise}
           onClose={() => setShowReviseModal(false)}
           loading={revising}
         />
