@@ -32,6 +32,7 @@ export default function BottomNav() {
       { href: '/material',       label: 'Material',   icon: Package },
     ] : []),
     ...(isCMS ? [
+      { href: '/qc/list',        label: 'QC List',    icon: ListVideo },
       { href: '/cms',            label: 'CMS',        icon: Inbox },
     ] : []),
     ...(isAdmin ? [

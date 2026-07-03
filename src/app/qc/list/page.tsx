@@ -19,6 +19,7 @@ export default function QCListPage() {
   const [status, setStatus] = useState<StatusEnum | ''>('')
   const [result, setResult] = useState<'PASS' | 'NOT PASS' | ''>('')
   const [showFilter, setShowFilter] = useState(false)
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest')
   const [exporting, setExporting] = useState<'excel' | 'pdf' | null>(null)
   const { user } = useAuth()
 
@@ -27,6 +28,12 @@ export default function QCListPage() {
   if (status) params.set('status', status)
   if (result) params.set('qc_result', result)
   params.set('page_size', '50')
+
+  const items = rawItems ? [...rawItems].sort((a, b) => {
+    const da = new Date(a.created_at ?? a.updated_at).getTime()
+    const db = new Date(b.created_at ?? b.updated_at).getTime()
+    return sortOrder === 'newest' ? db - da : da - db
+  }) : rawItems
 
   const doExport = async (format: 'excel' | 'pdf') => {
     setExporting(format)
@@ -53,7 +60,7 @@ export default function QCListPage() {
     }
   }
 
-  const { data: items, isLoading } = useSWR<QCContent[]>(
+  const { data: rawItems, isLoading } = useSWR<QCContent[]>(
     `/qc?${params.toString()}`, fetcher, { refreshInterval: 15000 }
   )
 
@@ -129,9 +136,17 @@ export default function QCListPage() {
                 <option value="PASS">PASS</option>
                 <option value="NOT PASS">NOT PASS</option>
               </select>
+              <select
+                value={sortOrder}
+                onChange={e => setSortOrder(e.target.value as 'newest' | 'oldest')}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              >
+                <option value="newest">Terbaru</option>
+                <option value="oldest">Terlama</option>
+              </select>
               {(status || result) && (
                 <button
-                  onClick={() => { setStatus(''); setResult('') }}
+                  onClick={() => { setStatus(''); setResult(''); setSortOrder('newest') }}
                   className="rounded-lg px-3 py-1.5 text-xs text-red-500"
                 >
                   Reset
