@@ -1,6 +1,5 @@
 'use client'
-import { useState, useRef, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import api from '@/lib/api'
@@ -85,9 +84,8 @@ export default function CreateQCPage() {
   const { user, isLoading: authLoading } = useRoleGuard(['editor', 'admin', 'material_handling'])
   const { user: authUser } = useAuth()
   const isMH = authUser?.role === 'material_handling'
-  const searchParams = useSearchParams()
-  const prefillTitle = searchParams.get('title') ?? ''
-  const fromLogbook  = searchParams.get('from') === 'logbook'
+  const [prefillTitle, setPrefillTitle] = useState('')
+  const [fromLogbook, setFromLogbook] = useState(false)
 
   const router = useRouter()
   const [success, setSuccess] = useState(false)
@@ -104,10 +102,14 @@ export default function CreateQCPage() {
     defaultValues: { status: 'QC Process', qc_result: 'PASS', qc_date: new Date().toISOString().slice(0, 10), editor_id: null }
   })
 
-  // Pre-fill title from logbook query param
+  // Read query params and pre-fill title from logbook
   useEffect(() => {
-    if (prefillTitle) setValue('title', prefillTitle)
-  }, [prefillTitle, setValue])
+    const params = new URLSearchParams(window.location.search)
+    const t = params.get('title') ?? ''
+    const f = params.get('from') === 'logbook'
+    setFromLogbook(f)
+    if (t) { setPrefillTitle(t); setValue('title', t) }
+  }, [])
 
   useEffect(() => {
     api.get('/users/editors').then(r => {

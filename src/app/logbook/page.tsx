@@ -14,7 +14,7 @@ import {
 const fetcher = (url: string) => api.get(url).then(r => r.data)
 
 export default function LogbookPage() {
-  useRoleGuard(['material_handling', 'admin'])
+  const { isLoading: authLoading } = useRoleGuard(['material_handling', 'admin'])
   const { data: deliveries, isLoading } = useSWR('/delivery/list', fetcher, { refreshInterval: 30000 })
   const [expanded, setExpanded] = useState<Set<number>>(new Set())
   const router = useRouter()
