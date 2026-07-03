@@ -6,7 +6,7 @@ import { QCContent } from '@/types'
 import TopBar from '@/components/layout/TopBar'
 import BottomNav from '@/components/layout/BottomNav'
 import { useRoleGuard } from '@/hooks/useRoleGuard'
-import { CheckCheck, Search, Loader2, Inbox, RefreshCw, X, Play, AlertCircle } from 'lucide-react'
+import { CheckCheck, Search, Loader2, Inbox, RefreshCw, X, Play, Tag } from 'lucide-react'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 
@@ -54,8 +54,122 @@ function ReviseModal({ onConfirm, onClose, loading }: {
 
 const fetcher = (url: string) => api.get(url).then(r => r.data)
 
+// ─── Naming Asset Tab ─────────────────────────────────────────────────────
+function NamingAssetTab() {
+  const { data: allItems, isLoading, mutate: mutateItems } = useSWR<QCContent[]>(
+    '/qc/list', fetcher, { refreshInterval: 20000 }
+  )
+  const [saving, setSaving] = useState<number | null>(null)
+  const [vals, setVals] = useState<Record<number, string>>({})
+  const [search, setSearch] = useState('')
+
+  const needsNaming = (allItems ?? []).filter(i => !i.naming_asset)
+  const filtered = search.trim()
+    ? needsNaming.filter(i =>
+        i.title.toLowerCase().includes(search.toLowerCase()) ||
+        (i.qcid ?? '').toLowerCase().includes(search.toLowerCase())
+      )
+    : needsNaming
+
+  const save = async (item: QCContent) => {
+    const val = (vals[item.id] ?? '').trim()
+    if (!val) return
+    setSaving(item.id)
+    try {
+      await api.patch(`/qc/${item.id}/naming-asset`, { naming_asset: val })
+      mutateItems()
+      setVals(prev => { const n = { ...prev }; delete n[item.id]; return n })
+    } catch { alert('Gagal menyimpan') }
+    finally { setSaving(null) }
+  }
+
+  const statusColor: Record<string, string> = {
+    'Pending': 'bg-slate-100 text-slate-600',
+    'QC Ready': 'bg-blue-100 text-blue-700',
+    'Uploading': 'bg-yellow-100 text-yellow-700',
+    'Ready To Ingest': 'bg-purple-100 text-purple-700',
+    'Ingesting': 'bg-cyan-100 text-cyan-700',
+    'Need Revised': 'bg-red-100 text-red-700',
+    'Done Ingest': 'bg-emerald-100 text-emerald-700',
+  }
+
+  const fmt = (d: string) => format(new Date(d), 'dd MMM yyyy', { locale: localeId })
+
+  if (isLoading) return (
+    <div className="flex h-40 items-center justify-center">
+      <Loader2 size={24} className="animate-spin text-brand-500" />
+    </div>
+  )
+
+  return (
+    <div>
+      {/* Search */}
+      <div className="border-b border-slate-100 bg-white/90 px-4 py-2 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+        <div className="relative">
+          <Search size={15} className="absolute left-3 top-2.5 text-slate-400" />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Cari judul atau QCID..."
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          />
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="flex h-48 flex-col items-center justify-center gap-2 text-slate-400">
+          <Tag size={28} strokeWidth={1.5} />
+          <p className="text-sm font-medium">Semua konten sudah ada Naming Asset</p>
+        </div>
+      ) : (
+        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          {filtered.map(item => (
+            <div key={item.id} className="px-4 py-3.5">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="min-w-0">
+                  {item.qcid && (
+                    <span className="mb-1 inline-block rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                      {item.qcid}
+                    </span>
+                  )}
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white leading-snug">{item.title}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    S{item.season} E{item.episode} · {item.editor_name} · {fmt(item.updated_at)}
+                  </p>
+                </div>
+                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusColor[item.status] ?? 'bg-slate-100 text-slate-600'}`}>
+                  {item.status}
+                </span>
+              </div>
+
+              {/* Inline input */}
+              <div className="flex gap-2">
+                <input
+                  value={vals[item.id] ?? ''}
+                  onChange={e => setVals(prev => ({ ...prev, [item.id]: e.target.value }))}
+                  placeholder="Contoh: SERIES_CINTADUAKASTA_EP01"
+                  className="flex-1 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-mono focus:border-blue-400 focus:outline-none dark:border-blue-900/50 dark:bg-blue-900/10 dark:text-white"
+                />
+                <button
+                  onClick={() => save(item)}
+                  disabled={!vals[item.id]?.trim() || saving === item.id}
+                  className="shrink-0 flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-40"
+                >
+                  {saving === item.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCheck size={12} />}
+                  Simpan
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function CMSPage() {
   const { user, isLoading: authLoading } = useRoleGuard(['cms', 'admin'], '/dashboard')
+  const [tab, setTab] = useState<'queue' | 'naming'>('queue')
   const [search, setSearch] = useState('')
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [revisingItem, setRevisingItem] = useState<QCContent | null>(null)
@@ -69,18 +183,19 @@ export default function CMSPage() {
     `/cms/queue?${params.toString()}`, fetcher, { refreshInterval: 15000 }
   )
   const { data: countData } = useSWR('/cms/queue/count', fetcher, { refreshInterval: 15000 })
+  const { data: allItems } = useSWR<QCContent[]>('/qc/list', fetcher, { refreshInterval: 20000 })
 
   if (authLoading || !user) return null
 
   const readyItems = items?.filter(i => i.status === 'Ready To Ingest') ?? []
   const ingestingItems = items?.filter(i => i.status === 'Ingesting') ?? []
+  const needsNamingCount = (allItems ?? []).filter(i => !i.naming_asset).length
 
   const refreshAll = () => {
     mutate(`/cms/queue?${params.toString()}`)
     mutate('/cms/queue/count')
   }
 
-  // Ready To Ingest → Ingesting
   const doStartIngesting = async (qcid: string) => {
     if (!operatorName.trim()) { alert('Isi nama operator terlebih dahulu'); return }
     setLoadingId(qcid + ':start')
@@ -89,12 +204,9 @@ export default function CMSPage() {
       refreshAll()
     } catch (err: any) {
       alert(err?.response?.data?.detail || 'Gagal memulai ingesting.')
-    } finally {
-      setLoadingId(null)
-    }
+    } finally { setLoadingId(null) }
   }
 
-  // Ingesting → Done Ingest
   const doDoneIngest = async (qcid: string) => {
     if (!operatorName.trim()) { alert('Isi nama operator terlebih dahulu'); return }
     setLoadingId(qcid + ':done')
@@ -103,12 +215,9 @@ export default function CMSPage() {
       refreshAll()
     } catch (err: any) {
       alert(err?.response?.data?.detail || 'Gagal menyelesaikan ingest.')
-    } finally {
-      setLoadingId(null)
-    }
+    } finally { setLoadingId(null) }
   }
 
-  // Ingesting → Need Revised (via /cms/item/{qcid}/revised)
   const doRevise = async (notes: string) => {
     if (!revisingItem?.qcid) return
     setRevising(true)
@@ -121,9 +230,7 @@ export default function CMSPage() {
       setRevisingItem(null)
     } catch (err: any) {
       alert(err?.response?.data?.detail || 'Gagal mengirim permintaan revisi.')
-    } finally {
-      setRevising(false)
-    }
+    } finally { setRevising(false) }
   }
 
   const fmt = (d: string) => format(new Date(d), 'dd MMM yyyy', { locale: localeId })
@@ -141,7 +248,6 @@ export default function CMSPage() {
           S{item.season} E{item.episode} · {item.editor_name} · {fmt(item.updated_at)}
         </p>
       </div>
-
       <div className="flex shrink-0 flex-col gap-1.5">
         {section === 'ready' && (
           <button
@@ -149,13 +255,10 @@ export default function CMSPage() {
             disabled={!item.qcid || loadingId === item.qcid + ':start'}
             className="flex items-center gap-1.5 rounded-xl bg-cyan-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-cyan-700 disabled:opacity-50"
           >
-            {loadingId === item.qcid + ':start'
-              ? <Loader2 size={14} className="animate-spin" />
-              : <Play size={13} />}
+            {loadingId === item.qcid + ':start' ? <Loader2 size={14} className="animate-spin" /> : <Play size={13} />}
             Ingesting
           </button>
         )}
-
         {section === 'ingesting' && (
           <>
             <button
@@ -163,9 +266,7 @@ export default function CMSPage() {
               disabled={!item.qcid || loadingId === item.qcid + ':done'}
               className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
             >
-              {loadingId === item.qcid + ':done'
-                ? <Loader2 size={14} className="animate-spin" />
-                : <CheckCheck size={13} />}
+              {loadingId === item.qcid + ':done' ? <Loader2 size={14} className="animate-spin" /> : <CheckCheck size={13} />}
               Done Ingest
             </button>
             <button
@@ -186,24 +287,22 @@ export default function CMSPage() {
       <TopBar title="CMS Queue" />
       <main className="flex-1 pb-nav">
 
-        {/* Stats */}
+        {/* Stats + Operator */}
         <div className="border-b border-slate-100 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
           <div className="flex gap-4 mb-3">
             <div className="flex-1 rounded-xl bg-purple-50 p-3 dark:bg-purple-900/20">
-              <p className="text-xl font-bold text-purple-700 dark:text-purple-300">
-                {countData?.ready_to_ingest ?? '—'}
-              </p>
+              <p className="text-xl font-bold text-purple-700 dark:text-purple-300">{countData?.ready_to_ingest ?? '—'}</p>
               <p className="text-[11px] text-purple-600 dark:text-purple-400">Ready To Ingest</p>
             </div>
             <div className="flex-1 rounded-xl bg-cyan-50 p-3 dark:bg-cyan-900/20">
-              <p className="text-xl font-bold text-cyan-700 dark:text-cyan-300">
-                {countData?.ingesting ?? '—'}
-              </p>
+              <p className="text-xl font-bold text-cyan-700 dark:text-cyan-300">{countData?.ingesting ?? '—'}</p>
               <p className="text-[11px] text-cyan-600 dark:text-cyan-400">Sedang Diingest</p>
             </div>
+            <div className="flex-1 rounded-xl bg-orange-50 p-3 dark:bg-orange-900/20">
+              <p className="text-xl font-bold text-orange-700 dark:text-orange-300">{needsNamingCount}</p>
+              <p className="text-[11px] text-orange-600 dark:text-orange-400">Belum Naming</p>
+            </div>
           </div>
-
-          {/* Operator name */}
           <label className="mb-1 block text-xs font-medium text-slate-500">Nama Operator CMS</label>
           <input
             value={operatorName}
@@ -213,63 +312,84 @@ export default function CMSPage() {
           />
         </div>
 
-        {/* Search */}
-        <div className="border-b border-slate-100 bg-white/90 px-4 py-2 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
-          <div className="relative">
-            <Search size={15} className="absolute left-3 top-2.5 text-slate-400" />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Cari QCID atau judul..."
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-            />
-          </div>
+        {/* Tabs */}
+        <div className="flex border-b border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <button
+            onClick={() => setTab('queue')}
+            className={`flex-1 py-3 text-sm font-semibold transition ${tab === 'queue' ? 'border-b-2 border-brand-500 text-brand-600 dark:text-brand-400' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            Queue Ingest
+          </button>
+          <button
+            onClick={() => setTab('naming')}
+            className={`relative flex-1 py-3 text-sm font-semibold transition ${tab === 'naming' ? 'border-b-2 border-orange-500 text-orange-600 dark:text-orange-400' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            Naming Asset
+            {needsNamingCount > 0 && (
+              <span className="ml-1.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-bold text-white">
+                {needsNamingCount}
+              </span>
+            )}
+          </button>
         </div>
 
-        {isLoading ? (
-          <div className="flex h-40 items-center justify-center">
-            <Loader2 size={24} className="animate-spin text-brand-500" />
-          </div>
+        {/* Tab content */}
+        {tab === 'naming' ? (
+          <NamingAssetTab />
         ) : (
           <>
-            {/* Ingesting section */}
-            {ingestingItems.length > 0 && (
-              <div className="mt-3">
-                <div className="flex items-center gap-2 px-4 pb-2">
-                  <div className="h-2 w-2 rounded-full bg-cyan-500 animate-pulse" />
-                  <p className="text-xs font-semibold uppercase tracking-wider text-cyan-700 dark:text-cyan-400">
-                    Sedang Diingest ({ingestingItems.length})
-                  </p>
-                </div>
-                <div className="divide-y divide-slate-100 rounded-xl mx-3 bg-cyan-50/50 dark:divide-slate-800 dark:bg-cyan-900/10">
-                  {ingestingItems.map(item => (
-                    <ItemCard key={item.id} item={item} section="ingesting" />
-                  ))}
-                </div>
+            {/* Search */}
+            <div className="border-b border-slate-100 bg-white/90 px-4 py-2 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+              <div className="relative">
+                <Search size={15} className="absolute left-3 top-2.5 text-slate-400" />
+                <input
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Cari QCID atau judul..."
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
               </div>
-            )}
-
-            {/* Ready To Ingest section */}
-            <div className="mt-3">
-              <div className="flex items-center gap-2 px-4 pb-2">
-                <Inbox size={13} className="text-purple-500" />
-                <p className="text-xs font-semibold uppercase tracking-wider text-purple-700 dark:text-purple-400">
-                  Antrian Ready To Ingest ({readyItems.length})
-                </p>
-              </div>
-              {readyItems.length === 0 ? (
-                <div className="flex h-32 flex-col items-center justify-center gap-2 text-slate-400">
-                  <CheckCheck size={28} strokeWidth={1.5} />
-                  <p className="text-sm">Antrian kosong</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {readyItems.map(item => (
-                    <ItemCard key={item.id} item={item} section="ready" />
-                  ))}
-                </div>
-              )}
             </div>
+
+            {isLoading ? (
+              <div className="flex h-40 items-center justify-center">
+                <Loader2 size={24} className="animate-spin text-brand-500" />
+              </div>
+            ) : (
+              <>
+                {ingestingItems.length > 0 && (
+                  <div className="mt-3">
+                    <div className="flex items-center gap-2 px-4 pb-2">
+                      <div className="h-2 w-2 rounded-full bg-cyan-500 animate-pulse" />
+                      <p className="text-xs font-semibold uppercase tracking-wider text-cyan-700 dark:text-cyan-400">
+                        Sedang Diingest ({ingestingItems.length})
+                      </p>
+                    </div>
+                    <div className="divide-y divide-slate-100 rounded-xl mx-3 bg-cyan-50/50 dark:divide-slate-800 dark:bg-cyan-900/10">
+                      {ingestingItems.map(item => <ItemCard key={item.id} item={item} section="ingesting" />)}
+                    </div>
+                  </div>
+                )}
+                <div className="mt-3">
+                  <div className="flex items-center gap-2 px-4 pb-2">
+                    <Inbox size={13} className="text-purple-500" />
+                    <p className="text-xs font-semibold uppercase tracking-wider text-purple-700 dark:text-purple-400">
+                      Antrian Ready To Ingest ({readyItems.length})
+                    </p>
+                  </div>
+                  {readyItems.length === 0 ? (
+                    <div className="flex h-32 flex-col items-center justify-center gap-2 text-slate-400">
+                      <CheckCheck size={28} strokeWidth={1.5} />
+                      <p className="text-sm">Antrian kosong</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {readyItems.map(item => <ItemCard key={item.id} item={item} section="ready" />)}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </>
         )}
       </main>
