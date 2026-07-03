@@ -25,6 +25,15 @@ interface RequestData {
   created_at: string
 }
 
+const PRINT_STYLE = `
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .no-print { display: none !important; }
+    .print-receipt { display: block !important; }
+  }
+  .print-receipt { display: none; }
+`
+
 function fmt(iso: string) {
   return new Date(iso).toLocaleString('id-ID', {
     day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -167,9 +176,17 @@ export default function RequestReceiptPage() {
               </button>
             )}
             {(data.status === 'Diterima' || confirmed) && (
-              <div className="mt-2 flex items-center justify-center gap-2 rounded-xl bg-green-50 border border-green-200 px-4 py-3">
-                <CheckCircle size={16} className="text-green-600" />
-                <p className="text-sm font-semibold text-green-700">Materi sudah diterima · Terima kasih!</p>
+              <div className="mt-2 space-y-2">
+                <div className="flex items-center justify-center gap-2 rounded-xl bg-green-50 border border-green-200 px-4 py-3">
+                  <CheckCircle size={16} className="text-green-600" />
+                  <p className="text-sm font-semibold text-green-700">Materi sudah diterima · Terima kasih!</p>
+                </div>
+                <button
+                  onClick={() => window.print()}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors"
+                >
+                  <Download size={15} /> Download Receipt
+                </button>
               </div>
             )}
           </div>
@@ -199,11 +216,35 @@ export default function RequestReceiptPage() {
         </div>
 
         {/* Watermark */}
-        <p className="text-center text-[11px] text-slate-400 pt-2">
+        <p className="text-center text-[11px] text-slate-400 pt-2 no-print">
           Form Request · Content Ops V+ & Vshort<br />
           Simpan link ini untuk memantau status request Anda
         </p>
+
+        {/* Print Receipt — hidden on screen, visible on print */}
+        {(data.status === 'Diterima' || confirmed) && (
+          <div className="print-receipt mt-4 rounded-2xl border-2 border-green-300 p-6 bg-white">
+            <div className="text-center mb-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">Receipt · Konfirmasi Penerimaan Materi</p>
+              <p className="text-lg font-bold text-slate-800">{data.requestor_name}</p>
+              <p className="text-sm text-slate-600">{data.source_requestor}</p>
+            </div>
+            <div className="border-t border-slate-200 pt-3 space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-slate-500">Keperluan</span><span className="font-medium text-right max-w-[60%]">{data.requestor_need}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Judul</span><span className="font-medium text-right max-w-[60%]">{data.content_titles.join(', ')}</span></div>
+              {data.total_eps > 0 && <div className="flex justify-between"><span className="text-slate-500">Episode</span><span className="font-medium">{data.total_eps}</span></div>}
+              {data.approved_by && <div className="flex justify-between"><span className="text-slate-500">Disetujui oleh</span><span className="font-medium">{data.approved_by}</span></div>}
+              {data.received_at && <div className="flex justify-between"><span className="text-slate-500">Tgl Diterima</span><span className="font-medium">{fmt(data.received_at)}</span></div>}
+            </div>
+            <div className="mt-4 rounded-lg bg-green-50 border border-green-200 py-2 text-center">
+              <p className="text-xs font-semibold text-green-700">✓ Materi telah diterima oleh requestor</p>
+              <p className="text-[10px] text-green-600 mt-0.5">Content Ops V+ dan Vshort</p>
+            </div>
+            <p className="mt-3 text-center text-[10px] text-slate-400">Token: {data.token}</p>
+          </div>
+        )}
       </div>
+      <style>{PRINT_STYLE}</style>
     </div>
   )
 }
