@@ -29,6 +29,10 @@ export default function QCListPage() {
   if (result) params.set('qc_result', result)
   params.set('page_size', '50')
 
+  const { data: rawItems, isLoading } = useSWR<QCContent[]>(
+    `/qc?${params.toString()}`, fetcher, { refreshInterval: 15000 }
+  )
+
   const items = rawItems ? [...rawItems].sort((a, b) => {
     const da = new Date(a.created_at ?? a.updated_at).getTime()
     const db = new Date(b.created_at ?? b.updated_at).getTime()
@@ -59,10 +63,6 @@ export default function QCListPage() {
       setExporting(null)
     }
   }
-
-  const { data: rawItems, isLoading } = useSWR<QCContent[]>(
-    `/qc?${params.toString()}`, fetcher, { refreshInterval: 15000 }
-  )
 
   return (
     <div className="flex min-h-screen flex-col">
