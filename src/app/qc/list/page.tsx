@@ -7,7 +7,7 @@ import { QCContent, StatusEnum } from '@/types'
 import TopBar from '@/components/layout/TopBar'
 import BottomNav from '@/components/layout/BottomNav'
 import StatusBadge from '@/components/ui/StatusBadge'
-import { Search, Filter, ChevronRight, Loader2, Download } from 'lucide-react'
+import { Search, Filter, ChevronRight, Loader2, Download, AlertTriangle } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 const fetcher = (url: string) => api.get(url).then(r => r.data)
@@ -196,6 +196,14 @@ export default function QCListPage() {
                       {item.qc_result}
                     </span>
                   </div>
+                  {item.status === 'Need Revised' && item.revised_notes && (
+                    <div className="mt-1.5 flex items-start gap-1.5 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 px-2.5 py-1.5">
+                      <AlertTriangle size={11} className="mt-0.5 shrink-0 text-orange-500" />
+                      <p className="text-[11px] text-orange-700 dark:text-orange-400 leading-snug">
+                        <span className="font-semibold">Catatan CMS: </span>{item.revised_notes}
+                      </p>
+                    </div>
+                  )}
                 </div>
                 <ChevronRight size={16} className="shrink-0 text-slate-400" />
               </Link>
