@@ -8,7 +8,7 @@ import BottomNav from '@/components/layout/BottomNav'
 import { useRoleGuard } from '@/hooks/useRoleGuard'
 import {
   BookOpen, PlusCircle, PackageCheck, ChevronDown, ChevronUp,
-  Calendar, User, Layers, ExternalLink
+  Calendar, User, Layers, ExternalLink, ThumbsUp, FileText
 } from 'lucide-react'
 
 const fetcher = (url: string) => api.get(url).then(r => r.data)
@@ -16,10 +16,12 @@ const fetcher = (url: string) => api.get(url).then(r => r.data)
 export default function LogbookPage() {
   const { isLoading: authLoading } = useRoleGuard(['material_handling', 'admin'])
   const { data: deliveries, isLoading } = useSWR('/delivery/list', fetcher, { refreshInterval: 30000 })
+  const { data: requests }                = useSWR('/request/list',  fetcher, { refreshInterval: 30000 })
   const [expanded, setExpanded] = useState<Set<number>>(new Set())
   const router = useRouter()
 
-  const readyItems = (deliveries ?? []).filter((d: any) => d.status === 'Ready to QC')
+  const readyItems   = (deliveries ?? []).filter((d: any) => d.status === 'Ready to QC')
+  const doneRequests = (requests ?? []).filter((r: any) => r.status === 'Diterima')
 
   const toggle = (id: number) => {
     setExpanded(prev => {
@@ -38,14 +40,25 @@ export default function LogbookPage() {
       <TopBar title="Log Book Materi" />
 
       <div className="mx-auto max-w-2xl px-4 pt-4">
-        {/* Header stat */}
-        <div className="mb-4 flex items-center gap-3 rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 px-4 py-3">
-          <PackageCheck size={20} className="text-green-600 dark:text-green-400 shrink-0" />
-          <div>
-            <p className="text-xs text-green-600 dark:text-green-400 font-medium">Ready to QC</p>
-            <p className="text-lg font-bold text-green-700 dark:text-green-300">
-              {isLoading ? '—' : readyItems.length} kiriman
-            </p>
+        {/* Header stats */}
+        <div className="mb-4 grid grid-cols-2 gap-3">
+          <div className="flex items-center gap-3 rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 px-4 py-3">
+            <PackageCheck size={18} className="text-green-600 dark:text-green-400 shrink-0" />
+            <div>
+              <p className="text-[10px] text-green-600 dark:text-green-400 font-medium">Ready to QC</p>
+              <p className="text-base font-bold text-green-700 dark:text-green-300">
+                {isLoading ? '—' : readyItems.length}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 rounded-2xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 px-4 py-3">
+            <ThumbsUp size={18} className="text-purple-600 dark:text-purple-400 shrink-0" />
+            <div>
+              <p className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">Request Selesai</p>
+              <p className="text-base font-bold text-purple-700 dark:text-purple-300">
+                {isLoading ? '—' : doneRequests.length}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -142,6 +155,41 @@ export default function LogbookPage() {
                 </div>
               )
             })}
+          </div>
+        )}
+        {/* Completed Requests */}
+        {doneRequests.length > 0 && (
+          <div className="mt-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 px-1">Request Selesai</p>
+            <div className="space-y-2">
+              {doneRequests.map((r: any) => (
+                <div key={r.id} className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 px-4 py-3 shadow-sm">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-semibold rounded-full px-2 py-0.5 bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400">
+                          Diterima Requestor
+                        </span>
+                      </div>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{r.requestor_name}</p>
+                      <p className="text-[11px] text-slate-500">{r.source_requestor} · {r.total_eps > 0 ? `${r.total_eps} ep` : ''}</p>
+                      <div className="mt-1 space-y-0.5">
+                        {r.content_titles.slice(0, 3).map((t: string, i: number) => (
+                          <p key={i} className="text-[11px] text-slate-600 dark:text-slate-400">· {t}</p>
+                        ))}
+                        {r.content_titles.length > 3 && (
+                          <p className="text-[11px] text-slate-400">+{r.content_titles.length - 3} judul lainnya</p>
+                        )}
+                      </div>
+                    </div>
+                    <a href={`/kirim/request/receipt/${r.token}`} target="_blank" rel="noreferrer"
+                      className="flex items-center gap-1 text-[10px] text-purple-500 hover:text-purple-600 shrink-0">
+                      <ExternalLink size={11} />
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

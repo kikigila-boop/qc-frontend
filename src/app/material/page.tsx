@@ -8,7 +8,7 @@ import BottomNav from '@/components/layout/BottomNav'
 import StatusBadge from '@/components/ui/StatusBadge'
 import { useRoleGuard } from '@/hooks/useRoleGuard'
 import { useAuth } from '@/hooks/useAuth'
-import { Package, Search, Loader2, RefreshCw, ChevronRight, AlertCircle, Inbox, CheckCircle2, ExternalLink, PlusCircle, FileText, CheckCheck, X, Copy, PackageCheck } from 'lucide-react'
+import { Package, Search, Loader2, RefreshCw, ChevronRight, AlertCircle, Inbox, CheckCircle2, ExternalLink, PlusCircle, FileText, CheckCheck, X, Copy, PackageCheck, Truck } from 'lucide-react'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import Link from 'next/link'
@@ -30,7 +30,9 @@ export default function MaterialPage() {
   const { data: counts } = useSWR('/material/queue/count', fetcher, { refreshInterval: 15000 })
   const [copying, setCopying] = useState<number | null>(null)
   const [completing, setCompleting] = useState<number | null>(null)
-  const [approvingReq, setApprovingReq] = useState<number | null>(null)
+  const [approvingReq, setApprovingReq]   = useState<number | null>(null)
+  const [copyingReq,  setCopyingReq]     = useState<number | null>(null)
+  const [completingReq, setCompletingReq] = useState<number | null>(null)
   const [rejectingReq, setRejectingReq] = useState<number | null>(null)
   const [rejectNotes, setRejectNotes] = useState<Record<number, string>>({})
   const [showRejectBox, setShowRejectBox] = useState<number | null>(null)
@@ -75,6 +77,20 @@ export default function MaterialPage() {
     } catch (err: any) {
       alert(err?.response?.data?.detail || 'Gagal selesaikan copy.')
     } finally { setCompleting(null) }
+  }
+
+  const doStartCopyReq = async (id: number) => {
+    setCopyingReq(id)
+    try { await api.patch(`/request/${id}/start-copy`); mutate('/request/list') }
+    catch (err: any) { alert(err?.response?.data?.detail || 'Gagal mulai copy') }
+    finally { setCopyingReq(null) }
+  }
+
+  const doCompleteCopyReq = async (id: number) => {
+    setCompletingReq(id)
+    try { await api.patch(`/request/${id}/complete-copy`); mutate('/request/list') }
+    catch (err: any) { alert(err?.response?.data?.detail || 'Gagal selesai copy') }
+    finally { setCompletingReq(null) }
   }
 
   const doApproveReq = async (id: number) => {
@@ -265,9 +281,12 @@ export default function MaterialPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className={`text-[10px] font-semibold rounded-full px-2 py-0.5 ${
-                          r.status === 'Pending'  ? 'bg-amber-200 text-amber-800' :
-                          r.status === 'Approved' ? 'bg-green-100 text-green-700' :
-                                                    'bg-red-100 text-red-700'}`}>
+                          r.status === 'Pending'   ? 'bg-amber-200 text-amber-800' :
+                          r.status === 'Approved'  ? 'bg-blue-100 text-blue-700' :
+                          r.status === 'Copying'   ? 'bg-indigo-100 text-indigo-700 animate-pulse' :
+                          r.status === 'Terkirim'  ? 'bg-teal-100 text-teal-700' :
+                          r.status === 'Diterima'  ? 'bg-green-100 text-green-700' :
+                                                     'bg-red-100 text-red-700'}`}>
                           {r.status}
                         </span>
                         {r.approved_by && <span className="text-[10px] text-slate-400">oleh {r.approved_by}</span>}
@@ -321,6 +340,28 @@ export default function MaterialPage() {
                           <X size={11} /> Reject
                         </button>
                       </>)}
+                      {r.status === 'Approved' && (
+                        <button onClick={() => doStartCopyReq(r.id)} disabled={copyingReq === r.id}
+                          className="flex items-center gap-1 rounded-lg bg-blue-600 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-700 disabled:opacity-50 justify-center">
+                          {copyingReq === r.id ? <Loader2 size={11} className="animate-spin" /> : <Copy size={11} />} Mulai Copy
+                        </button>
+                      )}
+                      {r.status === 'Copying' && (
+                        <button onClick={() => doCompleteCopyReq(r.id)} disabled={completingReq === r.id}
+                          className="flex items-center gap-1 rounded-lg bg-teal-600 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-teal-700 disabled:opacity-50 animate-pulse justify-center">
+                          {completingReq === r.id ? <Loader2 size={11} className="animate-spin" /> : <PackageCheck size={11} />} Kirim ke Requestor
+                        </button>
+                      )}
+                      {r.status === 'Terkirim' && (
+                        <span className="flex items-center gap-1 rounded-lg bg-teal-50 border border-teal-200 px-2.5 py-1.5 text-[11px] font-semibold text-teal-700 justify-center">
+                          <Truck size={11} /> Terkirim
+                        </span>
+                      )}
+                      {r.status === 'Diterima' && (
+                        <span className="flex items-center gap-1 rounded-lg bg-green-50 border border-green-200 px-2.5 py-1.5 text-[11px] font-semibold text-green-700 justify-center">
+                          <CheckCheck size={11} /> Diterima
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
