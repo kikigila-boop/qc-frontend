@@ -17,6 +17,7 @@ interface CreateForm {
   editor_name: string
   status: string
   duration: string
+  content_type: string
   naming_asset: string
   storage_location: string
   notes: string
@@ -92,6 +93,7 @@ export default function CreateQCPage() {
   const [submitError, setSubmitError] = useState('')
   const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number } | null>(null)
   const [episodeWatch, setEpisodeWatch] = useState('')
+  const [contentType, setContentType] = useState<string>('')
   const [epMode, setEpMode] = useState<EpMode>('individual')
   const [groupBy, setGroupBy] = useState(2)
   const [groupByInput, setGroupByInput] = useState('2')
@@ -141,7 +143,7 @@ export default function CreateQCPage() {
     }
 
     const base = {
-      title: data.title, season: data.season,
+      title: data.title, season: data.season, content_type: data.content_type || null,
       qc_result: data.qc_result, editor_name: data.editor_name,
       editor_id: data.editor_id || authUser?.id || null, status: data.status,
       duration: data.duration || null, naming_asset: data.naming_asset || null,
@@ -224,11 +226,29 @@ export default function CreateQCPage() {
               <FIELD label="Judul" required error={errors.title?.message}>
                 <input {...register('title', { required: 'Wajib diisi' })} placeholder="Nama drama / film" className={INPUT_CLS} />
               </FIELD>
-              <FIELD label="Season" required error={errors.season?.message}>
-                <input {...register('season', { required: 'Wajib' })} placeholder="1" className={INPUT_CLS} />
+              <FIELD label="Tipe Konten" required>
+                <select
+                  {...register('content_type', {
+                    onChange: e => setContentType(e.target.value)
+                  })}
+                  className={SELECT_CLS}
+                >
+                  <option value="">-- Pilih Tipe --</option>
+                  <option value="Microdrama">Microdrama</option>
+                  <option value="Series">Series</option>
+                  <option value="Movies">Movies</option>
+                  <option value="Trailer">Trailer</option>
+                </select>
               </FIELD>
 
+              {contentType !== 'Movies' && contentType !== 'Trailer' && (
+              <FIELD label="Season" required error={errors.season?.message}>
+                <input {...register('season', { required: contentType !== 'Movies' && contentType !== 'Trailer' ? 'Wajib' : false })} placeholder="1" className={INPUT_CLS} />
+              </FIELD>
+              )}
+
               {/* Episode mode selector */}
+              {contentType !== 'Movies' && contentType !== 'Trailer' && (
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
                   Mode Episode <span className="text-red-500">*</span>
@@ -299,6 +319,8 @@ export default function CreateQCPage() {
                   </div>
                 )}
               </div>
+
+              )}
 
               <FIELD label="Duration (opsional)">
                 <input {...register('duration')} placeholder="45:30" className={INPUT_CLS} />

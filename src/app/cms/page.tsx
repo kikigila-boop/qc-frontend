@@ -6,7 +6,7 @@ import { QCContent } from '@/types'
 import TopBar from '@/components/layout/TopBar'
 import BottomNav from '@/components/layout/BottomNav'
 import { useRoleGuard } from '@/hooks/useRoleGuard'
-import { CheckCheck, Search, Loader2, Inbox, RefreshCw, X, Play, Tag } from 'lucide-react'
+import { CheckCheck, Search, Loader2, Inbox, RefreshCw, X, Play, Tag, Wand2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 
@@ -53,6 +53,29 @@ function ReviseModal({ onConfirm, onClose, loading }: {
 }
 
 const fetcher = (url: string) => api.get(url).then(r => r.data)
+
+// ─── Auto Naming formula ────────────────────────────────────────────────────
+function autoName(item: QCContent): string {
+  const slug = item.title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+  const season = (item.season || '1').replace(/[^0-9]/g, '') || '1'
+  const episode = (item.episode || '').trim()
+  const isBulk = !episode || episode.includes('-') || episode.includes(',')
+  switch (item.content_type) {
+    case 'Series':
+    case 'Microdrama':
+      return isBulk ? `${slug}-S${season}-E..` : `${slug}-S${season}-E${episode}`
+    case 'Movies':
+      return `${slug}-M1`
+    case 'Trailer':
+      return `${slug}-T1`
+    default:
+      return slug
+  }
+}
 
 // ─── Naming Asset Tab ─────────────────────────────────────────────────────
 function NamingAssetTab() {
@@ -134,6 +157,7 @@ function NamingAssetTab() {
                   )}
                   <p className="text-sm font-semibold text-slate-900 dark:text-white leading-snug">{item.title}</p>
                   <p className="text-xs text-slate-500 mt-0.5">
+                    {item.content_type && <span className="mr-1 rounded bg-slate-100 px-1.5 py-0.5 font-medium text-[10px] text-slate-600 dark:bg-slate-800">{item.content_type}</span>}
                     S{item.season} E{item.episode} · {item.editor_name} · {fmt(item.updated_at)}
                   </p>
                 </div>
@@ -150,6 +174,16 @@ function NamingAssetTab() {
                   placeholder="Contoh: SERIES_CINTADUAKASTA_EP01"
                   className="flex-1 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-mono focus:border-blue-400 focus:outline-none dark:border-blue-900/50 dark:bg-blue-900/10 dark:text-white"
                 />
+                {item.content_type && (
+                  <button
+                    onClick={() => setVals(prev => ({ ...prev, [item.id]: autoName(item) }))}
+                    title="Generate otomatis"
+                    className="shrink-0 flex items-center gap-1 rounded-xl border border-blue-200 bg-blue-100 px-2.5 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-200 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                  >
+                    <Wand2 size={12} />
+                    Auto
+                  </button>
+                )}
                 <button
                   onClick={() => save(item)}
                   disabled={!vals[item.id]?.trim() || saving === item.id}
