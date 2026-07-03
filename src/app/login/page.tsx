@@ -28,10 +28,37 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-600">
-            <span className="text-2xl font-bold text-white">QC</span>
-          </div>
-          <h1 className="text-2xl font-bold text-white">Content Ops</h1>
+          {/* Content Ops Logo */}
+          <svg
+            viewBox="0 0 158 82"
+            xmlns="http://www.w3.org/2000/svg"
+            className="mx-auto mb-3 w-52 h-auto"
+          >
+            {/* CONTENT */}
+            <text
+              x="2" y="34"
+              fontFamily="'Arial Black', 'Helvetica Neue', sans-serif"
+              fontSize="30" fontWeight="900"
+              fill="white"
+              stroke="#818cf8" strokeWidth="1.5" paintOrder="stroke"
+            >CONTENT</text>
+            {/* OPS — offset right */}
+            <text
+              x="32" y="70"
+              fontFamily="'Arial Black', 'Helvetica Neue', sans-serif"
+              fontSize="30" fontWeight="900"
+              fill="white"
+              stroke="#818cf8" strokeWidth="1.5" paintOrder="stroke"
+            >OPS</text>
+            {/* Gold curved arrow: bottom of C → left of O */}
+            <path
+              d="M 14 40 C 2 55 16 76 36 71"
+              stroke="#f59e0b" strokeWidth="2.8" fill="none"
+              strokeLinecap="round"
+            />
+            {/* Arrowhead */}
+            <polygon points="36,71 28,66 30,74" fill="#f59e0b" />
+          </svg>
           <p className="mt-1 text-sm text-slate-400">Control Asset Management</p>
         </div>
 
