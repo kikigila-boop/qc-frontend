@@ -28,7 +28,6 @@ export default function MaterialPage() {
     `/material/queue?${params.toString()}`, fetcher, { refreshInterval: 15000 }
   )
   const { data: counts } = useSWR('/material/queue/count', fetcher, { refreshInterval: 15000 })
-  const [confirming, setConfirming] = useState<number | null>(null)
   const [copying, setCopying] = useState<number | null>(null)
   const [completing, setCompleting] = useState<number | null>(null)
   const [approvingReq, setApprovingReq] = useState<number | null>(null)
@@ -55,18 +54,6 @@ export default function MaterialPage() {
       alert(err?.response?.data?.detail || 'Gagal re-avail.')
     } finally {
       setReAvailling(null)
-    }
-  }
-
-  const doConfirm = async (id: number) => {
-    setConfirming(id)
-    try {
-      await api.patch(`/delivery/${id}/confirm`)
-      mutate('/delivery/list')
-    } catch (err: any) {
-      alert(err?.response?.data?.detail || 'Gagal konfirmasi.')
-    } finally {
-      setConfirming(null)
     }
   }
 
