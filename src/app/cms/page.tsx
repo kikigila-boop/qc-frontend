@@ -61,6 +61,7 @@ function autoName(item: QCContent): string {
     .replace(/[^a-z0-9\s]/g, '')
     .trim()
     .replace(/\s+/g, '-')
+  if (!item.content_type) return slug   // no content_type → title slug only
   const season = (item.season || '1').replace(/[^0-9]/g, '') || '1'
   const episode = (item.episode || '').trim()
   const isBulk = !episode || episode.includes('-') || episode.includes(',')
@@ -83,6 +84,7 @@ function NamingAssetTab() {
     '/qc/needs-naming', fetcher, { refreshInterval: 20000 }
   )
   const [saving, setSaving] = useState<number | null>(null)
+  const [savingAll, setSavingAll] = useState(false)
   const [vals, setVals] = useState<Record<number, string>>({})
   const [search, setSearch] = useState('')
 
@@ -106,6 +108,23 @@ function NamingAssetTab() {
     finally { setSaving(null) }
   }
 
+  const saveAll = async () => {
+    if (!needsNaming.length) return
+    setSavingAll(true)
+    let ok = 0
+    for (const item of needsNaming) {
+      const name = (vals[item.id] ?? '').trim() || autoName(item)
+      try {
+        await api.patch(`/qc/${item.id}/naming-asset`, { naming_asset: name })
+        ok++
+      } catch { /* skip failed */ }
+    }
+    await mutateItems()
+    setVals({})
+    setSavingAll(false)
+    alert(`Selesai — ${ok} dari ${needsNaming.length} konten berhasil di-naming.`)
+  }
+
   const statusColor: Record<string, string> = {
     'Pending': 'bg-slate-100 text-slate-600',
     'QC Ready': 'bg-blue-100 text-blue-700',
@@ -126,6 +145,23 @@ function NamingAssetTab() {
 
   return (
     <div>
+      {/* Auto Naming All */}
+      {needsNaming.length > 0 && (
+        <div className="flex items-center justify-between border-b border-orange-100 bg-orange-50 px-4 py-2.5 dark:border-orange-900/30 dark:bg-orange-900/10">
+          <p className="text-xs text-orange-700 dark:text-orange-300">
+            <span className="font-semibold">{needsNaming.length} konten</span> belum punya naming asset
+          </p>
+          <button
+            onClick={saveAll}
+            disabled={savingAll}
+            className="flex items-center gap-1.5 rounded-xl bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-600 disabled:opacity-50"
+          >
+            {savingAll ? <Loader2 size={12} className="animate-spin" /> : <Wand2 size={12} />}
+            {savingAll ? 'Menyimpan...' : 'Auto Naming All'}
+          </button>
+        </div>
+      )}
+
       {/* Search */}
       <div className="border-b border-slate-100 bg-white/90 px-4 py-2 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
         <div className="relative">
@@ -174,8 +210,7 @@ function NamingAssetTab() {
                   placeholder="Contoh: SERIES_CINTADUAKASTA_EP01"
                   className="flex-1 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-mono focus:border-blue-400 focus:outline-none dark:border-blue-900/50 dark:bg-blue-900/10 dark:text-white"
                 />
-                {item.content_type && (
-                  <button
+                <button
                     onClick={() => setVals(prev => ({ ...prev, [item.id]: autoName(item) }))}
                     title="Generate otomatis"
                     className="shrink-0 flex items-center gap-1 rounded-xl border border-blue-200 bg-blue-100 px-2.5 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-200 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
@@ -183,7 +218,6 @@ function NamingAssetTab() {
                     <Wand2 size={12} />
                     Auto
                   </button>
-                )}
                 <button
                   onClick={() => save(item)}
                   disabled={!vals[item.id]?.trim() || saving === item.id}
