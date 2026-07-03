@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, ListVideo, PlusCircle, Inbox, User, ShieldCheck, RotateCcw, Package, PackageSearch } from 'lucide-react'
+import { LayoutDashboard, ListVideo, PlusCircle, Inbox, User, ShieldCheck, RotateCcw, Package, PackageSearch, BookOpen } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -19,6 +19,7 @@ export default function BottomNav() {
     // MH sees their own queue + QC list + create
     ...(isMH && !isAdmin ? [
       { href: '/material',       label: 'Material',   icon: Package },
+      { href: '/logbook',        label: 'Log Book',   icon: BookOpen },
       { href: '/qc/list',        label: 'QC List',    icon: ListVideo },
       { href: '/qc/create',      label: 'Tambah',     icon: PlusCircle },
     ] : []),

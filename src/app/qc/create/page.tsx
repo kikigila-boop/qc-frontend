@@ -1,5 +1,6 @@
 'use client'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import api from '@/lib/api'
@@ -84,6 +85,10 @@ export default function CreateQCPage() {
   const { user, isLoading: authLoading } = useRoleGuard(['editor', 'admin', 'material_handling'])
   const { user: authUser } = useAuth()
   const isMH = authUser?.role === 'material_handling'
+  const searchParams = useSearchParams()
+  const prefillTitle = searchParams.get('title') ?? ''
+  const fromLogbook  = searchParams.get('from') === 'logbook'
+
   const router = useRouter()
   const [success, setSuccess] = useState(false)
   const [submitError, setSubmitError] = useState('')
@@ -98,6 +103,11 @@ export default function CreateQCPage() {
   const { register, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<CreateForm>({
     defaultValues: { status: 'QC Process', qc_result: 'PASS', qc_date: new Date().toISOString().slice(0, 10), editor_id: null }
   })
+
+  // Pre-fill title from logbook query param
+  useEffect(() => {
+    if (prefillTitle) setValue('title', prefillTitle)
+  }, [prefillTitle, setValue])
 
   useEffect(() => {
     api.get('/users/editors').then(r => {
@@ -151,7 +161,7 @@ export default function CreateQCPage() {
       reset()
       setEpisodeWatch('')
       setBulkProgress(null)
-      setTimeout(() => { setSuccess(false); router.push(isMH ? '/material' : '/qc/list') }, 1800)
+      setTimeout(() => { setSuccess(false); router.push(isMH ? (fromLogbook ? '/logbook' : '/material') : '/qc/list') }, 1800)
     } catch (e: any) {
       setBulkProgress(null)
       const detail = e?.response?.data?.detail
