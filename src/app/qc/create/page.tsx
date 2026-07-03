@@ -349,8 +349,18 @@ export default function CreateQCPage() {
 
               )}
 
-              <FIELD label="Duration (opsional)">
-                <input {...register('duration')} placeholder="45:30" className={INPUT_CLS} />
+              <FIELD label="Duration (opsional)" hint="Format wajib HH:MM:SS — contoh: 01:54:32" error={errors.duration?.message}>
+                <input
+                  {...register('duration', {
+                    pattern: {
+                      value: /^\d{2}:\d{2}:\d{2}$/,
+                      message: 'Format harus HH:MM:SS — contoh: 01:54:32'
+                    }
+                  })}
+                  placeholder="01:54:32"
+                  maxLength={8}
+                  className={INPUT_CLS}
+                />
               </FIELD>
               <FIELD label="Naming Asset (opsional)" hint="Nama file aset untuk sinkronisasi dengan ADI metadata CMS">
                 <div className="flex gap-2">
