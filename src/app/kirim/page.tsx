@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { PlusCircle, Trash2, Loader2, AlertCircle, Send, Package, FileText, ChevronDown } from 'lucide-react'
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? 'https://qc-backend-production-99d5.up.railway.app/api/v1'
+const API = '/api/v1'
 
 const INPUT_CLS = "w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
 const SELECT_CLS = INPUT_CLS

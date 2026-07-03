@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { CheckCircle, Download, Loader2, AlertCircle } from 'lucide-react'
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? 'https://qc-backend-production-99d5.up.railway.app/api/v1'
+const API = '/api/v1'
 
 interface DeliveryData {
   token: string
