@@ -57,7 +57,7 @@ const fetcher = (url: string) => api.get(url).then(r => r.data)
 // ─── Naming Asset Tab ─────────────────────────────────────────────────────
 function NamingAssetTab() {
   const { data: allItems, isLoading, mutate: mutateItems } = useSWR<QCContent[]>(
-    '/qc/list', fetcher, { refreshInterval: 20000 }
+    '/qc?page_size=200', fetcher, { refreshInterval: 20000 }
   )
   const [saving, setSaving] = useState<number | null>(null)
   const [vals, setVals] = useState<Record<number, string>>({})
@@ -183,7 +183,7 @@ export default function CMSPage() {
     `/cms/queue?${params.toString()}`, fetcher, { refreshInterval: 15000 }
   )
   const { data: countData } = useSWR('/cms/queue/count', fetcher, { refreshInterval: 15000 })
-  const { data: allItems } = useSWR<QCContent[]>('/qc/list', fetcher, { refreshInterval: 20000 })
+  const { data: allItems } = useSWR<QCContent[]>('/qc?page_size=200', fetcher, { refreshInterval: 20000 })
 
   if (authLoading || !user) return null
 
