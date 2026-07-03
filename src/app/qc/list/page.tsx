@@ -1,13 +1,13 @@
 'use client'
 import { useState } from 'react'
-import useSWR from 'swr'
+import useSWR, { mutate as globalMutate } from 'swr'
 import Link from 'next/link'
 import api from '@/lib/api'
 import { QCContent, StatusEnum } from '@/types'
 import TopBar from '@/components/layout/TopBar'
 import BottomNav from '@/components/layout/BottomNav'
 import StatusBadge from '@/components/ui/StatusBadge'
-import { Search, Filter, ChevronRight, Loader2, Download, AlertTriangle } from 'lucide-react'
+import { Search, Filter, ChevronRight, Loader2, Download, AlertTriangle, Archive } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 const fetcher = (url: string) => api.get(url).then(r => r.data)
@@ -21,6 +21,8 @@ export default function QCListPage() {
   const [showFilter, setShowFilter] = useState(false)
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest')
   const [exporting, setExporting] = useState<'excel' | 'pdf' | null>(null)
+  const [movingId, setMovingId] = useState<number | null>(null)
+  const [syncingLogbook, setSyncingLogbook] = useState(false)
   const { user } = useAuth()
 
   const params = new URLSearchParams()
@@ -62,6 +64,28 @@ export default function QCListPage() {
     } finally {
       setExporting(null)
     }
+  }
+
+  const doMoveToLogbook = async (id: number) => {
+    setMovingId(id)
+    try {
+      await api.post(`/logbook/${id}/move`)
+      globalMutate((key: string) => typeof key === 'string' && key.startsWith('/qc?'))
+    } catch (e: any) {
+      alert(e?.response?.data?.detail || 'Gagal memindahkan')
+    } finally { setMovingId(null) }
+  }
+
+  const doSyncAllToLogbook = async () => {
+    if (!confirm('Pindahkan semua konten Done Ingest ke Log QC?')) return
+    setSyncingLogbook(true)
+    try {
+      const res = await api.post('/logbook/sync-to-logbook')
+      alert(res.data.message)
+      globalMutate((key: string) => typeof key === 'string' && key.startsWith('/qc?'))
+    } catch (e: any) {
+      alert(e?.response?.data?.detail || 'Gagal sync')
+    } finally { setSyncingLogbook(false) }
   }
 
   return (
@@ -115,6 +139,15 @@ export default function QCListPage() {
                 PDF
               </button>
             </div>
+            <button
+              onClick={doSyncAllToLogbook}
+              disabled={syncingLogbook}
+              title="Sync semua Done Ingest ke Log QC"
+              className="flex items-center gap-1 rounded-xl border border-emerald-400 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100 disabled:opacity-60 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
+            >
+              {syncingLogbook ? <Loader2 size={15} className="animate-spin" /> : <Archive size={15} />}
+              Log QC
+            </button>
           </div>
 
           {showFilter && (
@@ -168,11 +201,8 @@ export default function QCListPage() {
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {items?.map(item => (
-              <Link
-                key={item.id}
-                href={`/qc/${item.id}`}
-                className="flex items-center gap-3 px-4 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-900/50"
-              >
+              <div key={item.id} className="flex items-center gap-2 px-4 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                <Link href={`/qc/${item.id}`} className="flex flex-1 min-w-0 items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     {item.qcid && (
@@ -206,7 +236,18 @@ export default function QCListPage() {
                   )}
                 </div>
                 <ChevronRight size={16} className="shrink-0 text-slate-400" />
-              </Link>
+                </Link>
+                {item.status === 'Done Ingest' && (
+                  <button
+                    onClick={() => doMoveToLogbook(item.id)}
+                    disabled={movingId === item.id}
+                    className="shrink-0 flex items-center gap-1 rounded-xl border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400"
+                  >
+                    {movingId === item.id ? <Loader2 size={11} className="animate-spin" /> : <Archive size={11} />}
+                    Log QC
+                  </button>
+                )}
+              </div>
             ))}
           </div>
         )}

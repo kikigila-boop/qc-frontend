@@ -37,6 +37,7 @@ export interface QCContent {
   revised_notes: string | null
   naming_asset: string | null
   content_type: string | null
+  in_logbook: boolean
   ingest_by: string | null
   ingest_at: string | null
   qc_date: string
