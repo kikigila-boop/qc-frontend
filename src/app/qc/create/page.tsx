@@ -181,7 +181,7 @@ export default function CreateQCPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <TopBar title="Tambah QC Baru" />
+      <TopBar title="Tambah Konten Baru" />
       <main className="flex-1 p-4 pb-nav">
         {success && (
           <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400">
@@ -295,7 +295,14 @@ export default function CreateQCPage() {
                 <input {...register('cast')} placeholder="Nama pemeran utama" className={INPUT_CLS} />
               </FIELD>
               <FIELD label="Storage Location (opsional)">
-                <input {...register('storage_location')} placeholder="NAS-Drama-01" className={INPUT_CLS} />
+                <select {...register('storage_location')} className={SELECT_CLS}>
+                  <option value="">-- Pilih NAS --</option>
+                  <option value="NAS 247">NAS 247</option>
+                  <option value="NAS 248">NAS 248</option>
+                  <option value="NAS 249">NAS 249</option>
+                  <option value="NAS 250">NAS 250</option>
+                  <option value="NAS 251">NAS 251</option>
+                </select>
               </FIELD>
             </div>
           </div>
@@ -303,6 +310,15 @@ export default function CreateQCPage() {
           <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900">
             <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{isMH ? 'Info Material' : 'Hasil QC'}</p>
             <div className="space-y-3">
+              {isMH && (
+              <FIELD label="Nama Material Handling">
+                <input
+                  value={authUser?.name ?? ''}
+                  readOnly
+                  className={`${INPUT_CLS} bg-slate-50 text-slate-500 dark:bg-slate-800/50 cursor-not-allowed`}
+                />
+              </FIELD>
+              )}
               {!isMH && (
               <FIELD label="QC Result" required>
                 <select {...register('qc_result')} className={SELECT_CLS}>
