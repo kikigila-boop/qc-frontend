@@ -62,12 +62,34 @@ export default function QCDetailPage() {
   const [showHistory, setShowHistory] = useState(false)
   const [showReviseModal, setShowReviseModal] = useState(false)
   const [revising, setRevising] = useState(false)
+  const [editingNaming, setEditingNaming] = useState(false)
+  const [namingVal, setNamingVal] = useState('')
+  const [savingNaming, setSavingNaming] = useState(false)
+
+  // Save naming asset
+  const saveNaming = async () => {
+    if (!namingVal.trim()) return
+    setSavingNaming(true)
+    try {
+      await api.patch(`/qc/${id}/naming-asset`, { naming_asset: namingVal.trim() })
+      mutate(`/qc/${id}`)
+      setEditingNaming(false)
+    } catch { alert('Gagal menyimpan naming asset') }
+    finally { setSavingNaming(false) }
+  }
 
   // Advance through STATUS_ORDER
   const advanceStatus = async (targetStatus?: string) => {
     const currentIdx = item ? STATUS_ORDER.indexOf(item.status as StatusEnum) : -1
     const target = targetStatus ?? (item ? STATUS_ORDER[currentIdx + 1] : null)
     if (!target || !item) return
+    // Warn editor if naming_asset is empty and they're going to Ready To Ingest
+    if (target === 'Ready To Ingest' && !item.naming_asset) {
+      const proceed = window.confirm(
+        '⚠️ Naming Asset belum diisi oleh tim CMS.\n\nKamu bisa isi sendiri atau tetap lanjut.\n\nKlik OK untuk lanjut tanpa Naming Asset, atau Cancel untuk isi dulu.'
+      )
+      if (!proceed) return
+    }
     setAdvancing(true)
     try {
       await api.patch(`/qc/${id}/status`, { new_status: target })
@@ -81,6 +103,12 @@ export default function QCDetailPage() {
 
   // Editor re-submits: Need Revised → Ready To Ingest
   const resubmit = async () => {
+    if (item && !item.naming_asset) {
+      const proceed = window.confirm(
+        '⚠️ Naming Asset belum diisi oleh tim CMS.\n\nKamu bisa isi sendiri atau tetap lanjut.\n\nKlik OK untuk lanjut tanpa Naming Asset, atau Cancel untuk isi dulu.'
+      )
+      if (!proceed) return
+    }
     setAdvancing(true)
     try {
       await api.patch(`/qc/${id}/status`, { new_status: 'Ready To Ingest' })
@@ -248,12 +276,47 @@ export default function QCDetailPage() {
         {/* Info */}
         <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Informasi</p>
+
+          {/* Naming Asset — editable by CMS and Editor */}
+          <div className="mb-3 rounded-xl border border-blue-100 bg-blue-50 dark:border-blue-900/40 dark:bg-blue-900/10 px-3 py-2.5">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">Naming Asset</span>
+              {!editingNaming && (isCMS || isEditor || isAdmin) && (
+                <button onClick={() => { setNamingVal(item.naming_asset || ''); setEditingNaming(true) }}
+                  className="text-[10px] text-blue-500 hover:text-blue-700 font-medium">
+                  {item.naming_asset ? 'Edit' : '+ Isi Sekarang'}
+                </button>
+              )}
+            </div>
+            {editingNaming ? (
+              <div className="flex gap-2 mt-1">
+                <input autoFocus value={namingVal} onChange={e => setNamingVal(e.target.value)}
+                  placeholder="Contoh: SERIES_CINTADUAKASTA_EP01"
+                  className="flex-1 rounded-lg border border-blue-200 bg-white px-2.5 py-1.5 text-xs focus:outline-none focus:border-blue-400" />
+                <button onClick={saveNaming} disabled={savingNaming}
+                  className="rounded-lg bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
+                  {savingNaming ? '...' : 'Simpan'}
+                </button>
+                <button onClick={() => setEditingNaming(false)}
+                  className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] text-slate-500 hover:bg-slate-50">
+                  Batal
+                </button>
+              </div>
+            ) : (
+              <p className={`text-sm font-mono font-semibold ${item.naming_asset ? 'text-blue-800 dark:text-blue-300' : 'text-slate-400 italic'}`}>
+                {item.naming_asset || 'Belum diisi — tim CMS akan mengisi segera'}
+              </p>
+            )}
+            {!item.naming_asset && (
+              <p className="mt-1 text-[10px] text-orange-500">⚠ Naming Asset diperlukan sebelum proses Ingest</p>
+            )}
+          </div>
           {[
             ...(item.mh_name ? [['Input MH', item.mh_name]] : []),
             ['Editor', item.editor_name || '-'],
             ['Duration', item.duration || '-'],
             ['Storage', item.storage_location || '-'],
-            ['Cast', item.cast || '-'],
+
             ['Tanggal QC', fmt(item.qc_date)],
             ['Dibuat', fmt(item.created_at)],
             ['Diperbarui', fmt(item.updated_at)],

@@ -35,6 +35,7 @@ export interface QCContent {
   editor_name: string | null
   editor_id: number | null
   revised_notes: string | null
+  naming_asset: string | null
   ingest_by: string | null
   ingest_at: string | null
   qc_date: string

@@ -17,7 +17,7 @@ interface CreateForm {
   editor_name: string
   status: string
   duration: string
-  cast: string
+  naming_asset: string
   storage_location: string
   notes: string
   qc_date: string
@@ -144,7 +144,7 @@ export default function CreateQCPage() {
       title: data.title, season: data.season,
       qc_result: data.qc_result, editor_name: data.editor_name,
       editor_id: data.editor_id || authUser?.id || null, status: data.status,
-      duration: data.duration || null, cast: data.cast || null,
+      duration: data.duration || null, naming_asset: data.naming_asset || null,
       storage_location: data.storage_location || null, notes: data.notes || null,
       qc_date: data.qc_date ? new Date(data.qc_date).toISOString() : null,
     }
@@ -303,8 +303,8 @@ export default function CreateQCPage() {
               <FIELD label="Duration (opsional)">
                 <input {...register('duration')} placeholder="45:30" className={INPUT_CLS} />
               </FIELD>
-              <FIELD label="Cast (opsional)">
-                <input {...register('cast')} placeholder="Nama pemeran utama" className={INPUT_CLS} />
+              <FIELD label="Naming Asset (opsional)" hint="Nama file aset untuk sinkronisasi dengan ADI metadata CMS">
+                <input {...register('naming_asset')} placeholder="Contoh: SERIES_CINTADUAKASTA_EP01" className={INPUT_CLS} />
               </FIELD>
               <FIELD label="Storage Location (opsional)">
                 <select {...register('storage_location')} className={SELECT_CLS}>
