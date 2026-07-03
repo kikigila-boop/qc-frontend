@@ -16,9 +16,11 @@ export default function BottomNav() {
 
   const NAV = [
     { href: '/dashboard',        label: 'Dashboard', icon: LayoutDashboard },
-    // MH sees their own queue; others see QC list
+    // MH sees their own queue + QC list + create
     ...(isMH && !isAdmin ? [
       { href: '/material',       label: 'Material',   icon: Package },
+      { href: '/qc/list',        label: 'QC List',    icon: ListVideo },
+      { href: '/qc/create',      label: 'Tambah',     icon: PlusCircle },
     ] : []),
     ...(isEditor ? [
       { href: '/qc/list',        label: 'QC List',    icon: ListVideo },

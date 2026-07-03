@@ -81,8 +81,9 @@ function parseEpisodeInput(raw: string, mode: EpMode, groupBy: number): EpisodeR
 }
 
 export default function CreateQCPage() {
-  const { user, isLoading: authLoading } = useRoleGuard(['editor', 'admin'])
+  const { user, isLoading: authLoading } = useRoleGuard(['editor', 'admin', 'material_handling'])
   const { user: authUser } = useAuth()
+  const isMH = authUser?.role === 'material_handling'
   const router = useRouter()
   const [success, setSuccess] = useState(false)
   const [submitError, setSubmitError] = useState('')
@@ -150,7 +151,7 @@ export default function CreateQCPage() {
       reset()
       setEpisodeWatch('')
       setBulkProgress(null)
-      setTimeout(() => { setSuccess(false); router.push('/qc/list') }, 1800)
+      setTimeout(() => { setSuccess(false); router.push(isMH ? '/material' : '/qc/list') }, 1800)
     } catch (e: any) {
       setBulkProgress(null)
       const detail = e?.response?.data?.detail
@@ -300,17 +301,20 @@ export default function CreateQCPage() {
           </div>
 
           <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Hasil QC</p>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{isMH ? 'Info Material' : 'Hasil QC'}</p>
             <div className="space-y-3">
+              {!isMH && (
               <FIELD label="QC Result" required>
                 <select {...register('qc_result')} className={SELECT_CLS}>
                   <option value="PASS">PASS</option>
                   <option value="NOT PASS">NOT PASS</option>
                 </select>
               </FIELD>
+              )}
+              {!isMH && (
               <FIELD label="Nama Editor" required error={errors.editor_name?.message}>
                 <select
-                  {...register('editor_name', { required: 'Wajib diisi' })}
+                  {...register('editor_name', { required: isMH ? false : 'Wajib diisi' })}
                   className={SELECT_CLS}
                   onChange={e => {
                     const selected = editors.find(ed => ed.name === e.target.value)
@@ -324,12 +328,15 @@ export default function CreateQCPage() {
                   ))}
                 </select>
               </FIELD>
+              )}
+              {!isMH && (
               <FIELD label="Status" required>
                 <select {...register('status')} className={SELECT_CLS}>
                   <option value="QC Process">QC Process</option>
                   <option value="QC Done">QC Done</option>
                 </select>
               </FIELD>
+              )}
               <FIELD label="Tanggal QC" required error={errors.qc_date?.message}
                 hint="Default hari ini jika dikosongkan">
                 <input
