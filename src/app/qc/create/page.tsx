@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import api from '@/lib/api'
 import TopBar from '@/components/layout/TopBar'
 import BottomNav from '@/components/layout/BottomNav'
-import { Loader2, CheckCircle, AlertCircle, Layers, Link } from 'lucide-react'
+import { Loader2, CheckCircle, AlertCircle, Layers, Link, Wand2 } from 'lucide-react'
 import { useRoleGuard } from '@/hooks/useRoleGuard'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -81,6 +81,28 @@ function parseEpisodeInput(raw: string, mode: EpMode, groupBy: number): EpisodeR
   return null
 }
 
+
+function buildAutoName(title: string, contentType: string, season: string, episode: string, epMode: string): string {
+  const slug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+  if (!slug) return ''
+  if (!contentType) return slug
+  const s = (season || '1').replace(/[^0-9]/g, '') || '1'
+  const ep = (episode || '').trim()
+  const isBulk = epMode === 'grouped' || epMode === 'combined' || ep.includes('-') || ep.includes(',') || !ep
+  switch (contentType) {
+    case 'Series':
+    case 'Microdrama':
+      return isBulk ? `${slug}-S${s}-E..` : `${slug}-S${s}-E${ep}`
+    case 'Movies': return `${slug}-M1`
+    case 'Trailer': return `${slug}-T1`
+    default: return slug
+  }
+}
+
 export default function CreateQCPage() {
   const { user, isLoading: authLoading } = useRoleGuard(['editor', 'admin', 'material_handling'])
   const { user: authUser } = useAuth()
@@ -100,9 +122,14 @@ export default function CreateQCPage() {
   const [editors, setEditors] = useState<{ id: number; name: string }[]>([])
   const formRef = useRef<HTMLFormElement>(null)
 
-  const { register, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<CreateForm>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<CreateForm>({
     defaultValues: { status: 'QC Process', qc_result: 'PASS', qc_date: new Date().toISOString().slice(0, 10), editor_id: null }
   })
+
+  const watchTitle = watch('title', '')
+  const watchSeason = watch('season', '1')
+  const watchEpisode = watch('episode', '')
+  const watchContentType = watch('content_type', '')
 
   // Read query params and pre-fill title from logbook
   useEffect(() => {
@@ -326,7 +353,21 @@ export default function CreateQCPage() {
                 <input {...register('duration')} placeholder="45:30" className={INPUT_CLS} />
               </FIELD>
               <FIELD label="Naming Asset (opsional)" hint="Nama file aset untuk sinkronisasi dengan ADI metadata CMS">
-                <input {...register('naming_asset')} placeholder="Contoh: SERIES_CINTADUAKASTA_EP01" className={INPUT_CLS} />
+                <div className="flex gap-2">
+                  <input {...register('naming_asset')} placeholder="Contoh: SERIES_CINTADUAKASTA_EP01" className={`${INPUT_CLS} flex-1`} />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const name = buildAutoName(watchTitle, watchContentType, watchSeason, watchEpisode, epMode)
+                      if (name) setValue('naming_asset', name)
+                    }}
+                    disabled={!watchTitle}
+                    className="shrink-0 flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100 disabled:opacity-40 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300"
+                  >
+                    <Wand2 size={13} />
+                    Auto
+                  </button>
+                </div>
               </FIELD>
               <FIELD label="Storage Location (opsional)">
                 <select {...register('storage_location')} className={SELECT_CLS}>
