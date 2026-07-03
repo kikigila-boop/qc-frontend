@@ -57,13 +57,13 @@ const fetcher = (url: string) => api.get(url).then(r => r.data)
 // ─── Naming Asset Tab ─────────────────────────────────────────────────────
 function NamingAssetTab() {
   const { data: allItems, isLoading, mutate: mutateItems } = useSWR<QCContent[]>(
-    '/qc?page_size=200', fetcher, { refreshInterval: 20000 }
+    '/qc/needs-naming', fetcher, { refreshInterval: 20000 }
   )
   const [saving, setSaving] = useState<number | null>(null)
   const [vals, setVals] = useState<Record<number, string>>({})
   const [search, setSearch] = useState('')
 
-  const needsNaming = (allItems ?? []).filter(i => !i.naming_asset)
+  const needsNaming = allItems ?? []
   const filtered = search.trim()
     ? needsNaming.filter(i =>
         i.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -183,13 +183,13 @@ export default function CMSPage() {
     `/cms/queue?${params.toString()}`, fetcher, { refreshInterval: 15000 }
   )
   const { data: countData } = useSWR('/cms/queue/count', fetcher, { refreshInterval: 15000 })
-  const { data: allItems } = useSWR<QCContent[]>('/qc?page_size=200', fetcher, { refreshInterval: 20000 })
+  const { data: allItems } = useSWR<QCContent[]>('/qc/needs-naming', fetcher, { refreshInterval: 20000 })
 
   if (authLoading || !user) return null
 
   const readyItems = items?.filter(i => i.status === 'Ready To Ingest') ?? []
   const ingestingItems = items?.filter(i => i.status === 'Ingesting') ?? []
-  const needsNamingCount = (allItems ?? []).filter(i => !i.naming_asset).length
+  const needsNamingCount = allItems?.length ?? 0
 
   const refreshAll = () => {
     mutate(`/cms/queue?${params.toString()}`)
