@@ -266,7 +266,7 @@ export default function MaterialPage() {
         )}
 
         {/* Request Konten */}
-        {requests && requests.length > 0 && (
+        {requests && requests.filter((r: any) => r.status !== 'Diterima').length > 0 && (
           <div className="border-b border-slate-100 bg-purple-50 dark:border-slate-800 dark:bg-purple-900/10">
             <div className="flex items-center gap-2 px-4 py-2 border-b border-purple-100 dark:border-purple-800">
               <FileText size={14} className="text-purple-600" />
@@ -275,7 +275,7 @@ export default function MaterialPage() {
               </p>
             </div>
             <div className="divide-y divide-purple-100 dark:divide-purple-900/30">
-              {requests.slice(0, 10).map((r: any) => (
+              {requests.filter((r: any) => r.status !== 'Diterima').slice(0, 10).map((r: any) => (
                 <div key={r.id} className="px-4 py-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
