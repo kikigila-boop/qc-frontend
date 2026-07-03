@@ -63,7 +63,7 @@ export default function MaterialPage() {
       await api.patch(`/delivery/${id}/start-copy`)
       mutate('/delivery/list')
     } catch (err: any) {
-      alert(err?.response?.data?.detail || 'Gagal mulai copy.')
+      alert(err?.response?.data?.detail || err?.message || `Gagal mulai copy (${err?.response?.status})`)
     } finally { setCopying(null) }
   }
 
