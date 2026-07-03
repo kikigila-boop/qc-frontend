@@ -8,7 +8,7 @@ import BottomNav from '@/components/layout/BottomNav'
 import StatusBadge from '@/components/ui/StatusBadge'
 import { useRoleGuard } from '@/hooks/useRoleGuard'
 import { useAuth } from '@/hooks/useAuth'
-import { Package, Search, Loader2, RefreshCw, ChevronRight, AlertCircle, Inbox, CheckCircle2, ExternalLink, PlusCircle, FileText, CheckCheck, X } from 'lucide-react'
+import { Package, Search, Loader2, RefreshCw, ChevronRight, AlertCircle, Inbox, CheckCircle2, ExternalLink, PlusCircle, FileText, CheckCheck, X, Copy, PackageCheck } from 'lucide-react'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import Link from 'next/link'
@@ -29,6 +29,8 @@ export default function MaterialPage() {
   )
   const { data: counts } = useSWR('/material/queue/count', fetcher, { refreshInterval: 15000 })
   const [confirming, setConfirming] = useState<number | null>(null)
+  const [copying, setCopying] = useState<number | null>(null)
+  const [completing, setCompleting] = useState<number | null>(null)
   const [approvingReq, setApprovingReq] = useState<number | null>(null)
   const [rejectingReq, setRejectingReq] = useState<number | null>(null)
   const [rejectNotes, setRejectNotes] = useState<Record<number, string>>({})
@@ -66,6 +68,26 @@ export default function MaterialPage() {
     } finally {
       setConfirming(null)
     }
+  }
+
+  const doStartCopy = async (id: number) => {
+    setCopying(id)
+    try {
+      await api.patch(`/delivery/${id}/start-copy`)
+      mutate('/delivery/list')
+    } catch (err: any) {
+      alert(err?.response?.data?.detail || 'Gagal mulai copy.')
+    } finally { setCopying(null) }
+  }
+
+  const doCompleteCopy = async (id: number) => {
+    setCompleting(id)
+    try {
+      await api.patch(`/delivery/${id}/complete-copy`)
+      mutate('/delivery/list')
+    } catch (err: any) {
+      alert(err?.response?.data?.detail || 'Gagal selesaikan copy.')
+    } finally { setCompleting(null) }
   }
 
   const doApproveReq = async (id: number) => {
@@ -169,7 +191,11 @@ export default function MaterialPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-[10px] font-semibold rounded-full px-2 py-0.5 ${d.status === 'Pending' ? 'bg-amber-200 text-amber-800' : 'bg-green-100 text-green-700'}`}>
+                        <span className={`text-[10px] font-semibold rounded-full px-2 py-0.5 ${
+                          d.status === 'Pending'     ? 'bg-amber-200 text-amber-800' :
+                          d.status === 'Copying'     ? 'bg-blue-100 text-blue-700 animate-pulse' :
+                          d.status === 'Ready to QC' ? 'bg-green-100 text-green-700' :
+                                                       'bg-slate-100 text-slate-600'}`}>
                           {d.status}
                         </span>
                         <span className="text-[10px] text-slate-400">{d.delivery_method}</span>
@@ -191,19 +217,34 @@ export default function MaterialPage() {
                     <div className="shrink-0 flex flex-col gap-1.5">
                       {d.status === 'Pending' && (
                         <button
-                          onClick={() => doConfirm(d.id)}
-                          disabled={confirming === d.id}
-                          className="flex items-center gap-1 rounded-lg bg-green-600 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                          onClick={() => doStartCopy(d.id)}
+                          disabled={copying === d.id}
+                          className="flex items-center gap-1 rounded-lg bg-blue-600 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
                         >
-                          {confirming === d.id ? <Loader2 size={11} className="animate-spin" /> : <CheckCircle2 size={11} />}
-                          Konfirmasi
+                          {copying === d.id ? <Loader2 size={11} className="animate-spin" /> : <Copy size={11} />}
+                          Mulai Copy
                         </button>
                       )}
+                      {d.status === 'Copying' && (
+                        <button
+                          onClick={() => doCompleteCopy(d.id)}
+                          disabled={completing === d.id}
+                          className="flex items-center gap-1 rounded-lg bg-green-600 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-green-700 disabled:opacity-50 animate-pulse"
+                        >
+                          {completing === d.id ? <Loader2 size={11} className="animate-spin" /> : <PackageCheck size={11} />}
+                          Selesai Copy
+                        </button>
+                      )}
+                      {d.status === 'Ready to QC' && (
+                        <span className="flex items-center gap-1 rounded-lg bg-green-100 px-2.5 py-1.5 text-[11px] font-semibold text-green-700">
+                          <CheckCheck size={11} /> Ready to QC
+                        </span>
+                      )}
                       <a
-                        href={`/kirim/receipt/${d.token}`} target="_blank" rel="noreferrer"
-                        className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50"
+                        href={`/kirim/track/${d.token}`} target="_blank" rel="noreferrer"
+                        className="flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-[11px] font-medium text-blue-600 hover:bg-blue-100"
                       >
-                        <ExternalLink size={11} /> Receipt
+                        <ExternalLink size={11} /> Track
                       </a>
                       {d.status === 'Confirmed' && (
                         <a

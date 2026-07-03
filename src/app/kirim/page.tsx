@@ -64,7 +64,7 @@ function DeliveryForm() {
       })
       if (!res.ok) throw new Error()
       const data = await res.json()
-      router.push(`/kirim/receipt/${data.token}`)
+      router.push(`/kirim/track/${data.token}`)
     } catch { setError('Gagal mengirim form. Coba lagi.'); setSubmitting(false) }
   }
 
