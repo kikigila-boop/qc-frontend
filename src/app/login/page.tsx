@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { useForm } from 'react-hook-form'
@@ -8,8 +8,12 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react'
 interface LoginForm { email: string; password: string }
 
 export default function LoginPage() {
-  const { login } = useAuth()
+  const { login, user } = useAuth()
   const router = useRouter()
+
+  useEffect(() => {
+    if (user) router.replace('/dashboard')
+  }, [user, router])
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState('')
   const { register, handleSubmit, formState: { isSubmitting } } = useForm<LoginForm>()
