@@ -31,6 +31,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
+        {/* Apply saved dark mode before first paint — prevents flash */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function(){
+            try {
+              var t = localStorage.getItem('qc_theme');
+              if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+              }
+            } catch(e){}
+          })();
+        `}} />
       </head>
       <body className={`${inter.className} bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50`}>
         <Providers>{children}</Providers>

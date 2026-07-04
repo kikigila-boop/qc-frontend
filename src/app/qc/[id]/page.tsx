@@ -281,7 +281,7 @@ export default function QCDetailPage() {
           <div className="mb-3 rounded-xl border border-blue-100 bg-blue-50 dark:border-blue-900/40 dark:bg-blue-900/10 px-3 py-2.5">
             <div className="flex items-center justify-between mb-1">
               <span className="text-[10px] font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">Naming Asset</span>
-              {!editingNaming && (isCMS || isEditor || isAdmin) && (
+              {!editingNaming && (isCMS || isEditor) && (
                 <button onClick={() => { setNamingVal(item.naming_asset || ''); setEditingNaming(true) }}
                   className="text-[10px] text-blue-500 hover:text-blue-700 font-medium">
                   {item.naming_asset ? 'Edit' : '+ Isi Sekarang'}
