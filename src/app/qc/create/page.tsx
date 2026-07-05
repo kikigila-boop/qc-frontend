@@ -132,6 +132,8 @@ export default function CreateQCPage() {
   const [platforms, setPlatforms] = useState<string[]>([])
   const [withSubs, setWithSubs] = useState(false)
   const [selectedLangs, setSelectedLangs] = useState<string[]>([])
+  const [withDubb, setWithDubb] = useState(false)
+  const [selectedDubbLangs, setSelectedDubbLangs] = useState<string[]>([])
 
   // Pre-fill languages when platform or withSubs changes
   const getDefaultLangs = (plats: string[]) => {
@@ -147,6 +149,7 @@ export default function CreateQCPage() {
     if (withSubs) setSelectedLangs(getDefaultLangs(next))
   }
   const toggleLang = (code: string) => setSelectedLangs(prev => prev.includes(code) ? prev.filter(x => x !== code) : [...prev, code])
+  const toggleDubbLang = (code: string) => setSelectedDubbLangs(prev => prev.includes(code) ? prev.filter(x => x !== code) : [...prev, code])
   const allLangsForPlatforms = () => {
     const seen = new Set<string>()
     const all: { code: string; name: string }[] = []
@@ -217,6 +220,8 @@ export default function CreateQCPage() {
       platform: platforms.length > 0 ? JSON.stringify(platforms) : null,
       with_subs: withSubs,
       selected_languages: withSubs && selectedLangs.length > 0 ? selectedLangs : null,
+      with_dubb: withDubb,
+      selected_dubb_languages: withDubb && selectedDubbLangs.length > 0 ? selectedDubbLangs : null,
     }
 
     try {
@@ -370,6 +375,51 @@ export default function CreateQCPage() {
               )}
               {withSubs && platforms.length === 0 && (
                 <p className="text-xs text-amber-500 -mt-2">Pilih platform dulu untuk melihat pilihan bahasa.</p>
+              )}
+
+              {/* With/Without Dubb */}
+              <FIELD label="Dubbing">
+                <div className="flex gap-3 pt-1">
+                  {[{ value: false, label: 'Tanpa Dubb' }, { value: true, label: 'Dengan Dubb' }].map(opt => (
+                    <button key={String(opt.value)} type="button"
+                      onClick={() => {
+                        setWithDubb(opt.value)
+                        if (opt.value) setSelectedDubbLangs(getDefaultLangs(platforms))
+                        else setSelectedDubbLangs([])
+                      }}
+                      className={`flex-1 py-2.5 rounded-xl border-2 text-sm font-semibold transition-colors ${
+                        withDubb === opt.value
+                          ? 'border-violet-500 bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400'
+                      }`}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </FIELD>
+
+              {withDubb && platforms.length > 0 && (
+                <FIELD label="Bahasa Dubbing" hint="Pre-filled sesuai platform, bisa ubah manual">
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {allLangsForPlatforms().map(lang => (
+                      <button key={lang.code} type="button"
+                        onClick={() => toggleDubbLang(lang.code)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                          selectedDubbLangs.includes(lang.code)
+                            ? 'bg-violet-600 border-violet-600 text-white'
+                            : 'border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400'
+                        }`}>
+                        {lang.code} · {lang.name}
+                      </button>
+                    ))}
+                  </div>
+                  {selectedDubbLangs.length === 0 && (
+                    <p className="mt-1 text-xs text-amber-500">Pilih minimal 1 bahasa</p>
+                  )}
+                </FIELD>
+              )}
+              {withDubb && platforms.length === 0 && (
+                <p className="text-xs text-amber-500 -mt-2">Pilih platform dulu untuk melihat pilihan bahasa dubbing.</p>
               )}
 
               {contentType !== 'Movies' && contentType !== 'Trailer' && (

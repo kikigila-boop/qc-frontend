@@ -13,7 +13,7 @@ export default function BottomNav() {
   const isEditor = role === 'editor' || isAdmin
   const isCMS = role === 'cms' || isAdmin
   const isMH = role === 'material_handling' || isAdmin
-  const isSubs = role === 'subtitle' || isAdmin
+  const isSubs = role === 'subtitle' || role === 'editor' || isAdmin
 
   const NAV = [
     { href: '/dashboard',        label: 'Dashboard', icon: LayoutDashboard },
@@ -40,10 +40,10 @@ export default function BottomNav() {
     ] : []),
     ...(isSubs && !isAdmin ? [
       { href: '/qc/list',        label: 'QC List',    icon: ListVideo },
-      { href: '/subs',           label: 'Subs',       icon: Captions },
+      { href: '/subs',           label: 'Sub & Dubb', icon: Captions },
     ] : []),
     ...(isAdmin ? [
-      { href: '/subs',           label: 'Subs',       icon: Captions },
+      { href: '/subs',           label: 'Sub & Dubb', icon: Captions },
     ] : []),
     ...(isAdmin ? [
       { href: '/admin/users',    label: 'Users',      icon: ShieldCheck },

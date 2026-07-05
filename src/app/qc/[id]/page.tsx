@@ -71,6 +71,12 @@ export default function QCDetailPage() {
   const [editingSubsPic, setEditingSubsPic] = useState<number | null>(null)
   const [picVal, setPicVal] = useState('')
   const [withSubsEditing, setWithSubsEditing] = useState(false)
+  const [dubbExpanded, setDubbExpanded] = useState(false)
+  const [dubbData, setDubbData] = useState<any[]>([])
+  const [loadingDubb, setLoadingDubb] = useState(false)
+  const [editingDubbPic, setEditingDubbPic] = useState<number | null>(null)
+  const [dubbPicVal, setDubbPicVal] = useState('')
+  const [withDubbEditing, setWithDubbEditing] = useState(false)
 
   // Subtitle helpers
   const loadSubtasks = async () => {
@@ -92,6 +98,26 @@ export default function QCDetailPage() {
     if (val) { setTimeout(loadSubtasks, 500) }
     setWithSubsEditing(false)
   }
+  const loadDubbTasks = async () => {
+    if (!id) return
+    setLoadingDubb(true)
+    try {
+      const res = await api.get(`/subs/${id}/tasks?task_type=dubb`)
+      setDubbData(res.data)
+    } catch {}
+    setLoadingDubb(false)
+  }
+  const updateDubbTask = async (taskId: number, updates: { status?: string; pic?: string }) => {
+    await api.patch(`/subs/${id}/tasks/${taskId}`, updates)
+    loadDubbTasks()
+  }
+  const toggleWithDubb = async (val: boolean) => {
+    await api.patch(`/qc/${id}`, { with_dubb: val })
+    mutate(`/qc/${id}`)
+    if (val) { setTimeout(loadDubbTasks, 500) }
+    setWithDubbEditing(false)
+  }
+
   const STATUS_COLORS: Record<string, string> = {
     pending: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
     in_progress: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
@@ -451,6 +477,95 @@ export default function QCDetailPage() {
                       ))}
                       {subsData.length === 0 && !loadingSubs && (
                         <p className="text-xs text-slate-400 italic">Belum ada subtitle task. Coba regenerate dari halaman Subs.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Dubbing Section ── */}
+          {item.with_dubb !== undefined && (
+            <div className="mt-3 rounded-xl border border-violet-100 bg-violet-50 dark:border-violet-900/40 dark:bg-violet-900/10 px-3 py-2.5">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400">Dubbing</span>
+                  {item.platform && (
+                    <span className="text-[10px] text-slate-400">
+                      {(() => { try { return (JSON.parse(item.platform) as string[]).map((p: string) => p === 'vshort' ? 'V+ Short' : 'V+').join(' & ') } catch { return item.platform } })()}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {(role === 'editor' || role === 'material_handling' || role === 'admin') && (
+                    withDubbEditing ? (
+                      <div className="flex gap-1">
+                        <button onClick={() => toggleWithDubb(true)} className="text-[10px] px-2 py-0.5 rounded-full bg-violet-600 text-white">Dengan Dubb</button>
+                        <button onClick={() => toggleWithDubb(false)} className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Tanpa Dubb</button>
+                        <button onClick={() => setWithDubbEditing(false)} className="text-[10px] text-slate-400">Batal</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => setWithDubbEditing(true)} className="text-[10px] text-violet-500 hover:text-violet-700">
+                        {item.with_dubb ? 'Dengan Dubb ✏' : 'Tanpa Dubb ✏'}
+                      </button>
+                    )
+                  )}
+                  {!withDubbEditing && (
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${item.with_dubb ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
+                      {item.with_dubb ? 'With Dubb' : 'No Dubb'}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {item.with_dubb && (
+                <div>
+                  <button onClick={() => { setDubbExpanded(e => !e); if (!dubbExpanded) loadDubbTasks() }}
+                    className="text-[11px] text-violet-600 dark:text-violet-400 underline">
+                    {dubbExpanded ? 'Sembunyikan detail' : 'Lihat progress bahasa →'}
+                  </button>
+
+                  {dubbExpanded && (
+                    <div className="mt-2 space-y-1.5">
+                      {loadingDubb && <p className="text-xs text-slate-400">Memuat...</p>}
+                      {dubbData.map((task: any) => (
+                        <div key={task.id} className="flex items-center gap-2 rounded-lg bg-white dark:bg-slate-800 px-2.5 py-2">
+                          <span className={`w-16 text-center text-[10px] font-bold px-1.5 py-0.5 rounded-full ${STATUS_COLORS[task.status]}`}>
+                            {task.language_code}
+                          </span>
+                          <span className="flex-1 text-xs text-slate-600 dark:text-slate-300">{task.language_name}</span>
+                          {role === 'editor' || role === 'admin' ? (
+                            editingDubbPic === task.id ? (
+                              <input autoFocus value={dubbPicVal} onChange={e => setDubbPicVal(e.target.value)}
+                                onBlur={() => { updateDubbTask(task.id, { pic: dubbPicVal }); setEditingDubbPic(null) }}
+                                onKeyDown={e => { if (e.key === 'Enter') { updateDubbTask(task.id, { pic: dubbPicVal }); setEditingDubbPic(null) } }}
+                                className="w-24 text-xs rounded border border-violet-300 px-1.5 py-0.5 focus:outline-none" placeholder="Nama PIC" />
+                            ) : (
+                              <button onClick={() => { setEditingDubbPic(task.id); setDubbPicVal(task.pic || '') }}
+                                className="text-xs text-slate-400 hover:text-slate-600 w-24 text-right truncate">
+                                {task.pic || '+ PIC'}
+                              </button>
+                            )
+                          ) : (
+                            <span className="text-xs text-slate-400 w-24 text-right truncate">{task.pic || '-'}</span>
+                          )}
+                          {(role === 'editor' || role === 'admin') ? (
+                            <button onClick={() => {
+                              const next = task.status === 'pending' ? 'in_progress' : task.status === 'in_progress' ? 'done' : 'pending'
+                              updateDubbTask(task.id, { status: next })
+                            }} className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${STATUS_COLORS[task.status]}`}>
+                              {STATUS_LABELS[task.status]}
+                            </button>
+                          ) : (
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${STATUS_COLORS[task.status]}`}>
+                              {STATUS_LABELS[task.status]}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                      {dubbData.length === 0 && !loadingDubb && (
+                        <p className="text-xs text-slate-400 italic">Belum ada dubbing task. Coba regenerate dari halaman Sub & Dubb.</p>
                       )}
                     </div>
                   )}
