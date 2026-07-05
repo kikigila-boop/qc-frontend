@@ -9,6 +9,19 @@ import { Loader2, CheckCircle, AlertCircle, Layers, Link, Wand2 } from 'lucide-r
 import { useRoleGuard } from '@/hooks/useRoleGuard'
 import { useAuth } from '@/hooks/useAuth'
 
+const VSHORT_LANGS = [
+  { code: 'ID', name: 'Indonesia' }, { code: 'EN', name: 'English' },
+  { code: 'AR', name: 'Arabic' },   { code: 'ES', name: 'Spanish' },
+  { code: 'PT', name: 'Portugis (Brazil)' }, { code: 'HI', name: 'Hindi' },
+  { code: 'ZH', name: 'Chinese' },
+]
+const VPLUS_LANGS = [
+  { code: 'ID', name: 'Indonesia' }, { code: 'EN', name: 'English' },
+  { code: 'MY', name: 'Malay' },    { code: 'JV', name: 'Javanese' },
+  { code: 'TH', name: 'Thailand' }, { code: 'SU', name: 'Sundanese' },
+  { code: 'ZH', name: 'Chinese' },
+]
+
 interface CreateForm {
   title: string
   season: string
@@ -116,6 +129,31 @@ export default function CreateQCPage() {
   const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number } | null>(null)
   const [episodeWatch, setEpisodeWatch] = useState('')
   const [contentType, setContentType] = useState<string>('')
+  const [platforms, setPlatforms] = useState<string[]>([])
+  const [withSubs, setWithSubs] = useState(false)
+  const [selectedLangs, setSelectedLangs] = useState<string[]>([])
+
+  // Pre-fill languages when platform or withSubs changes
+  const getDefaultLangs = (plats: string[]) => {
+    const seen = new Set<string>()
+    const langs: string[] = []
+    if (plats.includes('vshort')) VSHORT_LANGS.forEach(l => { if (!seen.has(l.code)) { langs.push(l.code); seen.add(l.code) } })
+    if (plats.includes('vplus'))  VPLUS_LANGS.forEach(l => { if (!seen.has(l.code)) { langs.push(l.code); seen.add(l.code) } })
+    return langs
+  }
+  const togglePlatform = (p: string) => {
+    const next = platforms.includes(p) ? platforms.filter(x => x !== p) : [...platforms, p]
+    setPlatforms(next)
+    if (withSubs) setSelectedLangs(getDefaultLangs(next))
+  }
+  const toggleLang = (code: string) => setSelectedLangs(prev => prev.includes(code) ? prev.filter(x => x !== code) : [...prev, code])
+  const allLangsForPlatforms = () => {
+    const seen = new Set<string>()
+    const all: { code: string; name: string }[] = []
+    if (platforms.includes('vshort')) VSHORT_LANGS.forEach(l => { if (!seen.has(l.code)) { all.push(l); seen.add(l.code) } })
+    if (platforms.includes('vplus'))  VPLUS_LANGS.forEach(l => { if (!seen.has(l.code)) { all.push(l); seen.add(l.code) } })
+    return all
+  }
   const [epMode, setEpMode] = useState<EpMode>('individual')
   const [groupBy, setGroupBy] = useState(2)
   const [groupByInput, setGroupByInput] = useState('2')
@@ -176,6 +214,9 @@ export default function CreateQCPage() {
       duration: data.duration || null, naming_asset: data.naming_asset || null,
       storage_location: data.storage_location || null, notes: data.notes || null,
       qc_date: data.qc_date ? new Date(data.qc_date).toISOString() : null,
+      platform: platforms.length > 0 ? JSON.stringify(platforms) : null,
+      with_subs: withSubs,
+      selected_languages: withSubs && selectedLangs.length > 0 ? selectedLangs : null,
     }
 
     try {
@@ -267,6 +308,69 @@ export default function CreateQCPage() {
                   <option value="Trailer">Trailer</option>
                 </select>
               </FIELD>
+
+              {/* Platform */}
+              <FIELD label="Platform">
+                <div className="flex gap-3 pt-1">
+                  {[{ value: 'vshort', label: 'V+ Short' }, { value: 'vplus', label: 'V+' }].map(p => (
+                    <button key={p.value} type="button"
+                      onClick={() => togglePlatform(p.value)}
+                      className={`flex-1 py-2.5 rounded-xl border-2 text-sm font-semibold transition-colors ${
+                        platforms.includes(p.value)
+                          ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400'
+                      }`}>
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </FIELD>
+
+              {/* With/Without Subs */}
+              <FIELD label="Subtitle">
+                <div className="flex gap-3 pt-1">
+                  {[{ value: false, label: 'Tanpa Subs' }, { value: true, label: 'Dengan Subs' }].map(opt => (
+                    <button key={String(opt.value)} type="button"
+                      onClick={() => {
+                        setWithSubs(opt.value)
+                        if (opt.value) setSelectedLangs(getDefaultLangs(platforms))
+                        else setSelectedLangs([])
+                      }}
+                      className={`flex-1 py-2.5 rounded-xl border-2 text-sm font-semibold transition-colors ${
+                        withSubs === opt.value
+                          ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400'
+                      }`}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </FIELD>
+
+              {/* Language picker — hanya tampil jika with_subs & platform dipilih */}
+              {withSubs && platforms.length > 0 && (
+                <FIELD label="Bahasa Subtitle" hint="Pre-filled sesuai platform, bisa ubah manual">
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {allLangsForPlatforms().map(lang => (
+                      <button key={lang.code} type="button"
+                        onClick={() => toggleLang(lang.code)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                          selectedLangs.includes(lang.code)
+                            ? 'bg-indigo-600 border-indigo-600 text-white'
+                            : 'border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400'
+                        }`}>
+                        {lang.code} · {lang.name}
+                      </button>
+                    ))}
+                  </div>
+                  {selectedLangs.length === 0 && (
+                    <p className="mt-1 text-xs text-amber-500">Pilih minimal 1 bahasa</p>
+                  )}
+                </FIELD>
+              )}
+              {withSubs && platforms.length === 0 && (
+                <p className="text-xs text-amber-500 -mt-2">Pilih platform dulu untuk melihat pilihan bahasa.</p>
+              )}
 
               {contentType !== 'Movies' && contentType !== 'Trailer' && (
               <FIELD label="Season" required error={errors.season?.message}>

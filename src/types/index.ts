@@ -19,6 +19,16 @@ export interface User {
   role: string
 }
 
+export interface SubtitleTask {
+  id: number
+  qc_content_id: number
+  language_code: string
+  language_name: string
+  status: 'pending' | 'in_progress' | 'done'
+  pic: string | null
+  updated_at: string | null
+}
+
 export interface QCContent {
   id: number
   qcid: string | null
@@ -38,6 +48,9 @@ export interface QCContent {
   naming_asset: string | null
   content_type: string | null
   in_logbook: boolean
+  platform: string | null
+  with_subs: boolean
+  subtitle_tasks?: SubtitleTask[]
   ingest_by: string | null
   ingest_at: string | null
   qc_date: string

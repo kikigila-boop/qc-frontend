@@ -65,6 +65,39 @@ export default function QCDetailPage() {
   const [editingNaming, setEditingNaming] = useState(false)
   const [namingVal, setNamingVal] = useState('')
   const [savingNaming, setSavingNaming] = useState(false)
+  const [subsExpanded, setSubsExpanded] = useState(false)
+  const [subsData, setSubsData] = useState<any[]>([])
+  const [loadingSubs, setLoadingSubs] = useState(false)
+  const [editingSubsPic, setEditingSubsPic] = useState<number | null>(null)
+  const [picVal, setPicVal] = useState('')
+  const [withSubsEditing, setWithSubsEditing] = useState(false)
+
+  // Subtitle helpers
+  const loadSubtasks = async () => {
+    if (!id) return
+    setLoadingSubs(true)
+    try {
+      const res = await api.get(`/subs/${id}/tasks`)
+      setSubsData(res.data)
+    } catch {}
+    setLoadingSubs(false)
+  }
+  const updateSubTask = async (taskId: number, updates: { status?: string; pic?: string }) => {
+    await api.patch(`/subs/${id}/tasks/${taskId}`, updates)
+    loadSubtasks()
+  }
+  const toggleWithSubs = async (val: boolean) => {
+    await api.patch(`/qc/${id}`, { with_subs: val })
+    mutate(`/qc/${id}`)
+    if (val) { setTimeout(loadSubtasks, 500) }
+    setWithSubsEditing(false)
+  }
+  const STATUS_COLORS: Record<string, string> = {
+    pending: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
+    in_progress: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+    done: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  }
+  const STATUS_LABELS: Record<string, string> = { pending: 'Pending', in_progress: 'In Progress', done: 'Done' }
 
   // Save naming asset
   const saveNaming = async () => {
@@ -83,6 +116,13 @@ export default function QCDetailPage() {
     const currentIdx = item ? STATUS_ORDER.indexOf(item.status as StatusEnum) : -1
     const target = targetStatus ?? (item ? STATUS_ORDER[currentIdx + 1] : null)
     if (!target || !item) return
+    // Soft gate: warn if subs not all done
+    if (item.with_subs && subsData.length > 0) {
+      const notDone = subsData.filter((t: any) => t.status !== 'done')
+      if (notDone.length > 0 && !window.confirm(
+        `⚠️ ${notDone.length} bahasa subtitle belum selesai.\n\nLanjut tanpa menunggu subtitle selesai?`
+      )) return
+    }
     // Warn editor if naming_asset is empty and they're going to Ready To Ingest
     if (target === 'Ready To Ingest' && !item.naming_asset) {
       const proceed = window.confirm(
@@ -327,6 +367,98 @@ export default function QCDetailPage() {
               <span className="text-xs font-medium text-slate-800 dark:text-slate-200 max-w-[60%] text-right">{value}</span>
             </div>
           ))}
+          {/* ── Subtitle Section ── */}
+          {item.with_subs !== undefined && (
+            <div className="mt-3 rounded-xl border border-indigo-100 bg-indigo-50 dark:border-indigo-900/40 dark:bg-indigo-900/10 px-3 py-2.5">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Subtitle</span>
+                  {item.platform && (
+                    <span className="text-[10px] text-slate-400">
+                      {(() => { try { return (JSON.parse(item.platform) as string[]).map((p: string) => p === 'vshort' ? 'V+ Short' : 'V+').join(' & ') } catch { return item.platform } })()}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* With/Without Subs toggle — editable by subtitle, editor, MH */}
+                  {(role === 'subtitle' || role === 'editor' || role === 'material_handling' || role === 'admin') && (
+                    withSubsEditing ? (
+                      <div className="flex gap-1">
+                        <button onClick={() => toggleWithSubs(true)} className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-600 text-white">Dengan Subs</button>
+                        <button onClick={() => toggleWithSubs(false)} className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Tanpa Subs</button>
+                        <button onClick={() => setWithSubsEditing(false)} className="text-[10px] text-slate-400">Batal</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => setWithSubsEditing(true)} className="text-[10px] text-indigo-500 hover:text-indigo-700">
+                        {item.with_subs ? 'Dengan Subs ✏' : 'Tanpa Subs ✏'}
+                      </button>
+                    )
+                  )}
+                  {!withSubsEditing && (
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${item.with_subs ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
+                      {item.with_subs ? 'With Subs' : 'No Subs'}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {item.with_subs && (
+                <div>
+                  <button onClick={() => { setSubsExpanded(e => !e); if (!subsExpanded) loadSubtasks() }}
+                    className="text-[11px] text-indigo-600 dark:text-indigo-400 underline">
+                    {subsExpanded ? 'Sembunyikan detail' : 'Lihat progress bahasa →'}
+                  </button>
+
+                  {subsExpanded && (
+                    <div className="mt-2 space-y-1.5">
+                      {loadingSubs && <p className="text-xs text-slate-400">Memuat...</p>}
+                      {subsData.map((task: any) => (
+                        <div key={task.id} className="flex items-center gap-2 rounded-lg bg-white dark:bg-slate-800 px-2.5 py-2">
+                          <span className={`w-16 text-center text-[10px] font-bold px-1.5 py-0.5 rounded-full ${STATUS_COLORS[task.status]}`}>
+                            {task.language_code}
+                          </span>
+                          <span className="flex-1 text-xs text-slate-600 dark:text-slate-300">{task.language_name}</span>
+                          {/* PIC */}
+                          {role === 'subtitle' || role === 'admin' ? (
+                            editingSubsPic === task.id ? (
+                              <input autoFocus value={picVal} onChange={e => setPicVal(e.target.value)}
+                                onBlur={() => { updateSubTask(task.id, { pic: picVal }); setEditingSubsPic(null) }}
+                                onKeyDown={e => { if (e.key === 'Enter') { updateSubTask(task.id, { pic: picVal }); setEditingSubsPic(null) } }}
+                                className="w-24 text-xs rounded border border-indigo-300 px-1.5 py-0.5 focus:outline-none" placeholder="Nama PIC" />
+                            ) : (
+                              <button onClick={() => { setEditingSubsPic(task.id); setPicVal(task.pic || '') }}
+                                className="text-xs text-slate-400 hover:text-slate-600 w-24 text-right truncate">
+                                {task.pic || '+ PIC'}
+                              </button>
+                            )
+                          ) : (
+                            <span className="text-xs text-slate-400 w-24 text-right truncate">{task.pic || '-'}</span>
+                          )}
+                          {/* Status cycle button — subtitle & admin only */}
+                          {(role === 'subtitle' || role === 'admin') ? (
+                            <button onClick={() => {
+                              const next = task.status === 'pending' ? 'in_progress' : task.status === 'in_progress' ? 'done' : 'pending'
+                              updateSubTask(task.id, { status: next })
+                            }} className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${STATUS_COLORS[task.status]}`}>
+                              {STATUS_LABELS[task.status]}
+                            </button>
+                          ) : (
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${STATUS_COLORS[task.status]}`}>
+                              {STATUS_LABELS[task.status]}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                      {subsData.length === 0 && !loadingSubs && (
+                        <p className="text-xs text-slate-400 italic">Belum ada subtitle task. Coba regenerate dari halaman Subs.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {item.notes && (
             <div className="mt-2 rounded-lg bg-slate-50 p-3 dark:bg-slate-800">
               <p className="text-xs text-slate-500">Catatan</p>
