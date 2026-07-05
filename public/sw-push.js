@@ -1,4 +1,4 @@
-// Push notification handler (runs in service worker context)
+// Push notification handler — v202607050739
 self.addEventListener('push', (event) => {
   if (!event.data) return
   const data = event.data.json()
