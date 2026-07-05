@@ -7,16 +7,41 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 interface LoginForm { email: string; password: string }
 
-const ContentOpsLogo = () => (
-  <svg viewBox="0 0 158 82" xmlns="http://www.w3.org/2000/svg" className="w-52 h-auto mx-auto mb-3">
-    <text x="2" y="34" fontFamily="'Arial Black','Helvetica Neue',sans-serif" fontSize="30" fontWeight="900"
-      fill="white" stroke="#818cf8" strokeWidth="1.5" paintOrder="stroke">CONTENT</text>
-    <text x="32" y="70" fontFamily="'Arial Black','Helvetica Neue',sans-serif" fontSize="30" fontWeight="900"
-      fill="white" stroke="#818cf8" strokeWidth="1.5" paintOrder="stroke">OPS</text>
-    <path d="M 14 40 C 2 55 16 76 36 71" stroke="#f59e0b" strokeWidth="2.8" fill="none" strokeLinecap="round"/>
-    <polygon points="36,71 28,66 30,74" fill="#f59e0b"/>
-  </svg>
-)
+function ContentOpsLogo() {
+  return (
+    <div className="mx-auto mb-3 flex flex-col items-start w-fit">
+      {/* CONTENT row */}
+      <div className="flex items-center">
+        <span style={{
+          fontFamily: 'Impact, "Arial Black", "Helvetica Neue", sans-serif',
+          fontSize: '2.6rem',
+          fontWeight: 900,
+          letterSpacing: '-0.02em',
+          color: 'white',
+          WebkitTextStroke: '1.5px #818cf8',
+          lineHeight: 1,
+        }}>CONTENT</span>
+      </div>
+      {/* OPS row with arrow */}
+      <div className="flex items-center relative" style={{marginLeft:'1.6rem', marginTop:'-4px'}}>
+        {/* Gold curved arrow svg */}
+        <svg width="36" height="36" viewBox="0 0 36 36" style={{position:'absolute', left:'-30px', top:'-4px'}}>
+          <path d="M 10 4 C 0 12 4 28 20 28" stroke="#f59e0b" strokeWidth="2.8" fill="none" strokeLinecap="round"/>
+          <polygon points="20,28 13,23 14,32" fill="#f59e0b"/>
+        </svg>
+        <span style={{
+          fontFamily: 'Impact, "Arial Black", "Helvetica Neue", sans-serif',
+          fontSize: '2.6rem',
+          fontWeight: 900,
+          letterSpacing: '-0.02em',
+          color: 'white',
+          WebkitTextStroke: '1.5px #818cf8',
+          lineHeight: 1,
+        }}>OPS</span>
+      </div>
+    </div>
+  )
+}
 
 export default function LoginPage() {
   const { login, user } = useAuth()
@@ -42,9 +67,9 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4">
       <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
+        <div className="mb-8 text-center flex flex-col items-center">
           <ContentOpsLogo />
-          <p className="mt-1 text-sm text-slate-400">Control Asset Management</p>
+          <p className="mt-2 text-sm text-slate-400">Control Asset Management</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
