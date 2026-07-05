@@ -182,11 +182,12 @@ export default function SubsPage() {
     (item.qcid || '').toLowerCase().includes(search.toLowerCase())
   )
 
-  const totalDone = filtered.reduce((acc: number, item: any) => {
-    const tasks = item.subtitle_tasks || []
-    return acc + tasks.filter((t: any) => t.status === 'done').length
-  }, 0)
   const totalTasks = filtered.reduce((acc: number, item: any) => acc + (item.subtitle_tasks?.length || 0), 0)
+  // Konten selesai = semua bahasa sudah Done
+  const totalDone = filtered.filter((item: any) => {
+    const tasks = item.subtitle_tasks || []
+    return tasks.length > 0 && tasks.every((t: any) => t.status === 'done')
+  }).length
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950 pb-24">
