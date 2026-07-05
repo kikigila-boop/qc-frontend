@@ -103,7 +103,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-[#fafaf8] dark:bg-slate-950 transition-colors">
 
       {/* NAV */}
-      <nav className="flex items-center justify-between px-6 py-5 max-w-6xl mx-auto">
+      <nav className="flex items-center justify-between px-8 py-5 w-full max-w-screen-2xl mx-auto">
         <div>
           <ContentOpsLogo />
           <p className="text-[11px] text-slate-400 mt-0.5 ml-0.5">Control Asset Management</p>
@@ -115,7 +115,7 @@ export default function LandingPage() {
       </nav>
 
       {/* HERO */}
-      <section className="max-w-6xl mx-auto px-6 py-6 flex flex-col lg:flex-row items-center gap-8">
+      <section className="w-full px-8 max-w-screen-2xl mx-auto py-6 flex flex-col lg:flex-row items-center gap-8">
         <div className="flex-1 space-y-5">
           <div>
             <h1 className="text-5xl font-black leading-tight text-slate-900 dark:text-white">All Content.</h1>
@@ -140,7 +140,7 @@ export default function LandingPage() {
       </section>
 
       {/* CONTENT FLOW */}
-      <section className="max-w-6xl mx-auto px-6 py-4">
+      <section className="w-full px-8 max-w-screen-2xl mx-auto py-4">
         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm p-8 relative overflow-hidden">
           <span className="absolute top-5 right-6 text-yellow-400 text-3xl select-none">★</span>
           <h2 className="text-[11px] font-black tracking-widest text-slate-600 dark:text-slate-400 mb-8 uppercase">Content Flow</h2>
@@ -160,7 +160,7 @@ export default function LandingPage() {
       </section>
 
       {/* QUOTE + STATS */}
-      <section className="max-w-6xl mx-auto px-6 py-4 pb-14">
+      <section className="w-full px-8 max-w-screen-2xl mx-auto py-4 pb-14">
         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm p-8">
           <div className="flex flex-col lg:flex-row items-center gap-8">
             <div className="flex-1 min-w-[200px]">
@@ -169,7 +169,7 @@ export default function LandingPage() {
                 Behind every great content,<br/>there is a great team.
               </p>
               <div className="mt-3 w-28 h-0.5 bg-indigo-400 rounded"/>
-              <span className="text-2xl text-pink-400 select-none">♥</span>
+              
             </div>
             <div className="flex flex-wrap gap-3 flex-1 justify-center lg:justify-end">
               {stats.map(({icon:Icon, value, label, bg, ic}) => (
