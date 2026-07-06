@@ -35,7 +35,7 @@ function getNav(role: string): NavItem[] {
     case 'pns':
       return [Dashboard, QCList, Material, LogBook, OnAir, Profil]
     case 'admin':
-      return [Dashboard, QCList, Material, LogBook, SubDubb, CMS, OnAir, Users, Profil]
+      return [Dashboard, QCList, Avail, Tambah, Material, LogBook, CMS, SubDubb, OnAir, Users, Profil]
     default:
       return [Dashboard, Profil]
   }
