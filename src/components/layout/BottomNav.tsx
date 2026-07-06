@@ -45,13 +45,12 @@ export default function BottomNav() {
     ...(isAdmin ? [
       { href: '/subs',           label: 'Sub & Dubb', icon: Captions },
     ] : []),
-    // PnS — only On Air (other items already excluded by role checks above)
     // On Air — visible to all roles
-    { href: '/on-air',           label: 'On Air',     icon: Tv },
+    { href: '/on-air', label: 'On Air', icon: Tv },
     ...(isAdmin ? [
-      { href: '/admin/users',    label: 'Users',      icon: ShieldCheck },
+      { href: '/admin/users', label: 'Users', icon: ShieldCheck },
     ] : []),
-    { href: '/profile',          label: 'Profil',     icon: User },
+    { href: '/profile', label: 'Profil', icon: User },
   ]
 
   const seen = new Set<string>()
@@ -63,7 +62,9 @@ export default function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 safe-bottom">
-      <div className="mx-auto flex max-w-lg overflow-x-auto">
+      {/* Mobile: fixed 76px per item → ~5 visible, rest scrollable
+          Desktop (md+): centered, auto spacing, no scroll */}
+      <div className="flex overflow-x-auto scrollbar-hide md:justify-center md:overflow-visible md:max-w-3xl md:mx-auto">
         {dedupedNav.map(({ href, label, icon: Icon }) => {
           const active = path === href || (href !== '/dashboard' && path.startsWith(href))
           return (
@@ -71,7 +72,10 @@ export default function BottomNav() {
               key={href}
               href={href}
               className={clsx(
-                'flex min-w-0 flex-1 flex-col items-center gap-0.5 py-2 text-xs font-medium transition-colors',
+                // Mobile: fixed width so exactly ~5 show at once
+                // Desktop: min-w with generous padding
+                'flex flex-none flex-col items-center gap-0.5 py-2 text-xs font-medium transition-colors',
+                'min-w-[76px] md:min-w-0 md:px-5',
                 active
                   ? 'text-brand-600 dark:text-brand-500'
                   : 'text-slate-500 dark:text-slate-400'
@@ -79,7 +83,7 @@ export default function BottomNav() {
             >
               <Icon size={26} strokeWidth={active ? 2.5 : 1.8}
                 className={active ? 'text-brand-600 dark:text-brand-500' : ''} />
-              {label}
+              <span className="truncate w-full text-center leading-tight">{label}</span>
             </Link>
           )
         })}
