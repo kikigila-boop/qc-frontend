@@ -1,79 +1,63 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, ListVideo, PlusCircle, Inbox, User, ShieldCheck, Package, PackageSearch, BookOpen, Captions, Tv } from 'lucide-react'
+import {
+  LayoutDashboard, ListVideo, PlusCircle, Inbox, User, ShieldCheck,
+  Package, PackageSearch, BookOpen, Captions, Tv
+} from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth } from '@/hooks/useAuth'
+
+type NavItem = { href: string; label: string; icon: React.ElementType }
+
+function getNav(role: string): NavItem[] {
+  const Dashboard  = { href: '/dashboard',      label: 'Dashboard',  icon: LayoutDashboard }
+  const QCList     = { href: '/qc/list',         label: 'QC List',    icon: ListVideo }
+  const Avail      = { href: '/material/queue',  label: 'Avail',      icon: PackageSearch }
+  const Tambah     = { href: '/qc/create',       label: 'Tambah',     icon: PlusCircle }
+  const LogBook    = { href: '/logbook',         label: 'Log Book',   icon: BookOpen }
+  const SubDubb    = { href: '/subs',            label: 'Sub & Dubb', icon: Captions }
+  const OnAir      = { href: '/on-air',          label: 'On Air',     icon: Tv }
+  const Profil     = { href: '/profile',         label: 'Profil',     icon: User }
+  const Material   = { href: '/material',        label: 'Material',   icon: Package }
+  const CMS        = { href: '/cms',             label: 'CMS',        icon: Inbox }
+  const Users      = { href: '/admin/users',     label: 'Users',      icon: ShieldCheck }
+
+  switch (role) {
+    case 'editor':
+      return [Dashboard, QCList, Avail, Tambah, LogBook, SubDubb, OnAir, Profil]
+    case 'cms':
+      return [Dashboard, QCList, Avail, LogBook, Profil]
+    case 'material_handling':
+      return [Dashboard, QCList, Avail, Tambah, LogBook, OnAir, Profil]
+    case 'subtitle':
+      return [Dashboard, QCList, SubDubb, LogBook, OnAir, Profil]
+    case 'pns':
+      return [Dashboard, QCList, Material, LogBook, OnAir, Profil]
+    case 'admin':
+      return [Dashboard, QCList, Material, LogBook, SubDubb, CMS, OnAir, Users, Profil]
+    default:
+      return [Dashboard, Profil]
+  }
+}
 
 export default function BottomNav() {
   const path = usePathname()
   const { user } = useAuth()
-  const role = user?.role ?? ''
-  const isAdmin = role === 'admin'
-  const isEditor = role === 'editor' || isAdmin
-  const isCMS = role === 'cms' || isAdmin
-  const isMH = role === 'material_handling' || isAdmin
-  const isSubs = role === 'subtitle' || role === 'editor' || isAdmin
-  const isPnS  = role === 'pns'
-
-  const NAV = [
-    ...(!isPnS ? [{ href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard }] : []),
-    ...(isMH && !isAdmin ? [
-      { href: '/material',       label: 'Material',   icon: Package },
-      { href: '/logbook',        label: 'Log Book',   icon: BookOpen },
-      { href: '/qc/list',        label: 'QC List',    icon: ListVideo },
-      { href: '/qc/create',      label: 'Tambah',     icon: PlusCircle },
-    ] : []),
-    ...(isEditor ? [
-      { href: '/qc/list',        label: 'QC List',    icon: ListVideo },
-      { href: '/material/queue', label: 'Avail',      icon: PackageSearch },
-      { href: '/qc/create',      label: 'Tambah',     icon: PlusCircle },
-    ] : []),
-    ...(isAdmin ? [
-      { href: '/qc/list',        label: 'QC List',    icon: ListVideo },
-      { href: '/material',       label: 'Material',   icon: Package },
-      { href: '/logbook',        label: 'Log Book',   icon: BookOpen },
-    ] : []),
-    ...(isCMS ? [
-      { href: '/qc/list',        label: 'QC List',    icon: ListVideo },
-      { href: '/cms',            label: 'CMS',        icon: Inbox },
-    ] : []),
-    ...(isSubs && !isAdmin ? [
-      { href: '/qc/list',        label: 'QC List',    icon: ListVideo },
-      { href: '/subs',           label: 'Sub & Dubb', icon: Captions },
-    ] : []),
-    ...(isAdmin ? [
-      { href: '/subs',           label: 'Sub & Dubb', icon: Captions },
-    ] : []),
-    // On Air — visible to all roles
-    { href: '/on-air', label: 'On Air', icon: Tv },
-    ...(isAdmin ? [
-      { href: '/admin/users', label: 'Users', icon: ShieldCheck },
-    ] : []),
-    { href: '/profile', label: 'Profil', icon: User },
-  ]
-
-  const seen = new Set<string>()
-  const dedupedNav = NAV.filter(({ href }) => {
-    if (seen.has(href)) return false
-    seen.add(href)
-    return true
-  })
+  const nav = getNav(user?.role ?? '')
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 safe-bottom">
-      {/* Mobile: fixed 76px per item → ~5 visible, rest scrollable
-          Desktop (md+): centered, auto spacing, no scroll */}
+      {/* Mobile: 76px per item → ~5 visible, swipe for rest
+          Desktop: centered with padding */}
       <div className="flex overflow-x-auto scrollbar-hide md:justify-center md:overflow-visible md:max-w-3xl md:mx-auto">
-        {dedupedNav.map(({ href, label, icon: Icon }) => {
+        {nav.map(({ href, label, icon: Icon }) => {
           const active = path === href || (href !== '/dashboard' && path.startsWith(href))
           return (
             <Link
               key={href}
               href={href}
               className={clsx(
-                // Mobile: fixed width so exactly ~5 show at once
-                // Desktop: min-w with generous padding
                 'flex flex-none flex-col items-center gap-0.5 py-2 text-xs font-medium transition-colors',
                 'min-w-[76px] md:min-w-0 md:px-5',
                 active

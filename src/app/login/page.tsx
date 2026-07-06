@@ -51,16 +51,14 @@ export default function LoginPage() {
   const { register, handleSubmit, formState: { isSubmitting } } = useForm<LoginForm>()
 
   useEffect(() => {
-    if (user) router.replace(user.role === 'pns' ? '/on-air' : '/dashboard')
+    if (user) router.replace('/dashboard')
   }, [user, router])
 
   const onSubmit = async (data: LoginForm) => {
     try {
       setError('')
       await login(data.email, data.password)
-      const stored = typeof window !== 'undefined' ? localStorage.getItem('qc_user') : null
-      const loggedUser = stored ? JSON.parse(stored) : null
-      router.push(loggedUser?.role === 'pns' ? '/on-air' : '/dashboard')
+      router.push('/dashboard')
     } catch {
       setError('Email atau password salah.')
     }
