@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, ListVideo, PlusCircle, Inbox, User, ShieldCheck, RotateCcw, Package, PackageSearch, BookOpen, Captions } from 'lucide-react'
+import { LayoutDashboard, ListVideo, PlusCircle, Inbox, User, ShieldCheck, Package, PackageSearch, BookOpen, Captions, Tv } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -17,7 +17,6 @@ export default function BottomNav() {
 
   const NAV = [
     { href: '/dashboard',        label: 'Dashboard', icon: LayoutDashboard },
-    // MH sees their own queue + QC list + create
     ...(isMH && !isAdmin ? [
       { href: '/material',       label: 'Material',   icon: Package },
       { href: '/logbook',        label: 'Log Book',   icon: BookOpen },
@@ -45,13 +44,14 @@ export default function BottomNav() {
     ...(isAdmin ? [
       { href: '/subs',           label: 'Sub & Dubb', icon: Captions },
     ] : []),
+    // On Air — visible to all roles
+    { href: '/on-air',           label: 'On Air',     icon: Tv },
     ...(isAdmin ? [
       { href: '/admin/users',    label: 'Users',      icon: ShieldCheck },
     ] : []),
     { href: '/profile',          label: 'Profil',     icon: User },
   ]
 
-  // Deduplicate by href (admin gets both sets)
   const seen = new Set<string>()
   const dedupedNav = NAV.filter(({ href }) => {
     if (seen.has(href)) return false
