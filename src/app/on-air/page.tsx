@@ -3,7 +3,9 @@
 import { useState, useCallback } from 'react'
 import useSWR from 'swr'
 import { RefreshCw, Tv, Calendar, Clock, CheckCircle2, Circle } from 'lucide-react'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/hooks/useAuth'
+import TopBar from '@/components/layout/TopBar'
+import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
 
 const fetcher = (url: string) => api.get(url).then(r => r.data)
@@ -152,7 +154,9 @@ export default function OnAirPage() {
     : null
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex min-h-screen flex-col">
+      <TopBar title="On Air Schedule" />
+      <main className="flex-1 pb-nav">
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -233,6 +237,8 @@ export default function OnAirPage() {
           )}
         </div>
       </div>
+      </main>
+      <BottomNav />
     </div>
   )
 }
