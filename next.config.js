@@ -14,6 +14,12 @@ const withPWA = require('next-pwa')({
       handler: 'NetworkFirst',
       options: { cacheName: 'qc-cache', expiration: { maxAgeSeconds: 60 } },
     },
+    {
+      // Fitur EPG (Mirada) — backend terpisah
+      urlPattern: /^https:\/\/.*\/api\/epg\//,
+      handler: 'NetworkFirst',
+      options: { cacheName: 'epg-cache', expiration: { maxAgeSeconds: 60 } },
+    },
   ],
 })
 
@@ -27,6 +33,15 @@ const nextConfig = {
       {
         source: '/api/v1/:path*',
         destination: 'https://rifqki-content-ops.hf.space/api/v1/:path*',
+      },
+      {
+        // Backend EPG Metadata Tool (Mirada) — Space Hugging Face TERPISAH
+        // dari Content-Ops. GANTI URL ini setelah Space `epgcontent-backend`
+        // benar-benar di-deploy (lihat DEPLOYMENT_CHECKLIST_HF.md di repo
+        // Mirada untuk cara deploy-nya). Rute Mirada TIDAK pakai prefix
+        // /api/v1, jadi :path* diteruskan apa adanya (bukan digabung lagi).
+        source: '/api/epg/:path*',
+        destination: 'https://REPLACE-WITH-epgcontent-backend.hf.space/:path*',
       },
     ]
   },

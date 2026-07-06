@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, ListVideo, PlusCircle, Inbox, User, ShieldCheck,
-  Package, PackageSearch, BookOpen, Captions, Tv
+  Package, PackageSearch, BookOpen, Captions, Tv, FileSpreadsheet
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth } from '@/hooks/useAuth'
@@ -22,6 +22,10 @@ function getNav(role: string): NavItem[] {
   const Material   = { href: '/material',        label: 'Material',   icon: Package }
   const CMS        = { href: '/cms',             label: 'CMS',        icon: Inbox }
   const Users      = { href: '/admin/users',     label: 'Users',      icon: ShieldCheck }
+  // Fitur baru: EPG Metadata Tool (Mirada) — backend & login terpisah dari
+  // Content Ops, sengaja dibatasi ke role admin dulu untuk rollout awal.
+  // Tambahkan Epg ke array role lain di switch di bawah kalau mau diperluas.
+  const Epg        = { href: '/epg',             label: 'EPG',        icon: FileSpreadsheet }
 
   switch (role) {
     case 'editor':
@@ -35,7 +39,7 @@ function getNav(role: string): NavItem[] {
     case 'pns':
       return [Dashboard, QCList, Material, LogBook, OnAir, Profil]
     case 'admin':
-      return [Dashboard, QCList, Avail, Tambah, Material, LogBook, CMS, SubDubb, OnAir, Users, Profil]
+      return [Dashboard, QCList, Avail, Tambah, Material, LogBook, CMS, SubDubb, OnAir, Epg, Users, Profil]
     default:
       return [Dashboard, Profil]
   }
