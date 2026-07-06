@@ -7,7 +7,7 @@ import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
 import { Plus, Pencil, Key, UserX, UserCheck, X, Loader2 } from 'lucide-react'
 
-type Role = 'admin' | 'editor' | 'cms' | 'material_handling' | 'subtitle'
+type Role = 'admin' | 'editor' | 'cms' | 'material_handling' | 'subtitle' | 'pns'
 
 interface UserRow {
   id: number
@@ -284,6 +284,7 @@ export default function AdminUsersPage() {
                     <option value="cms">CMS</option>
                     <option value="material_handling">Material Handling</option>
                     <option value="subtitle">Subtitle</option>
+                    <option value="pns">PnS</option>
                     <option value="admin">Admin</option>
                   </select>
                 </div>

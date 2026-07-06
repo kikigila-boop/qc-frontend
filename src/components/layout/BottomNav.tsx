@@ -14,9 +14,10 @@ export default function BottomNav() {
   const isCMS = role === 'cms' || isAdmin
   const isMH = role === 'material_handling' || isAdmin
   const isSubs = role === 'subtitle' || role === 'editor' || isAdmin
+  const isPnS  = role === 'pns'
 
   const NAV = [
-    { href: '/dashboard',        label: 'Dashboard', icon: LayoutDashboard },
+    ...(!isPnS ? [{ href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard }] : []),
     ...(isMH && !isAdmin ? [
       { href: '/material',       label: 'Material',   icon: Package },
       { href: '/logbook',        label: 'Log Book',   icon: BookOpen },
@@ -44,6 +45,7 @@ export default function BottomNav() {
     ...(isAdmin ? [
       { href: '/subs',           label: 'Sub & Dubb', icon: Captions },
     ] : []),
+    // PnS — only On Air (other items already excluded by role checks above)
     // On Air — visible to all roles
     { href: '/on-air',           label: 'On Air',     icon: Tv },
     ...(isAdmin ? [
@@ -69,13 +71,13 @@ export default function BottomNav() {
               key={href}
               href={href}
               className={clsx(
-                'flex min-w-0 flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium transition-colors',
+                'flex min-w-0 flex-1 flex-col items-center gap-0.5 py-2 text-xs font-medium transition-colors',
                 active
                   ? 'text-brand-600 dark:text-brand-500'
                   : 'text-slate-500 dark:text-slate-400'
               )}
             >
-              <Icon size={22} strokeWidth={active ? 2.5 : 1.8}
+              <Icon size={26} strokeWidth={active ? 2.5 : 1.8}
                 className={active ? 'text-brand-600 dark:text-brand-500' : ''} />
               {label}
             </Link>
