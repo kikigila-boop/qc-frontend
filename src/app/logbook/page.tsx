@@ -8,7 +8,7 @@ import { useRoleGuard } from '@/hooks/useRoleGuard'
 import { useAuth } from '@/hooks/useAuth'
 import {
   Loader2, RefreshCw, Sheet, Truck, ClipboardList,
-  X, ChevronDown, ChevronUp, RotateCcw
+  X, ChevronDown, ChevronUp, RotateCcw, Tv, CheckCircle2
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
@@ -310,10 +310,88 @@ function LibraryTab() {
   )
 }
 
+
+// ─── Tab 4: Log Airing ───────────────────────────────────────────────────────
+const PLATFORM_COLORS: Record<string, string> = {
+  vplus:  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  vshort: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
+}
+
+function LogAiringTab() {
+  const [platform, setPlatform] = useState<'all' | 'vplus' | 'vshort'>('all')
+  const { data, isLoading } = useSWR(`/on-air/log-airing?platform=${platform}`, (url: string) => api.get(url).then(r => r.data))
+
+  const rows: Record<string, any>[] = data?.rows ?? []
+
+  return (
+    <div className="p-4 space-y-3">
+      {/* Platform filter */}
+      <div className="flex gap-2">
+        {(['all', 'vplus', 'vshort'] as const).map(p => (
+          <button key={p} onClick={() => setPlatform(p)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+              platform === p
+                ? 'bg-rose-500 text-white border-rose-500'
+                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-700'
+            }`}>
+            {p === 'all' ? 'Semua' : p === 'vplus' ? 'V+' : 'Vshort'}
+          </button>
+        ))}
+        <span className="ml-auto text-xs text-slate-400 self-center">{rows.length} konten</span>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-10"><Loader2 className="animate-spin text-slate-400" /></div>
+      ) : rows.length === 0 ? (
+        <div className="text-center py-14 text-slate-400">
+          <Tv className="w-10 h-10 mx-auto mb-2 opacity-30" />
+          <p className="text-sm">Belum ada konten yang ditandai sudah tayang.</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-2xl border border-slate-100 dark:border-slate-800">
+          <table className="w-full min-w-[500px] text-xs">
+            <thead className="bg-slate-50 dark:bg-slate-800/60">
+              <tr>
+                <th className="px-3 py-2 text-left text-slate-500 font-semibold">Platform</th>
+                <th className="px-3 py-2 text-left text-slate-500 font-semibold">Title</th>
+                <th className="px-3 py-2 text-left text-slate-500 font-semibold">Release Date</th>
+                <th className="px-3 py-2 text-left text-slate-500 font-semibold">Aired At</th>
+                <th className="px-3 py-2 text-left text-slate-500 font-semibold">Aired By</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, i) => {
+                const title = row['Title'] || row['Title EN'] || '—'
+                const releaseDate = row['Release Schedule'] || row['Release Date'] || '—'
+                const airedAt = row._aired_at
+                  ? fmt(row._aired_at)
+                  : '—'
+                return (
+                  <tr key={row._id ?? i} className="border-t border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <td className="px-3 py-2">
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${PLATFORM_COLORS[row._platform] ?? ''}`}>
+                        {row._platform === 'vplus' ? 'V+' : 'Vshort'}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 font-medium text-slate-700 dark:text-slate-300">{title}</td>
+                    <td className="px-3 py-2 text-slate-500">{releaseDate}</td>
+                    <td className="px-3 py-2 text-slate-500 whitespace-nowrap">{airedAt}</td>
+                    <td className="px-3 py-2 text-slate-500">{row._aired_by || '—'}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function LogbookPage() {
   const { user, isLoading: authLoading } = useRoleGuard(['material_handling', 'admin'], '/dashboard')
-  const [tab, setTab] = useState<'traffic' | 'qc' | 'library'>('traffic')
+  const [tab, setTab] = useState<'traffic' | 'qc' | 'library' | 'airing'>('traffic')
   const { user: authUser } = useAuth()
   const isAdmin = authUser?.role === 'admin'
 
@@ -323,6 +401,7 @@ export default function LogbookPage() {
     { key: 'traffic', label: 'Log Traffic', icon: Truck },
     { key: 'qc',      label: 'Log QC',      icon: ClipboardList },
     ...(isAdmin ? [{ key: 'library', label: 'Library', icon: Sheet }] : []),
+    { key: 'airing', label: 'Log Airing', icon: Tv },
   ] as const
 
   return (
@@ -346,6 +425,7 @@ export default function LogbookPage() {
         {tab === 'traffic' && <TrafficTab />}
         {tab === 'qc'      && <QCLogTab />}
         {tab === 'library' && isAdmin && <LibraryTab />}
+        {tab === 'airing' && <LogAiringTab />}
       </main>
       <BottomNav />
     </div>

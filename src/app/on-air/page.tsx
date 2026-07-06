@@ -2,13 +2,12 @@
 
 import { useState, useCallback } from 'react'
 import useSWR from 'swr'
-import { RefreshCw, Tv, Calendar, Clock } from 'lucide-react'
+import { RefreshCw, Tv, Calendar, Clock, CheckCircle2, Circle } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import api from '@/lib/api'
 
 const fetcher = (url: string) => api.get(url).then(r => r.data)
 
-// ─── V+ columns ───────────────────────────────────────────────────────────────
 const VPLUS_COLS = [
   { key: 'Release Schedule', label: 'Release Date' },
   { key: 'Title',            label: 'Title' },
@@ -21,22 +20,29 @@ const VPLUS_COLS = [
   { key: 'Cluster',         label: 'Cluster' },
 ]
 
-// ─── Vshort columns ───────────────────────────────────────────────────────────
 const VSHORT_COLS = [
-  { key: 'Release Date',               label: 'Release Date' },
-  { key: 'Time',                       label: 'Time' },
-  { key: 'Naik di Coming Soon',        label: 'Coming Soon' },
-  { key: 'Turun dari Recently Added',  label: 'Recently Added Until' },
-  { key: 'Title EN',                   label: 'Title' },
-  { key: 'Exclusivity',                label: 'Exclusivity' },
-  { key: 'License',                    label: 'License' },
-  { key: 'Country of Origin',          label: 'Country' },
-  { key: 'Production House',           label: 'Production House' },
+  { key: 'Release Date',              label: 'Release Date' },
+  { key: 'Time',                      label: 'Time' },
+  { key: 'Naik di Coming Soon',       label: 'Coming Soon' },
+  { key: 'Turun dari Recently Added', label: 'Recently Added Until' },
+  { key: 'Title EN',                  label: 'Title' },
+  { key: 'Exclusivity',              label: 'Exclusivity' },
+  { key: 'License',                  label: 'License' },
+  { key: 'Country of Origin',        label: 'Country' },
+  { key: 'Production House',         label: 'Production House' },
 ]
 
 type TabKey = 'vplus' | 'vshort'
 
-function ScheduleTable({ rows, cols }: { rows: Record<string, string>[]; cols: { key: string; label: string }[] }) {
+function ScheduleTable({
+  rows,
+  cols,
+  onToggleAired,
+}: {
+  rows: Record<string, any>[]
+  cols: { key: string; label: string }[]
+  onToggleAired: (id: number) => void
+}) {
   if (!rows || rows.length === 0) {
     return (
       <div className="text-center py-16 text-gray-400 dark:text-gray-600">
@@ -51,6 +57,9 @@ function ScheduleTable({ rows, cols }: { rows: Record<string, string>[]; cols: {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200 dark:border-gray-700">
+            <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 w-10">
+              Aired
+            </th>
             {cols.map(c => (
               <th key={c.key} className="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">
                 {c.label}
@@ -61,9 +70,21 @@ function ScheduleTable({ rows, cols }: { rows: Record<string, string>[]; cols: {
         <tbody>
           {rows.map((row, i) => (
             <tr
-              key={i}
+              key={row._id ?? i}
               className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
             >
+              <td className="px-3 py-2">
+                <button
+                  onClick={() => onToggleAired(row._id)}
+                  className="text-gray-300 hover:text-green-500 dark:text-gray-600 dark:hover:text-green-400 transition-colors"
+                  title="Tandai sudah tayang"
+                >
+                  {row._is_aired
+                    ? <CheckCircle2 className="w-5 h-5 text-green-500" />
+                    : <Circle className="w-5 h-5" />
+                  }
+                </button>
+              </td>
               {cols.map(c => (
                 <td key={c.key} className="px-3 py-2 text-gray-700 dark:text-gray-300 whitespace-nowrap">
                   {row[c.key] || <span className="text-gray-300 dark:text-gray-600">—</span>}
@@ -83,6 +104,7 @@ export default function OnAirPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('vplus')
   const [syncing, setSyncing] = useState(false)
   const [syncMsg, setSyncMsg] = useState<string | null>(null)
+  const [togglingId, setTogglingId] = useState<number | null>(null)
 
   const { data: vplusData, mutate: mutateVplus, isLoading: vplusLoading } =
     useSWR('/on-air/vplus', fetcher)
@@ -108,6 +130,19 @@ export default function OnAirPage() {
       setSyncing(false)
     }
   }, [isAdmin, mutateVplus, mutateVshort])
+
+  const handleToggleAired = useCallback(async (id: number) => {
+    setTogglingId(id)
+    try {
+      await api.patch(`/on-air/${id}/aired`)
+      await mutateVplus()
+      await mutateVshort()
+    } catch {
+      // silent
+    } finally {
+      setTogglingId(null)
+    }
+  }, [mutateVplus, mutateVshort])
 
   const currentData = activeTab === 'vplus' ? vplusData : vshortData
   const currentCols = activeTab === 'vplus' ? VPLUS_COLS : VSHORT_COLS
@@ -152,38 +187,34 @@ export default function OnAirPage() {
           </div>
         )}
 
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
+          Centang kolom <span className="font-medium">Aired</span> untuk menandai konten sudah tayang — akan otomatis masuk ke Log Airing di Log Book.
+        </p>
+
         {/* Tabs */}
         <div className="flex gap-1 mb-4 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl w-fit">
-          <button
-            onClick={() => setActiveTab('vplus')}
-            className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeTab === 'vplus'
-                ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-            }`}
-          >
-            V+
-            {vplusData && (
-              <span className="ml-2 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-full">
-                {vplusData.count}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('vshort')}
-            className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeTab === 'vshort'
-                ? 'bg-white dark:bg-gray-700 text-violet-600 dark:text-violet-400 shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-            }`}
-          >
-            Vshort
-            {vshortData && (
-              <span className="ml-2 text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 px-1.5 py-0.5 rounded-full">
-                {vshortData.count}
-              </span>
-            )}
-          </button>
+          {(['vplus', 'vshort'] as TabKey[]).map(t => (
+            <button
+              key={t}
+              onClick={() => setActiveTab(t)}
+              className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeTab === t
+                  ? 'bg-white dark:bg-gray-700 shadow-sm ' + (t === 'vplus' ? 'text-blue-600 dark:text-blue-400' : 'text-violet-600 dark:text-violet-400')
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+              }`}
+            >
+              {t === 'vplus' ? 'V+' : 'Vshort'}
+              {(t === 'vplus' ? vplusData : vshortData) && (
+                <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${
+                  t === 'vplus'
+                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                    : 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400'
+                }`}>
+                  {(t === 'vplus' ? vplusData : vshortData)?.count}
+                </span>
+              )}
+            </button>
+          ))}
         </div>
 
         {/* Table */}
@@ -194,7 +225,11 @@ export default function OnAirPage() {
               <span className="text-sm">Memuat jadwal…</span>
             </div>
           ) : (
-            <ScheduleTable rows={currentData?.rows ?? []} cols={currentCols} />
+            <ScheduleTable
+              rows={currentData?.rows ?? []}
+              cols={currentCols}
+              onToggleAired={handleToggleAired}
+            />
           )}
         </div>
       </div>
