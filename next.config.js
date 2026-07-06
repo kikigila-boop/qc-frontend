@@ -26,7 +26,7 @@ const nextConfig = {
     return [
       {
         source: '/api/v1/:path*',
-        destination: 'https://qc-backend-production-2c7a.up.railway.app/api/v1/:path*',
+        destination: 'https://qc-backend.fly.dev/api/v1/:path*',
       },
     ]
   },
