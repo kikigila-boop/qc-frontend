@@ -109,7 +109,7 @@ function BannerDropdown({
       }}
       className="text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
     >
-      <option value="">— pilih —</option>
+      <option value="">â pilih â</option>
       <option value="yes">Home Banner: Yes</option>
       <option value="no">Home Banner: No</option>
     </select>
@@ -127,12 +127,16 @@ function ScheduleTable({
   onAssignPic,
   onSetBanner,
   onAddJob,
+  currentUserId,
+  currentUserRole,
 }: {
   rows: Record<string, any>[]
   cols: { key: string; label: string }[]
   editors: Editor[]
   isAdmin: boolean
   showBanner?: boolean
+  currentUserId?: number
+  currentUserRole?: string
   onToggleAired: (id: number) => void
   onAssignPic: (id: number, editor: Editor | null) => void
   onSetBanner?: (id: number, value: boolean | null) => void
@@ -182,7 +186,14 @@ function ScheduleTable({
           {rows.map((row, i) => {
             const id = row._id ?? i
             const hasPic = !!row._pic_user_id
-            const jobDone = row._job_status === 'added'
+            const jobDone = row._job_status === 'added' || row._job_status === 'kv_process' || row._job_status === 'kv_done'
+            const isKvProcess = row._job_status === 'kv_process'
+            const isKvDone = row._job_status === 'kv_done'
+            const canAddJob = !jobDone && (
+              (showBanner && row._pic_user_id && row._pic_user_id === currentUserId) ||
+              (showBanner && (currentUserRole === 'admin' || currentUserRole === 'chef_designer' || currentUserRole === 'supervisor')) ||
+              (!showBanner && isAdmin)
+            )
 
             return (
               <tr
@@ -207,7 +218,7 @@ function ScheduleTable({
                   const displayed = formatCell(c.key, row[c.key])
                   return (
                     <td key={c.key} className="px-3 py-2 text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                      {displayed || <span className="text-gray-300 dark:text-gray-600">—</span>}
+                      {displayed || <span className="text-gray-300 dark:text-gray-600">â</span>}
                     </td>
                   )
                 })}
@@ -222,7 +233,7 @@ function ScheduleTable({
                       />
                     ) : (
                       <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {row._banner_home === true ? 'Yes' : row._banner_home === false ? 'No' : '—'}
+                        {row._banner_home === true ? 'Yes' : row._banner_home === false ? 'No' : 'â'}
                       </span>
                     )}
                   </td>
@@ -283,27 +294,49 @@ function ScheduleTable({
                         )}
                       </>
                     ) : (
-                      <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>
+                      <span className="text-gray-300 dark:text-gray-600 text-xs">â</span>
                     )}
                   </div>
                 </td>
 
-                {/* Add Job column */}
+                {/* Add Job / KV Status column */}
                 <td className="px-3 py-2 whitespace-nowrap">
-                  {!hasPic && !isAdmin ? (
-                    <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>
-                  ) : jobDone ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-900/30 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-300">
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                      Job Process
-                    </span>
+                  {showBanner ? (
+                    /* Catchup: show KV status badge or Add Job button */
+                    isKvDone ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                        KV Done
+                      </span>
+                    ) : isKvProcess ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                        KV on Process
+                      </span>
+                    ) : canAddJob ? (
+                      <button
+                        onClick={() => onAddJob?.(row)}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-violet-600 hover:bg-violet-700 text-white transition-colors"
+                      >
+                        <PlusCircle className="w-3 h-3" /> Add Job
+                      </button>
+                    ) : (
+                      <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>
+                    )
                   ) : (
-                    <button
-                      onClick={() => onAddJob(row)}
-                      className="inline-flex items-center gap-1 rounded-lg bg-green-500 hover:bg-green-600 px-2.5 py-1 text-xs font-semibold text-white transition-colors shadow-sm"
-                    >
-                      <Plus className="w-3 h-3" /> Add Job
-                    </button>
+                    /* V+/Vshort: original Add Job logic */
+                    !hasPic && !isAdmin ? (
+                      <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>
+                    ) : jobDone ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                        Added
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => onAddJob?.(row)}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-brand-600 hover:bg-brand-700 text-white transition-colors"
+                      >
+                        <PlusCircle className="w-3 h-3" /> Add Job
+                      </button>
+                    )
                   )}
                 </td>
               </tr>
@@ -371,6 +404,14 @@ export default function OnAirPage() {
   const handleAddJob = useCallback(async (row: Record<string, any>) => {
     const id = row._id
     const platform = row._platform as string
+    if (platform === 'catchup') {
+      try {
+        await api.patch(`/on-air/${id}/add-job`)
+        await mutateAll()
+        router.push('/kv')
+      } catch { /* silent */ }
+      return
+    }
     const titleKey = platform === 'vplus' ? 'Title' : 'Title EN'
     const title = row[titleKey] || row['Title'] || ''
     try {
@@ -423,19 +464,19 @@ export default function OnAirPage() {
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-sm font-medium transition-colors disabled:opacity-50"
               >
                 <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-                {syncing ? 'Syncing…' : 'Sync Now'}
+                {syncing ? 'Syncingâ¦' : 'Sync Now'}
               </button>
             )}
           </div>
 
           {syncMsg && (
             <div className="mb-4 px-4 py-2 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-sm">
-              ✓ {syncMsg}
+              â {syncMsg}
             </div>
           )}
 
           <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
-            Centang <span className="font-medium">Aired</span> untuk tandai tayang · <span className="font-medium">Assign PIC</span> untuk tugaskan editor · <span className="font-medium">Add Job</span> untuk buat QC job
+            Centang <span className="font-medium">Aired</span> untuk tandai tayang Â· <span className="font-medium">Assign PIC</span> untuk tugaskan editor Â· <span className="font-medium">Add Job</span> untuk buat QC job
           </p>
 
           {/* Tabs */}
@@ -471,7 +512,7 @@ export default function OnAirPage() {
             {isLoading ? (
               <div className="flex items-center justify-center py-16 text-gray-400">
                 <RefreshCw className="w-6 h-6 animate-spin mr-2" />
-                <span className="text-sm">Memuat jadwal…</span>
+                <span className="text-sm">Memuat jadwalâ¦</span>
               </div>
             ) : (
               <ScheduleTable
@@ -484,6 +525,8 @@ export default function OnAirPage() {
                 onAssignPic={handleAssignPic}
                 onSetBanner={handleSetBanner}
                 onAddJob={handleAddJob}
+                currentUserId={user?.id}
+                currentUserRole={user?.role}
               />
             )}
           </div>
