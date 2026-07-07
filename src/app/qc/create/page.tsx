@@ -212,7 +212,11 @@ export default function CreateQCPage() {
     setSubmitError('')
     setBulkProgress(null)
 
-    const result = parseEpisodeInput(data.episode, epMode, groupBy)
+    // Movies & Trailer selalu 1 episode
+    const isMovieType = data.content_type === 'Movies' || data.content_type === 'Trailer'
+    const result = isMovieType
+      ? { labels: ['1'], isBulk: false }
+      : parseEpisodeInput(data.episode, epMode, groupBy)
     if (!result) {
       setSubmitError('Format episode tidak valid. Contoh: 5 atau 1-15')
       return
