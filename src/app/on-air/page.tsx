@@ -245,7 +245,7 @@ export default function OnAirPage() {
     useSWR('/on-air/vplus', fetcher)
   const { data: vshortData, mutate: mutateVshort, isLoading: vshortLoading } =
     useSWR('/on-air/vshort', fetcher)
-  const { data: editorsData } = useSWR(isAdmin ? '/users/editors' : null, fetcher)
+  const { data: editorsData } = useSWR(isAdmin ? '/users/editors' : null, fetcher, { revalidateOnMount: true, revalidateOnFocus: true })
   const editors: Editor[] = editorsData ?? []
 
   const mutateAll = useCallback(async () => {
@@ -258,7 +258,7 @@ export default function OnAirPage() {
     try {
       const res = await api.post('/on-air/sync?platform=all')
       const results = res.data.results as { platform: string; synced: number; error: string | null }[]
-      setSyncMsg(results.map(r => r.error ? `${r.platform}: error` : `${r.platform}: ${r.synced} baris`).join(' | '))
+      setSyncMsg(results.map(r => r.error ? `${r.platform}: ${r.error}` : `${r.platform}: ${r.synced} baris`).join(' | '))
       await mutateAll()
     } catch { setSyncMsg('Sync gagal') }
     finally { setSyncing(false) }
