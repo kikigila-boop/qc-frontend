@@ -6,7 +6,7 @@ import useSWR from 'swr'
 import { useRouter } from 'next/navigation'
 import {
   RefreshCw, Tv, Calendar, Clock, CheckCircle2, Circle,
-  UserCheck, UserX, Plus, PlusCircle, Loader2, X, ChevronDown
+  UserCheck, UserX, PlusCircle, Loader2, X, ChevronDown
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import TopBar from '@/components/layout/TopBar'
@@ -44,12 +44,8 @@ type TabKey = 'vplus' | 'vshort' | 'catchup'
 
 interface Editor { id: number; name: string; role: string }
 
-// --- Assign PIC dropdown (portal-based to escape overflow clipping) --------
 function AssignPicDropdown({
-  editors,
-  onSelect,
-  onClose,
-  anchor,
+  editors, onSelect, onClose, anchor,
 }: {
   editors: Editor[]
   onSelect: (editor: Editor) => void
@@ -57,7 +53,6 @@ function AssignPicDropdown({
   anchor: { top: number; left: number }
 }) {
   const ref = useRef<HTMLDivElement>(null)
-
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose()
@@ -67,21 +62,15 @@ function AssignPicDropdown({
   }, [onClose])
 
   return createPortal(
-    <div
-      ref={ref}
-      style={{ position: 'absolute', top: anchor.top, left: anchor.left, zIndex: 9999 }}
-      className="w-48 rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 overflow-hidden"
-    >
+    <div ref={ref} style={{ position: 'absolute', top: anchor.top, left: anchor.left, zIndex: 9999 }}
+      className="w-48 rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 overflow-hidden">
       <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-100 dark:border-gray-700">
         Pilih Editor
       </div>
       <div className="max-h-60 overflow-y-auto">
         {editors.map(e => (
-          <button
-            key={e.id}
-            onClick={() => onSelect(e)}
-            className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-          >
+          <button key={e.id} onClick={() => onSelect(e)}
+            className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
             {e.name}
             <span className="ml-1 text-xs text-gray-400">({e.role})</span>
           </button>
@@ -92,23 +81,12 @@ function AssignPicDropdown({
   )
 }
 
-// --- Banner Home dropdown -------------------------------------------------
-function BannerDropdown({
-  value,
-  onChange,
-}: {
-  value: boolean | null | undefined
-  onChange: (val: boolean | null) => void
-}) {
+function BannerDropdown({ value, onChange }: { value: boolean | null | undefined; onChange: (val: boolean | null) => void }) {
   return (
     <select
       value={value === true ? 'yes' : value === false ? 'no' : ''}
-      onChange={e => {
-        const v = e.target.value
-        onChange(v === 'yes' ? true : v === 'no' ? false : null)
-      }}
-      className="text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-    >
+      onChange={e => { const v = e.target.value; onChange(v === 'yes' ? true : v === 'no' ? false : null) }}
+      className="text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500">
       <option value="">— pilih —</option>
       <option value="yes">Home Banner: Yes</option>
       <option value="no">Home Banner: No</option>
@@ -116,19 +94,10 @@ function BannerDropdown({
   )
 }
 
-// --- Table ----------------------------------------------------------------
 function ScheduleTable({
-  rows,
-  cols,
-  editors,
-  isAdmin,
-  showBanner,
-  onToggleAired,
-  onAssignPic,
-  onSetBanner,
-  onAddJob,
-  currentUserId,
-  currentUserRole,
+  rows, cols, editors, isAdmin, showBanner,
+  onToggleAired, onAssignPic, onSetBanner, onAddJob,
+  currentUserId, currentUserRole,
 }: {
   rows: Record<string, any>[]
   cols: { key: string; label: string }[]
@@ -170,9 +139,7 @@ function ScheduleTable({
           <tr className="border-b border-gray-200 dark:border-gray-700">
             <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 w-10">Aired</th>
             {cols.map(c => (
-              <th key={c.key} className="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                {c.label}
-              </th>
+              <th key={c.key} className="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">{c.label}</th>
             ))}
             {showBanner && (
               <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">Home Banner</th>
@@ -185,9 +152,22 @@ function ScheduleTable({
           {rows.map((row, i) => {
             const id = row._id ?? i
             const hasPic = !!row._pic_user_id
-            const jobDone = row._job_status === 'added' || row._job_status === 'kv_process' || row._job_status === 'kv_done'
-            const isKvProcess = row._job_status === 'kv_process'
-            const isKvDone = row._job_status === 'kv_done'
+
+            // All KV statuses count as "done" — no Add Job button
+            const jobDone =
+              row._job_status === 'added' ||
+              row._job_status === 'kv_process' ||
+              row._job_status === 'kv_upload' ||
+              row._job_status === 'kv_done' ||
+              row._job_status === 'kv_complete' ||
+              row._job_status === 'kv_logged'
+
+            // Individual KV phase flags
+            const isKvProcess  = row._job_status === 'kv_process'
+            const isKvUpload   = row._job_status === 'kv_upload' || row._job_status === 'kv_done'
+            const isKvComplete = row._job_status === 'kv_complete'
+            const isKvLogged   = row._job_status === 'kv_logged'
+
             const canAddJob = !jobDone && (
               (showBanner && row._pic_user_id && row._pic_user_id === currentUserId) ||
               (showBanner && (currentUserRole === 'admin' || currentUserRole === 'chef_designer' || currentUserRole === 'supervisor')) ||
@@ -195,17 +175,11 @@ function ScheduleTable({
             )
 
             return (
-              <tr
-                key={id}
-                className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-              >
-                {/* Aired toggle */}
+              <tr key={id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                {/* Aired */}
                 <td className="px-3 py-2">
-                  <button
-                    onClick={() => onToggleAired(id)}
-                    className="text-gray-300 hover:text-green-500 dark:text-gray-600 dark:hover:text-green-400 transition-colors"
-                    title="Tandai sudah tayang"
-                  >
+                  <button onClick={() => onToggleAired(id)}
+                    className="text-gray-300 hover:text-green-500 dark:text-gray-600 dark:hover:text-green-400 transition-colors">
                     {row._is_aired
                       ? <CheckCircle2 className="w-5 h-5 text-green-500" />
                       : <Circle className="w-5 h-5" />}
@@ -222,14 +196,11 @@ function ScheduleTable({
                   )
                 })}
 
-                {/* Home Banner column (catchup only) */}
+                {/* Home Banner */}
                 {showBanner && (
                   <td className="px-3 py-2 whitespace-nowrap">
                     {isAdmin ? (
-                      <BannerDropdown
-                        value={row._banner_home}
-                        onChange={(val) => onSetBanner?.(id, val)}
-                      />
+                      <BannerDropdown value={row._banner_home} onChange={val => onSetBanner?.(id, val)} />
                     ) : (
                       <span className="text-xs text-gray-500 dark:text-gray-400">
                         {row._banner_home === true ? 'Yes' : row._banner_home === false ? 'No' : '—'}
@@ -238,21 +209,17 @@ function ScheduleTable({
                   </td>
                 )}
 
-                {/* PIC column */}
+                {/* PIC */}
                 <td className="px-3 py-2 whitespace-nowrap">
                   <div className="relative">
                     {hasPic ? (
                       <div className="flex items-center gap-1">
                         <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300">
-                          <UserCheck className="w-3 h-3" />
-                          {row._pic_name}
+                          <UserCheck className="w-3 h-3" /> {row._pic_name}
                         </span>
                         {isAdmin && (
-                          <button
-                            onClick={() => onAssignPic(id, null)}
-                            className="ml-0.5 text-gray-300 hover:text-red-400 transition-colors"
-                            title="Lepas PIC"
-                          >
+                          <button onClick={() => onAssignPic(id, null)}
+                            className="ml-0.5 text-gray-300 hover:text-red-400 transition-colors" title="Lepas PIC">
                             <X className="w-3.5 h-3.5" />
                           </button>
                         )}
@@ -260,34 +227,20 @@ function ScheduleTable({
                     ) : isAdmin ? (
                       <>
                         <button
-                          onClick={(e) => {
+                          onClick={e => {
                             const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect()
                             const newAnchor = { top: rect.bottom + window.scrollY, left: rect.left + window.scrollX }
-                            if (openDropdownId === id) {
-                              setOpenDropdownId(null)
-                              setDropdownAnchor(null)
-                            } else {
-                              setOpenDropdownId(id)
-                              setDropdownAnchor(newAnchor)
-                            }
+                            if (openDropdownId === id) { setOpenDropdownId(null); setDropdownAnchor(null) }
+                            else { setOpenDropdownId(id); setDropdownAnchor(newAnchor) }
                           }}
-                          className="inline-flex items-center gap-1 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 px-2.5 py-1 text-xs text-gray-500 dark:text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-colors"
-                        >
-                          <UserX className="w-3 h-3" /> Assign
-                          <ChevronDown className="w-3 h-3" />
+                          className="inline-flex items-center gap-1 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 px-2.5 py-1 text-xs text-gray-500 dark:text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-colors">
+                          <UserX className="w-3 h-3" /> Assign <ChevronDown className="w-3 h-3" />
                         </button>
                         {openDropdownId === id && dropdownAnchor && (
                           <AssignPicDropdown
                             editors={editors}
-                            onSelect={editor => {
-                              onAssignPic(id, editor)
-                              setOpenDropdownId(null)
-                              setDropdownAnchor(null)
-                            }}
-                            onClose={() => {
-                              setOpenDropdownId(null)
-                              setDropdownAnchor(null)
-                            }}
+                            onSelect={editor => { onAssignPic(id, editor); setOpenDropdownId(null); setDropdownAnchor(null) }}
+                            onClose={() => { setOpenDropdownId(null); setDropdownAnchor(null) }}
                             anchor={dropdownAnchor}
                           />
                         )}
@@ -298,28 +251,36 @@ function ScheduleTable({
                   </div>
                 </td>
 
-                {/* Add Job / KV Status column */}
+                {/* Job / KV Status */}
                 <td className="px-3 py-2 whitespace-nowrap">
                   {showBanner ? (
-                    isKvDone ? (
+                    // Catchup / Live Airing — show KV flow status badges
+                    isKvLogged ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                        Log KV
+                      </span>
+                    ) : isKvComplete ? (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                        KV Done
+                        KV Complete
+                      </span>
+                    ) : isKvUpload ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                        KV Upload
                       </span>
                     ) : isKvProcess ? (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
                         KV on Process
                       </span>
                     ) : canAddJob ? (
-                      <button
-                        onClick={() => onAddJob?.(row)}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-violet-600 hover:bg-violet-700 text-white transition-colors"
-                      >
+                      <button onClick={() => onAddJob?.(row)}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-violet-600 hover:bg-violet-700 text-white transition-colors">
                         <PlusCircle className="w-3 h-3" /> Add Job
                       </button>
                     ) : (
                       <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>
                     )
                   ) : (
+                    // V+ / Vshort
                     !hasPic && !isAdmin ? (
                       <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>
                     ) : jobDone ? (
@@ -327,10 +288,8 @@ function ScheduleTable({
                         Added
                       </span>
                     ) : (
-                      <button
-                        onClick={() => onAddJob?.(row)}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-brand-600 hover:bg-brand-700 text-white transition-colors"
-                      >
+                      <button onClick={() => onAddJob?.(row)}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-brand-600 hover:bg-brand-700 text-white transition-colors">
                         <PlusCircle className="w-3 h-3" /> Add Job
                       </button>
                     )
@@ -345,7 +304,6 @@ function ScheduleTable({
   )
 }
 
-// --- Page -----------------------------------------------------------------
 export default function OnAirPage() {
   const { user } = useAuth()
   const router = useRouter()
@@ -354,12 +312,9 @@ export default function OnAirPage() {
   const [syncing, setSyncing] = useState(false)
   const [syncMsg, setSyncMsg] = useState<string | null>(null)
 
-  const { data: catchupData, mutate: mutateCatchup, isLoading: catchupLoading } =
-    useSWR('/on-air/catchup', fetcher)
-  const { data: vplusData, mutate: mutateVplus, isLoading: vplusLoading } =
-    useSWR('/on-air/vplus', fetcher)
-  const { data: vshortData, mutate: mutateVshort, isLoading: vshortLoading } =
-    useSWR('/on-air/vshort', fetcher)
+  const { data: catchupData, mutate: mutateCatchup, isLoading: catchupLoading } = useSWR('/on-air/catchup', fetcher)
+  const { data: vplusData, mutate: mutateVplus, isLoading: vplusLoading } = useSWR('/on-air/vplus', fetcher)
+  const { data: vshortData, mutate: mutateVshort, isLoading: vshortLoading } = useSWR('/on-air/vshort', fetcher)
   const { data: editorsData } = useSWR(isAdmin ? '/users/editors' : null, fetcher, { revalidateOnMount: true, revalidateOnFocus: true })
   const editors: Editor[] = editorsData ?? []
 
@@ -421,24 +376,18 @@ export default function OnAirPage() {
 
   const currentData = activeTab === 'vplus' ? vplusData : activeTab === 'vshort' ? vshortData : catchupData
   const currentCols = activeTab === 'vplus' ? VPLUS_COLS : activeTab === 'vshort' ? VSHORT_COLS : CATCHUP_COLS
-  const isLoading = activeTab === 'vplus' ? vplusLoading : activeTab === 'vshort' ? vshortLoading : catchupLoading
-  const lastSynced = currentData?.synced_at
+  const isLoading   = activeTab === 'vplus' ? vplusLoading : activeTab === 'vshort' ? vshortLoading : catchupLoading
+  const lastSynced  = currentData?.synced_at
     ? new Date(currentData.synced_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })
     : null
 
-  const TAB_LABELS: Record<TabKey, string> = {
-    vplus: 'V+',
-    vshort: 'Vshort',
-    catchup: 'Live Airing',
-  }
+  const TAB_LABELS: Record<TabKey, string> = { vplus: 'V+', vshort: 'Vshort', catchup: 'Live Airing' }
 
   return (
     <div className="flex min-h-screen flex-col">
       <TopBar title="On Air Schedule" />
       <main className="flex-1 pb-nav">
         <div className="max-w-full mx-auto px-4 py-6">
-
-          {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-rose-500/10 dark:bg-rose-500/20 flex items-center justify-center">
@@ -454,11 +403,8 @@ export default function OnAirPage() {
               </div>
             </div>
             {isAdmin && (
-              <button
-                onClick={handleSync}
-                disabled={syncing}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-sm font-medium transition-colors disabled:opacity-50"
-              >
+              <button onClick={handleSync} disabled={syncing}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-sm font-medium transition-colors disabled:opacity-50">
                 <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
                 {syncing ? 'Syncing…' : 'Sync Now'}
               </button>
@@ -472,29 +418,23 @@ export default function OnAirPage() {
           )}
 
           <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
-            Centang <span className="font-medium">Aired</span> untuk tandai tayang · <span className="font-medium">Assign PIC</span> untuk tugaskan editor · <span className="font-medium">Add Job</span> untuk buat QC job
+            Centang <span className="font-medium">Aired</span> untuk tandai tayang · <span className="font-medium">Assign PIC</span> untuk tugaskan editor · <span className="font-medium">Add Job</span> untuk buat KV/QC job
           </p>
 
-          {/* Tabs */}
           <div className="flex gap-1 mb-4 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl w-fit">
             {(['vplus', 'vshort', 'catchup'] as TabKey[]).map(t => (
-              <button
-                key={t}
-                onClick={() => setActiveTab(t)}
+              <button key={t} onClick={() => setActiveTab(t)}
                 className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
                   activeTab === t
                     ? 'bg-white dark:bg-gray-700 shadow-sm ' + (t === 'vplus' ? 'text-blue-600 dark:text-blue-400' : t === 'vshort' ? 'text-violet-600 dark:text-violet-400' : 'text-emerald-600 dark:text-emerald-400')
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
-                }`}
-              >
+                }`}>
                 {TAB_LABELS[t]}
                 {(t === 'vplus' ? vplusData : t === 'vshort' ? vshortData : catchupData) && (
                   <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${
-                    t === 'vplus'
-                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                      : t === 'vshort'
-                      ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400'
-                      : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                    t === 'vplus' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                    : t === 'vshort' ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400'
+                    : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
                   }`}>
                     {(t === 'vplus' ? vplusData : t === 'vshort' ? vshortData : catchupData)?.count}
                   </span>
@@ -503,7 +443,6 @@ export default function OnAirPage() {
             ))}
           </div>
 
-          {/* Table */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             {isLoading ? (
               <div className="flex items-center justify-center py-16 text-gray-400">
