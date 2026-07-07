@@ -38,7 +38,6 @@ const CATCHUP_COLS = [
   { key: 'Channel', label: 'Channel' },
   { key: 'EVENTS', label: 'Events' },
   { key: 'EXCLUSIVE?', label: 'Exclusive?' },
-  { key: 'BANNER', label: 'Banner' },
 ]
 
 type TabKey = 'vplus' | 'vshort' | 'catchup'
@@ -93,22 +92,50 @@ function AssignPicDropdown({
   )
 }
 
+// --- Banner Home dropdown -------------------------------------------------
+function BannerDropdown({
+  value,
+  onChange,
+}: {
+  value: boolean | null | undefined
+  onChange: (val: boolean | null) => void
+}) {
+  return (
+    <select
+      value={value === true ? 'yes' : value === false ? 'no' : ''}
+      onChange={e => {
+        const v = e.target.value
+        onChange(v === 'yes' ? true : v === 'no' ? false : null)
+      }}
+      className="text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+    >
+      <option value="">— pilih —</option>
+      <option value="yes">Home Banner: Yes</option>
+      <option value="no">Home Banner: No</option>
+    </select>
+  )
+}
+
 // --- Table ----------------------------------------------------------------
 function ScheduleTable({
   rows,
   cols,
   editors,
   isAdmin,
+  showBanner,
   onToggleAired,
   onAssignPic,
+  onSetBanner,
   onAddJob,
 }: {
   rows: Record<string, any>[]
   cols: { key: string; label: string }[]
   editors: Editor[]
   isAdmin: boolean
+  showBanner?: boolean
   onToggleAired: (id: number) => void
   onAssignPic: (id: number, editor: Editor | null) => void
+  onSetBanner?: (id: number, value: boolean | null) => void
   onAddJob: (row: Record<string, any>) => void
 }) {
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null)
@@ -123,6 +150,16 @@ function ScheduleTable({
     )
   }
 
+  // Transform cell value
+  function formatCell(key: string, value: any): string {
+    if (key === 'EXCLUSIVE?') {
+      const s = String(value || '').toUpperCase()
+      if (s === 'TRUE') return 'Yes'
+      if (s === 'FALSE') return 'No'
+    }
+    return value || ''
+  }
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -134,6 +171,9 @@ function ScheduleTable({
                 {c.label}
               </th>
             ))}
+            {showBanner && (
+              <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">Home Banner</th>
+            )}
             <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">PIC</th>
             <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">Job</th>
           </tr>
@@ -163,11 +203,30 @@ function ScheduleTable({
                 </td>
 
                 {/* Data cols */}
-                {cols.map(c => (
-                  <td key={c.key} className="px-3 py-2 text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                    {row[c.key] || <span className="text-gray-300 dark:text-gray-600">—</span>}
+                {cols.map(c => {
+                  const displayed = formatCell(c.key, row[c.key])
+                  return (
+                    <td key={c.key} className="px-3 py-2 text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                      {displayed || <span className="text-gray-300 dark:text-gray-600">—</span>}
+                    </td>
+                  )
+                })}
+
+                {/* Home Banner column (catchup only) */}
+                {showBanner && (
+                  <td className="px-3 py-2 whitespace-nowrap">
+                    {isAdmin ? (
+                      <BannerDropdown
+                        value={row._banner_home}
+                        onChange={(val) => onSetBanner?.(id, val)}
+                      />
+                    ) : (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {row._banner_home === true ? 'Yes' : row._banner_home === false ? 'No' : '—'}
+                      </span>
+                    )}
                   </td>
-                ))}
+                )}
 
                 {/* PIC column */}
                 <td className="px-3 py-2 whitespace-nowrap">
@@ -302,6 +361,13 @@ export default function OnAirPage() {
     } catch { /* silent */ }
   }, [mutateAll])
 
+  const handleSetBanner = useCallback(async (id: number, value: boolean | null) => {
+    try {
+      await api.patch(`/on-air/${id}/banner`, { banner_home: value })
+      await mutateAll()
+    } catch { /* silent */ }
+  }, [mutateAll])
+
   const handleAddJob = useCallback(async (row: Record<string, any>) => {
     const id = row._id
     const platform = row._platform as string
@@ -321,6 +387,13 @@ export default function OnAirPage() {
   const lastSynced = currentData?.synced_at
     ? new Date(currentData.synced_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })
     : null
+
+  // Tab display labels
+  const TAB_LABELS: Record<TabKey, string> = {
+    vplus: 'V+',
+    vshort: 'Vshort',
+    catchup: 'Live Airing',
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -377,7 +450,7 @@ export default function OnAirPage() {
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
                 }`}
               >
-                {t === 'vplus' ? 'V+' : t === 'vshort' ? 'Vshort' : 'Catch Up'}
+                {TAB_LABELS[t]}
                 {(t === 'vplus' ? vplusData : t === 'vshort' ? vshortData : catchupData) && (
                   <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${
                     t === 'vplus'
@@ -406,8 +479,10 @@ export default function OnAirPage() {
                 cols={currentCols}
                 editors={editors}
                 isAdmin={isAdmin}
+                showBanner={activeTab === 'catchup'}
                 onToggleAired={handleToggleAired}
                 onAssignPic={handleAssignPic}
+                onSetBanner={handleSetBanner}
                 onAddJob={handleAddJob}
               />
             )}
