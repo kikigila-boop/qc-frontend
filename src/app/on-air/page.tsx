@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import useSWR from 'swr'
 import { useRouter } from 'next/navigation'
 import {
@@ -16,43 +17,45 @@ const fetcher = (url: string) => api.get(url).then(r => r.data)
 
 const VPLUS_COLS = [
   { key: 'Release Schedule', label: 'Release Date' },
-  { key: 'Title',            label: 'Title' },
-  { key: 'Type',             label: 'Type' },
-  { key: 'Season',           label: 'Season' },
-  { key: 'Eps',              label: 'Eps' },
-  { key: 'PH / Licensor',   label: 'PH / Licensor' },
+  { key: 'Title', label: 'Title' },
+  { key: 'Type', label: 'Type' },
+  { key: 'Season', label: 'Season' },
+  { key: 'Eps', label: 'Eps' },
+  { key: 'PH / Licensor', label: 'PH / Licensor' },
 ]
 
 const VSHORT_COLS = [
-  { key: 'Release Date',              label: 'Release Date' },
-  { key: 'Title EN',                  label: 'Title' },
-  { key: 'Exclusivity',              label: 'Exclusivity' },
-  { key: 'License',                  label: 'License' },
-  { key: 'Country of Origin',        label: 'Country' },
-  { key: 'Production House',         label: 'PH' },
+  { key: 'Release Date', label: 'Release Date' },
+  { key: 'Title EN', label: 'Title' },
+  { key: 'Exclusivity', label: 'Exclusivity' },
+  { key: 'License', label: 'License' },
+  { key: 'Country of Origin', label: 'Country' },
+  { key: 'Production House', label: 'PH' },
 ]
 
 const CATCHUP_COLS = [
-  { key: 'TX DATE',    label: 'TX Date' },
-  { key: 'Channel',   label: 'Channel' },
-  { key: 'EVENTS',    label: 'Events' },
+  { key: 'TX DATE', label: 'TX Date' },
+  { key: 'Channel', label: 'Channel' },
+  { key: 'EVENTS', label: 'Events' },
   { key: 'EXCLUSIVE?', label: 'Exclusive?' },
-  { key: 'BANNER',    label: 'Banner' },
+  { key: 'BANNER', label: 'Banner' },
 ]
 
 type TabKey = 'vplus' | 'vshort' | 'catchup'
 
 interface Editor { id: number; name: string; role: string }
 
-// ─── Assign PIC dropdown ─────────────────────────────────────────────────
+// --- Assign PIC dropdown (portal-based to escape overflow clipping) --------
 function AssignPicDropdown({
   editors,
   onSelect,
   onClose,
+  anchor,
 }: {
   editors: Editor[]
   onSelect: (editor: Editor) => void
   onClose: () => void
+  anchor: { top: number; left: number }
 }) {
   const ref = useRef<HTMLDivElement>(null)
 
@@ -64,29 +67,33 @@ function AssignPicDropdown({
     return () => document.removeEventListener('mousedown', handler)
   }, [onClose])
 
-  return (
+  return createPortal(
     <div
       ref={ref}
-      className="absolute z-50 mt-1 w-48 rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 overflow-hidden"
+      style={{ position: 'absolute', top: anchor.top, left: anchor.left, zIndex: 9999 }}
+      className="w-48 rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 overflow-hidden"
     >
       <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-100 dark:border-gray-700">
         Pilih Editor
       </div>
-      {editors.map(e => (
-        <button
-          key={e.id}
-          onClick={() => onSelect(e)}
-          className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-        >
-          {e.name}
-          <span className="ml-1 text-xs text-gray-400">({e.role})</span>
-        </button>
-      ))}
-    </div>
+      <div className="max-h-60 overflow-y-auto">
+        {editors.map(e => (
+          <button
+            key={e.id}
+            onClick={() => onSelect(e)}
+            className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+          >
+            {e.name}
+            <span className="ml-1 text-xs text-gray-400">({e.role})</span>
+          </button>
+        ))}
+      </div>
+    </div>,
+    document.body
   )
 }
 
-// ─── Table ────────────────────────────────────────────────────────────────
+// --- Table ----------------------------------------------------------------
 function ScheduleTable({
   rows,
   cols,
@@ -105,6 +112,7 @@ function ScheduleTable({
   onAddJob: (row: Record<string, any>) => void
 }) {
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null)
+  const [dropdownAnchor, setDropdownAnchor] = useState<{ top: number; left: number } | null>(null)
 
   if (!rows || rows.length === 0) {
     return (
@@ -183,17 +191,35 @@ function ScheduleTable({
                     ) : isAdmin ? (
                       <>
                         <button
-                          onClick={() => setOpenDropdownId(openDropdownId === id ? null : id)}
+                          onClick={(e) => {
+                            const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect()
+                            const newAnchor = { top: rect.bottom + window.scrollY, left: rect.left + window.scrollX }
+                            if (openDropdownId === id) {
+                              setOpenDropdownId(null)
+                              setDropdownAnchor(null)
+                            } else {
+                              setOpenDropdownId(id)
+                              setDropdownAnchor(newAnchor)
+                            }
+                          }}
                           className="inline-flex items-center gap-1 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 px-2.5 py-1 text-xs text-gray-500 dark:text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-colors"
                         >
                           <UserX className="w-3 h-3" /> Assign
                           <ChevronDown className="w-3 h-3" />
                         </button>
-                        {openDropdownId === id && (
+                        {openDropdownId === id && dropdownAnchor && (
                           <AssignPicDropdown
                             editors={editors}
-                            onSelect={editor => { onAssignPic(id, editor); setOpenDropdownId(null) }}
-                            onClose={() => setOpenDropdownId(null)}
+                            onSelect={editor => {
+                              onAssignPic(id, editor)
+                              setOpenDropdownId(null)
+                              setDropdownAnchor(null)
+                            }}
+                            onClose={() => {
+                              setOpenDropdownId(null)
+                              setDropdownAnchor(null)
+                            }}
+                            anchor={dropdownAnchor}
                           />
                         )}
                       </>
@@ -230,7 +256,7 @@ function ScheduleTable({
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────
+// --- Page -----------------------------------------------------------------
 export default function OnAirPage() {
   const { user } = useAuth()
   const router = useRouter()
@@ -250,7 +276,7 @@ export default function OnAirPage() {
 
   const mutateAll = useCallback(async () => {
     await Promise.all([mutateVplus(), mutateVshort(), mutateCatchup()])
-  }, [mutateVplus, mutateVshort])
+  }, [mutateVplus, mutateVshort, mutateCatchup])
 
   const handleSync = useCallback(async () => {
     if (!isAdmin) return
@@ -284,7 +310,6 @@ export default function OnAirPage() {
     try {
       await api.patch(`/on-air/${id}/add-job`)
       await mutateAll()
-      // Redirect to create QC with title pre-filled
       const params = new URLSearchParams({ title, from: 'onair', platform: platform === 'vplus' ? 'V+' : 'Vshort' })
       router.push(`/qc/create?${params.toString()}`)
     } catch { /* silent */ }
