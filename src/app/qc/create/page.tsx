@@ -172,13 +172,21 @@ export default function CreateQCPage() {
   const watchEpisode = watch('episode', '')
   const watchContentType = watch('content_type', '')
 
-  // Read query params and pre-fill title from logbook
+  // Read query params and pre-fill from logbook or on-air
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const t = params.get('title') ?? ''
-    const f = params.get('from') === 'logbook'
-    setFromLogbook(f)
+    const from = params.get('from') ?? ''
+    const plat = params.get('platform') ?? ''
+    setFromLogbook(from === 'logbook')
     if (t) { setPrefillTitle(t); setValue('title', t) }
+    // Pre-select platform when coming from on-air
+    if (plat) {
+      const key = plat.toLowerCase().replace('+', 'plus').replace('vshort', 'vshort')
+      // map: "V+" → "vplus", "Vshort" → "vshort"
+      const mapped = plat === 'V+' ? 'vplus' : plat.toLowerCase()
+      setPlatforms([mapped])
+    }
   }, [])
 
   useEffect(() => {
@@ -238,7 +246,13 @@ export default function CreateQCPage() {
       reset()
       setEpisodeWatch('')
       setBulkProgress(null)
-      setTimeout(() => { setSuccess(false); router.push(isMH ? (fromLogbook ? '/logbook' : '/material') : '/qc/list') }, 1800)
+      const from = new URLSearchParams(window.location.search).get('from')
+      setTimeout(() => {
+        setSuccess(false)
+        if (isMH) { router.push(fromLogbook ? '/logbook' : '/material') }
+        else if (from === 'onair') { router.push('/on-air') }
+        else { router.push('/qc/list') }
+      }, 1800)
     } catch (e: any) {
       setBulkProgress(null)
       const detail = e?.response?.data?.detail
