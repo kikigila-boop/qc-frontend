@@ -7,7 +7,7 @@ import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
 import { Plus, Pencil, Key, UserX, UserCheck, X, Loader2 } from 'lucide-react'
 
-type Role = 'admin' | 'editor' | 'chef_editor' | 'designer' | 'cms' | 'material_handling' | 'subtitle' | 'pns'
+type Role = 'admin' | 'editor' | 'chef_editor' | 'chef_designer' | 'designer' | 'cms' | 'material_handling' | 'subtitle' | 'pns'
 
 interface UserRow {
   id: number
@@ -22,6 +22,7 @@ const ROLE_COLORS: Record<Role, string> = {
   admin:             'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
   editor:            'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   chef_editor:       'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
+  chef_designer:     'bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-400',
   designer:          'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400',
   cms:               'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
   material_handling: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
@@ -284,6 +285,7 @@ export default function AdminUsersPage() {
                   >
                     <option value="editor">Editor</option>
                     <option value="chef_editor">Chef Editor</option>
+                    <option value="chef_designer">Chef Designer</option>
                     <option value="designer">Designer</option>
                     <option value="cms">CMS</option>
                     <option value="material_handling">Material Handling</option>
