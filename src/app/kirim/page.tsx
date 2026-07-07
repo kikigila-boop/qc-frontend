@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { PlusCircle, Trash2, Loader2, AlertCircle, Send, Package, FileText, ChevronDown } from 'lucide-react'
 
@@ -263,6 +263,15 @@ function RequestForm() {
 // ─── Main Page ────────────────────────────────────────────────────────────
 export default function KirimPage() {
   const [formType, setFormType] = useState<FormType>('')
+  const formRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (formType) {
+      setTimeout(() => {
+        formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 50)
+    }
+  }, [formType])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-slate-100 py-8 px-4">
@@ -306,8 +315,10 @@ export default function KirimPage() {
         </div>
 
         {/* Render selected form */}
-        {formType === 'delivery' && <DeliveryForm />}
-        {formType === 'request'  && <RequestForm />}
+        <div ref={formRef}>
+          {formType === 'delivery' && <DeliveryForm />}
+          {formType === 'request'  && <RequestForm />}
+        </div>
 
         {!formType && (
           <p className="pb-6 text-center text-sm text-slate-400">Pilih jenis form di atas untuk melanjutkan</p>
