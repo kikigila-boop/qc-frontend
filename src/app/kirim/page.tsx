@@ -5,7 +5,7 @@ import { PlusCircle, Trash2, Loader2, AlertCircle, Send, Package, FileText, Chev
 
 const API = '/api/v1'
 
-const INPUT_CLS = "w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+const INPUT_CLS = "w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
 const SELECT_CLS = INPUT_CLS
 const LABEL_CLS  = "mb-1 block text-sm font-medium text-slate-700"
 
