@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, ListVideo, PlusCircle, Inbox, User, ShieldCheck,
-  Package, PackageSearch, BookOpen, Captions, Tv
+  Package, PackageSearch, BookOpen, Captions, Tv, Tv2
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth } from '@/hooks/useAuth'
@@ -11,26 +11,22 @@ import { useAuth } from '@/hooks/useAuth'
 type NavItem = { href: string; label: string; icon: React.ElementType }
 
 function getNav(role: string): NavItem[] {
-  const Dashboard   = { href: '/dashboard',    label: 'Dashboard', icon: LayoutDashboard }
-  const QCList      = { href: '/qc/list',       label: 'QC List',   icon: ListVideo }
-  const Avail       = { href: '/material',      label: 'Avail',     icon: PackageSearch }
-  const Tambah      = { href: '/qc/create',     label: 'Tambah',    icon: PlusCircle }
-  const LogBook     = { href: '/logbook',       label: 'Log Book',  icon: BookOpen }
-  const SubDubb     = { href: '/subs',          label: 'Sub & Dubb',icon: Captions }
-  const OnAir       = { href: '/on-air',        label: 'On Air',    icon: Tv }
-  const Profil      = { href: '/profile',       label: 'Profil',    icon: User }
-  const Material    = { href: '/material',      label: 'Material',  icon: Package }
-  const CMS         = { href: '/cms',           label: 'CMS',       icon: Inbox }
-  const Users       = { href: '/admin/users',   label: 'Users',     icon: ShieldCheck }
+  const Dashboard  = { href: '/dashboard',      label: 'Dashboard',  icon: LayoutDashboard }
+  const QCList     = { href: '/qc/list',         label: 'QC List',    icon: ListVideo }
+  const Avail      = { href: '/material/queue',  label: 'Avail',      icon: PackageSearch }
+  const Tambah     = { href: '/qc/create',       label: 'Tambah',     icon: PlusCircle }
+  const LogBook    = { href: '/logbook',         label: 'Log Book',   icon: BookOpen }
+  const SubDubb    = { href: '/subs',            label: 'Sub & Dubb', icon: Captions }
+  const OnAir      = { href: '/on-air',          label: 'On Air',     icon: Tv }
+  const Profil     = { href: '/profile',         label: 'Profil',     icon: User }
+  const Material   = { href: '/material',        label: 'Material',   icon: Package }
+  const CMS        = { href: '/cms',             label: 'CMS',        icon: Inbox }
+  const Users      = { href: '/admin/users',     label: 'Users',      icon: ShieldCheck }
+  const KV         = { href: '/kv',              label: 'KV',         icon: Tv2 }
 
   switch (role) {
     case 'editor':
-    case 'chef_editor':
       return [Dashboard, QCList, Avail, Tambah, LogBook, SubDubb, OnAir, Profil]
-    case 'chef_designer':
-      return [Dashboard, QCList, Tambah, LogBook, OnAir, Profil]
-    case 'designer':
-      return [Dashboard, QCList, Tambah, LogBook, OnAir, Profil]
     case 'cms':
       return [Dashboard, QCList, Avail, LogBook, Profil]
     case 'material_handling':
@@ -39,6 +35,10 @@ function getNav(role: string): NavItem[] {
       return [Dashboard, QCList, SubDubb, LogBook, OnAir, Profil]
     case 'pns':
       return [Dashboard, QCList, Material, LogBook, OnAir, Profil]
+    case 'chef_designer':
+      return [Dashboard, QCList, Tambah, LogBook, OnAir, KV, Profil]
+    case 'designer':
+      return [Dashboard, QCList, Tambah, LogBook, OnAir, KV, Profil]
     case 'admin':
       return [Dashboard, QCList, Tambah, Material, LogBook, CMS, SubDubb, OnAir, Users, Profil]
     default:
@@ -53,12 +53,14 @@ export default function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 safe-bottom">
+      {/* Mobile: 76px per item → ~5 visible, swipe for rest
+          Desktop: centered with padding */}
       <div className="flex overflow-x-auto scrollbar-hide md:justify-center md:overflow-visible md:max-w-3xl md:mx-auto">
         {nav.map(({ href, label, icon: Icon }) => {
           const active = path === href || (href !== '/dashboard' && path.startsWith(href))
           return (
             <Link
-              key={href + label}
+              key={href}
               href={href}
               className={clsx(
                 'flex flex-none flex-col items-center gap-0.5 py-2 text-xs font-medium transition-colors',
