@@ -2,8 +2,8 @@
 import { useState, useCallback, useMemo } from 'react'
 import useSWR from 'swr'
 import {
-  Tv2, Search, CheckCircle2, CloudUpload, ArrowRightCircle,
-  Loader2, RefreshCw
+  Tv2, Search, CheckCircle2, ArrowRightCircle,
+  Loader2, RefreshCw, HardDriveUpload, ChevronRight
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import api from '@/lib/api'
@@ -25,8 +25,8 @@ const fetcher = (url: string) => api.get(url).then(r => r.data)
 
 const STATUS_CFG: Record<string, { label: string; cls: string }> = {
   kv_process:  { label: 'KV on Process',  cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
-  kv_upload:   { label: 'KV Upload',      cls: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
-  kv_done:     { label: 'KV Upload',      cls: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
+  kv_upload:   { label: 'Upload G-Drive', cls: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
+  kv_done:     { label: 'Upload G-Drive', cls: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
   kv_complete: { label: 'KV Complete',    cls: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
 }
 
@@ -88,7 +88,7 @@ export default function KVPage() {
           </button>
         </div>
 
-        {/* Search */}
+        {/* Search — full width */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -99,21 +99,28 @@ export default function KVPage() {
           />
         </div>
 
-        {/* Count pills */}
+        {/* Status count pills */}
         <div className="flex gap-2">
-          {[
-            { label: 'On Process', count: counts.process, cls: 'bg-blue-100 text-blue-700' },
-            { label: 'Upload',     count: counts.upload,  cls: 'bg-orange-100 text-orange-700' },
-            { label: 'Complete',   count: counts.complete,cls: 'bg-green-100 text-green-700' },
-          ].map(s => s.count > 0 ? (
-            <span key={s.label} className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${s.cls}`}>
-              {s.label} ({s.count})
+          {counts.process > 0 && (
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
+              On Process ({counts.process})
             </span>
-          ) : null)}
+          )}
+          {counts.upload > 0 && (
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-700">
+              Upload ({counts.upload})
+            </span>
+          )}
+          {counts.complete > 0 && (
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green-100 text-green-700">
+              Complete ({counts.complete})
+            </span>
+          )}
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto">
+      {/* List — full width, no max-width centering */}
+      <div className="bg-white dark:bg-slate-900">
         {isLoading && (
           <div className="flex justify-center py-16">
             <Loader2 className="w-6 h-6 animate-spin text-violet-500" />
@@ -127,7 +134,6 @@ export default function KVPage() {
           </div>
         )}
 
-        {/* Rows */}
         <div className="divide-y divide-slate-100 dark:divide-slate-800">
           {filtered.map(entry => {
             const status = entry._job_status ?? ''
@@ -140,58 +146,68 @@ export default function KVPage() {
 
             return (
               <div key={entry._id}
-                className="bg-white dark:bg-slate-900 px-4 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-semibold text-slate-900 dark:text-white text-sm truncate">
+                className="px-4 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                {/* Row: info on left, actions on right */}
+                <div className="flex items-start gap-3">
+                  {/* Main info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-slate-900 dark:text-white text-sm leading-snug">
                       {entry['EVENTS'] || '—'}
                     </p>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-slate-500 dark:text-slate-400">
+                      {entry['Channel'] && <span>{entry['Channel']}</span>}
+                      {entry['TX DATE'] && <span>· {entry['TX DATE']}</span>}
+                      {exclusiveLabel && (
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${exclusiveLabel === 'Yes' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800'}`}>
+                          Eksklusif: {exclusiveLabel}
+                        </span>
+                      )}
+                      {entry._pic_name && <span>· 🎨 {entry._pic_name}</span>}
+                    </div>
+                    {/* Status badge below info */}
                     {cfg && (
-                      <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold ${cfg.cls}`}>
+                      <span className={`mt-1.5 inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${cfg.cls}`}>
                         {cfg.label}
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
-                    {entry['Channel'] && <span>{entry['Channel']}</span>}
-                    {entry['TX DATE'] && <span>· {entry['TX DATE']}</span>}
-                    {exclusiveLabel && (
-                      <span className={`px-1.5 py-0.5 rounded font-medium ${exclusiveLabel === 'Yes' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800'}`}>
-                        Eksklusif: {exclusiveLabel}
-                      </span>
+
+                  {/* Action button — right side */}
+                  <div className="shrink-0 flex flex-col items-end gap-2">
+                    {canDoAction && status === 'kv_process' && (
+                      <button onClick={() => callEndpoint(entry, 'kv-done')} disabled={busy}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-violet-600 hover:bg-violet-700 text-white disabled:opacity-60 transition-colors">
+                        {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+                        KV Done Process
+                      </button>
                     )}
-                    {entry._pic_name && <span className="text-slate-400">· {entry._pic_name}</span>}
+                    {canDoAction && isUploadPhase && (
+                      <button onClick={() => callEndpoint(entry, 'kv-complete')} disabled={busy}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-60 transition-colors">
+                        {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <HardDriveUpload className="w-3 h-3" />}
+                        Upload to G-Drive
+                      </button>
+                    )}
+                    {canDoAction && status === 'kv_complete' && (
+                      <button onClick={() => callEndpoint(entry, 'kv-log')} disabled={busy}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-60 transition-colors">
+                        {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <ArrowRightCircle className="w-3 h-3" />}
+                        Move to Log KV
+                      </button>
+                    )}
+                    {/* G-Drive placeholder note for upload phase */}
+                    {isUploadPhase && (
+                      <p className="text-[10px] text-slate-400 text-right max-w-[120px] leading-tight">
+                        G-Drive API akan dihubungkan nanti
+                      </p>
+                    )}
                   </div>
                 </div>
-
-                {/* Action button */}
-                {canDoAction && status === 'kv_process' && (
-                  <button onClick={() => callEndpoint(entry, 'kv-done')} disabled={busy}
-                    className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-violet-600 hover:bg-violet-700 text-white disabled:opacity-60 transition-colors">
-                    {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
-                    KV Done
-                  </button>
-                )}
-                {canDoAction && isUploadPhase && (
-                  <button onClick={() => callEndpoint(entry, 'kv-complete')} disabled={busy}
-                    className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-60 transition-colors">
-                    {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <CloudUpload className="w-3 h-3" />}
-                    Upload Drive
-                  </button>
-                )}
-                {canDoAction && status === 'kv_complete' && (
-                  <button onClick={() => callEndpoint(entry, 'kv-log')} disabled={busy}
-                    className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-60 transition-colors">
-                    {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <ArrowRightCircle className="w-3 h-3" />}
-                    Log KV
-                  </button>
-                )}
               </div>
             )
           })}
         </div>
-      </main>
+      </div>
 
       <BottomNav />
     </div>
