@@ -319,7 +319,7 @@ function ScheduleTable({
 export default function OnAirPage() {
   const { user } = useAuth()
   const router = useRouter()
-  const isAdmin = user?.role === 'admin' || user?.role === 'supervisor' || user?.role === 'chef_editor'
+  const isAdmin = user?.role === 'admin' || user?.role === 'supervisor' || user?.role === 'chef_editor' || user?.role === 'chef_designer'
   const [activeTab, setActiveTab] = useState<TabKey>('vplus')
   const [syncing, setSyncing] = useState(false)
   const [syncMsg, setSyncMsg] = useState<string | null>(null)
