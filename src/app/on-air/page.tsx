@@ -245,7 +245,7 @@ export default function OnAirPage() {
     useSWR('/on-air/vplus', fetcher)
   const { data: vshortData, mutate: mutateVshort, isLoading: vshortLoading } =
     useSWR('/on-air/vshort', fetcher)
-  const { data: editorsData } = useSWR(isAdmin ? '/users/active' : null, fetcher)
+  const { data: editorsData } = useSWR(isAdmin ? '/users/editors' : null, fetcher)
   const editors: Editor[] = editorsData ?? []
 
   const mutateAll = useCallback(async () => {
