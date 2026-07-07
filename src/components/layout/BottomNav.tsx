@@ -27,6 +27,8 @@ function getNav(role: string): NavItem[] {
     case 'editor':
     case 'chef_editor':
       return [Dashboard, QCList, Avail, Tambah, LogBook, SubDubb, OnAir, Profil]
+    case 'designer':
+      return [Dashboard, QCList, Tambah, LogBook, OnAir, Profil]
     case 'cms':
       return [Dashboard, QCList, Avail, LogBook, Profil]
     case 'material_handling':

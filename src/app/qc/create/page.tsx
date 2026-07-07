@@ -117,7 +117,7 @@ function buildAutoName(title: string, contentType: string, season: string, episo
 }
 
 export default function CreateQCPage() {
-  const { user, isLoading: authLoading } = useRoleGuard(['editor', 'chef_editor', 'admin', 'material_handling'])
+  const { user, isLoading: authLoading } = useRoleGuard(['editor', 'chef_editor', 'designer', 'admin', 'material_handling'])
   const { user: authUser } = useAuth()
   const isMH = authUser?.role === 'material_handling'
   const [prefillTitle, setPrefillTitle] = useState('')

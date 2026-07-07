@@ -32,7 +32,15 @@ const VSHORT_COLS = [
   { key: 'Production House',         label: 'PH' },
 ]
 
-type TabKey = 'vplus' | 'vshort'
+const CATCHUP_COLS = [
+  { key: 'TX DATE',    label: 'TX Date' },
+  { key: 'Channel',   label: 'Channel' },
+  { key: 'EVENTS',    label: 'Events' },
+  { key: 'EXCLUSIVE?', label: 'Exclusive?' },
+  { key: 'BANNER',    label: 'Banner' },
+]
+
+type TabKey = 'vplus' | 'vshort' | 'catchup'
 
 interface Editor { id: number; name: string; role: string }
 
@@ -231,6 +239,8 @@ export default function OnAirPage() {
   const [syncing, setSyncing] = useState(false)
   const [syncMsg, setSyncMsg] = useState<string | null>(null)
 
+  const { data: catchupData, mutate: mutateCatchup, isLoading: catchupLoading } =
+    useSWR('/on-air/catchup', fetcher)
   const { data: vplusData, mutate: mutateVplus, isLoading: vplusLoading } =
     useSWR('/on-air/vplus', fetcher)
   const { data: vshortData, mutate: mutateVshort, isLoading: vshortLoading } =
@@ -239,7 +249,7 @@ export default function OnAirPage() {
   const editors: Editor[] = editorsData ?? []
 
   const mutateAll = useCallback(async () => {
-    await Promise.all([mutateVplus(), mutateVshort()])
+    await Promise.all([mutateVplus(), mutateVshort(), mutateCatchup()])
   }, [mutateVplus, mutateVshort])
 
   const handleSync = useCallback(async () => {
@@ -280,9 +290,9 @@ export default function OnAirPage() {
     } catch { /* silent */ }
   }, [mutateAll, router])
 
-  const currentData = activeTab === 'vplus' ? vplusData : vshortData
-  const currentCols = activeTab === 'vplus' ? VPLUS_COLS : VSHORT_COLS
-  const isLoading = activeTab === 'vplus' ? vplusLoading : vshortLoading
+  const currentData = activeTab === 'vplus' ? vplusData : activeTab === 'vshort' ? vshortData : catchupData
+  const currentCols = activeTab === 'vplus' ? VPLUS_COLS : activeTab === 'vshort' ? VSHORT_COLS : CATCHUP_COLS
+  const isLoading = activeTab === 'vplus' ? vplusLoading : activeTab === 'vshort' ? vshortLoading : catchupLoading
   const lastSynced = currentData?.synced_at
     ? new Date(currentData.synced_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })
     : null
@@ -332,24 +342,26 @@ export default function OnAirPage() {
 
           {/* Tabs */}
           <div className="flex gap-1 mb-4 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl w-fit">
-            {(['vplus', 'vshort'] as TabKey[]).map(t => (
+            {(['vplus', 'vshort', 'catchup'] as TabKey[]).map(t => (
               <button
                 key={t}
                 onClick={() => setActiveTab(t)}
                 className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
                   activeTab === t
-                    ? 'bg-white dark:bg-gray-700 shadow-sm ' + (t === 'vplus' ? 'text-blue-600 dark:text-blue-400' : 'text-violet-600 dark:text-violet-400')
+                    ? 'bg-white dark:bg-gray-700 shadow-sm ' + (t === 'vplus' ? 'text-blue-600 dark:text-blue-400' : t === 'vshort' ? 'text-violet-600 dark:text-violet-400' : 'text-emerald-600 dark:text-emerald-400')
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
                 }`}
               >
-                {t === 'vplus' ? 'V+' : 'Vshort'}
-                {(t === 'vplus' ? vplusData : vshortData) && (
+                {t === 'vplus' ? 'V+' : t === 'vshort' ? 'Vshort' : 'Catch Up'}
+                {(t === 'vplus' ? vplusData : t === 'vshort' ? vshortData : catchupData) && (
                   <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${
                     t === 'vplus'
                       ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                      : 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400'
+                      : t === 'vshort'
+                      ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400'
+                      : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
                   }`}>
-                    {(t === 'vplus' ? vplusData : vshortData)?.count}
+                    {(t === 'vplus' ? vplusData : t === 'vshort' ? vshortData : catchupData)?.count}
                   </span>
                 )}
               </button>
