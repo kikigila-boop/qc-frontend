@@ -40,7 +40,7 @@ function getNav(role: string): NavItem[] {
     case 'designer':
       return [Dashboard, QCList, Tambah, LogBook, OnAir, KV, Profil]
     case 'admin':
-      return [Dashboard, QCList, Tambah, Material, LogBook, CMS, SubDubb, OnAir, Users, Profil]
+      return [Dashboard, QCList, Tambah, Material, LogBook, CMS, SubDubb, OnAir, KV, Users, Profil]
     default:
       return [Dashboard, Profil]
   }
@@ -53,8 +53,6 @@ export default function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 safe-bottom">
-      {/* Mobile: 76px per item → ~5 visible, swipe for rest
-          Desktop: centered with padding */}
       <div className="flex overflow-x-auto scrollbar-hide md:justify-center md:overflow-visible md:max-w-3xl md:mx-auto">
         {nav.map(({ href, label, icon: Icon }) => {
           const active = path === href || (href !== '/dashboard' && path.startsWith(href))
