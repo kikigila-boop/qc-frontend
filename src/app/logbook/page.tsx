@@ -155,7 +155,7 @@ function QCLogTab() {
   const [expanded, setExpanded] = useState<number | null>(null)
   const [reQCItem, setReQCItem] = useState<any | null>(null)
   const { user } = useAuth()
-  const canReQC = user?.role && ['admin', 'material_handling', 'editor'].includes(user.role)
+  const canReQC = user?.role && ['admin', 'material_handling', 'editor', 'chef_editor'].includes(user.role)
 
   const rows = (data ?? []).filter((r: any) =>
     !search || r.title?.toLowerCase().includes(search.toLowerCase()) || (r.qcid ?? '').toLowerCase().includes(search.toLowerCase())

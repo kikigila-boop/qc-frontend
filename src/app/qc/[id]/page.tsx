@@ -235,11 +235,11 @@ export default function QCDetailPage() {
   const currentIdx = STATUS_ORDER.indexOf(item.status as StatusEnum)
   const nextStatus = currentIdx >= 0 ? STATUS_ORDER[currentIdx + 1] ?? null : null
 
-  const isEditor = role === 'editor' || role === 'admin'
+  const isEditor = role === 'editor' || role === 'chef_editor' || role === 'admin'
   const isCMS = role === 'cms' || role === 'admin'
 
   // Button visibility rules
-  const showAdvance = (role === 'editor' || role === 'cms' || role === 'admin')
+  const showAdvance = (role === 'editor' || role === 'chef_editor' || role === 'cms' || role === 'admin')
     && nextStatus
     && item.status !== 'Done Ingest'
     && item.status !== 'Need Revised'
@@ -407,7 +407,7 @@ export default function QCDetailPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   {/* With/Without Subs toggle — editable by subtitle, editor, MH */}
-                  {(role === 'subtitle' || role === 'editor' || role === 'material_handling' || role === 'admin') && (
+                  {(role === 'subtitle' || role === 'editor' || role === 'chef_editor' || role === 'material_handling' || role === 'admin') && (
                     withSubsEditing ? (
                       <div className="flex gap-1">
                         <button onClick={() => toggleWithSubs(true)} className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-600 text-white">Dengan Subs</button>
@@ -498,7 +498,7 @@ export default function QCDetailPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  {(role === 'editor' || role === 'material_handling' || role === 'admin') && (
+                  {(role === 'editor' || role === 'chef_editor' || role === 'material_handling' || role === 'admin') && (
                     withDubbEditing ? (
                       <div className="flex gap-1">
                         <button onClick={() => toggleWithDubb(true)} className="text-[10px] px-2 py-0.5 rounded-full bg-violet-600 text-white">Dengan Dubb</button>
@@ -535,7 +535,7 @@ export default function QCDetailPage() {
                             {task.language_code}
                           </span>
                           <span className="flex-1 text-xs text-slate-600 dark:text-slate-300">{task.language_name}</span>
-                          {role === 'editor' || role === 'admin' ? (
+                          {role === 'editor' || role === 'chef_editor' || role === 'admin' ? (
                             editingDubbPic === task.id ? (
                               <input autoFocus value={dubbPicVal} onChange={e => setDubbPicVal(e.target.value)}
                                 onBlur={() => { updateDubbTask(task.id, { pic: dubbPicVal }); setEditingDubbPic(null) }}
@@ -550,7 +550,7 @@ export default function QCDetailPage() {
                           ) : (
                             <span className="text-xs text-slate-400 w-24 text-right truncate">{task.pic || '-'}</span>
                           )}
-                          {(role === 'editor' || role === 'admin') ? (
+                          {(role === 'editor' || role === 'chef_editor' || role === 'admin') ? (
                             <button onClick={() => {
                               const next = task.status === 'pending' ? 'in_progress' : task.status === 'in_progress' ? 'done' : 'pending'
                               updateDubbTask(task.id, { status: next })

@@ -12,7 +12,7 @@ import { Search, Loader2, Package, CheckSquare, Square } from 'lucide-react'
 const fetcher = (url: string) => api.get(url).then(r => r.data)
 
 export default function MaterialQueuePage() {
-  const { user, isLoading: authLoading } = useRoleGuard(['editor', 'admin'], '/dashboard')
+  const { user, isLoading: authLoading } = useRoleGuard(['editor', 'chef_editor', 'admin'], '/dashboard')
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [claiming, setClaiming] = useState(false)

@@ -43,7 +43,7 @@ function ContentCard({ item, taskType }: { item: any; taskType: 'subs' | 'dubb' 
   const role = user?.role ?? ''
   const canEdit = taskType === 'subs'
     ? (role === 'subtitle' || role === 'admin')
-    : (role === 'editor' || role === 'admin')
+    : (role === 'editor' || role === 'chef_editor' || role === 'admin')
 
   const accent = taskType === 'dubb' ? 'violet' : 'indigo'
   const badgeClass = taskType === 'dubb'

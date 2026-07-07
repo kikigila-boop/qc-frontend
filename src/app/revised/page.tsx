@@ -23,7 +23,7 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function RevisedQueuePage() {
-  const { user, isLoading: authLoading } = useRoleGuard(['editor', 'admin'], '/cms')
+  const { user, isLoading: authLoading } = useRoleGuard(['editor', 'chef_editor', 'admin'], '/cms')
   const router = useRouter()
 
   const { data: items, isLoading, mutate } = useSWR<QCContent[]>(
