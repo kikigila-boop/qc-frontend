@@ -6,7 +6,7 @@ import useSWR from 'swr'
 import { useRouter } from 'next/navigation'
 import {
   RefreshCw, Tv, Calendar, Clock, CheckCircle2, Circle,
-  UserCheck, UserX, Plus, Loader2, X, ChevronDown
+  UserCheck, UserX, Plus, PlusCircle, Loader2, X, ChevronDown
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import TopBar from '@/components/layout/TopBar'
@@ -109,7 +109,7 @@ function BannerDropdown({
       }}
       className="text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
     >
-      <option value="">â pilih â</option>
+      <option value="">— pilih —</option>
       <option value="yes">Home Banner: Yes</option>
       <option value="no">Home Banner: No</option>
     </select>
@@ -154,7 +154,6 @@ function ScheduleTable({
     )
   }
 
-  // Transform cell value
   function formatCell(key: string, value: any): string {
     if (key === 'EXCLUSIVE?') {
       const s = String(value || '').toUpperCase()
@@ -218,7 +217,7 @@ function ScheduleTable({
                   const displayed = formatCell(c.key, row[c.key])
                   return (
                     <td key={c.key} className="px-3 py-2 text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                      {displayed || <span className="text-gray-300 dark:text-gray-600">â</span>}
+                      {displayed || <span className="text-gray-300 dark:text-gray-600">—</span>}
                     </td>
                   )
                 })}
@@ -233,7 +232,7 @@ function ScheduleTable({
                       />
                     ) : (
                       <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {row._banner_home === true ? 'Yes' : row._banner_home === false ? 'No' : 'â'}
+                        {row._banner_home === true ? 'Yes' : row._banner_home === false ? 'No' : '—'}
                       </span>
                     )}
                   </td>
@@ -294,7 +293,7 @@ function ScheduleTable({
                         )}
                       </>
                     ) : (
-                      <span className="text-gray-300 dark:text-gray-600 text-xs">â</span>
+                      <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>
                     )}
                   </div>
                 </td>
@@ -302,7 +301,6 @@ function ScheduleTable({
                 {/* Add Job / KV Status column */}
                 <td className="px-3 py-2 whitespace-nowrap">
                   {showBanner ? (
-                    /* Catchup: show KV status badge or Add Job button */
                     isKvDone ? (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                         KV Done
@@ -322,7 +320,6 @@ function ScheduleTable({
                       <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>
                     )
                   ) : (
-                    /* V+/Vshort: original Add Job logic */
                     !hasPic && !isAdmin ? (
                       <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>
                     ) : jobDone ? (
@@ -429,7 +426,6 @@ export default function OnAirPage() {
     ? new Date(currentData.synced_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })
     : null
 
-  // Tab display labels
   const TAB_LABELS: Record<TabKey, string> = {
     vplus: 'V+',
     vshort: 'Vshort',
@@ -464,19 +460,19 @@ export default function OnAirPage() {
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-sm font-medium transition-colors disabled:opacity-50"
               >
                 <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-                {syncing ? 'Syncingâ¦' : 'Sync Now'}
+                {syncing ? 'Syncing…' : 'Sync Now'}
               </button>
             )}
           </div>
 
           {syncMsg && (
             <div className="mb-4 px-4 py-2 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-sm">
-              â {syncMsg}
+              ✓ {syncMsg}
             </div>
           )}
 
           <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
-            Centang <span className="font-medium">Aired</span> untuk tandai tayang Â· <span className="font-medium">Assign PIC</span> untuk tugaskan editor Â· <span className="font-medium">Add Job</span> untuk buat QC job
+            Centang <span className="font-medium">Aired</span> untuk tandai tayang · <span className="font-medium">Assign PIC</span> untuk tugaskan editor · <span className="font-medium">Add Job</span> untuk buat QC job
           </p>
 
           {/* Tabs */}
@@ -512,7 +508,7 @@ export default function OnAirPage() {
             {isLoading ? (
               <div className="flex items-center justify-center py-16 text-gray-400">
                 <RefreshCw className="w-6 h-6 animate-spin mr-2" />
-                <span className="text-sm">Memuat jadwalâ¦</span>
+                <span className="text-sm">Memuat jadwal…</span>
               </div>
             ) : (
               <ScheduleTable
