@@ -39,6 +39,8 @@ function getNav(role: string): NavItem[] {
       return [Dashboard, QCList, Tambah, LogBook, OnAir, KV, Profil]
     case 'designer':
       return [Dashboard, QCList, Tambah, LogBook, OnAir, KV, Profil]
+    case 'epg_metadata':
+      return [Dashboard, QCList, OnAir, Profil]
     case 'admin':
       return [Dashboard, QCList, Tambah, Material, LogBook, CMS, SubDubb, OnAir, KV, Users, Profil]
     default:
