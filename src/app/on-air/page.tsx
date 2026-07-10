@@ -87,12 +87,24 @@ function BannerDropdown({ value, onChange }: { value: boolean | null | undefined
       value={value === true ? 'yes' : value === false ? 'no' : ''}
       onChange={e => { const v = e.target.value; onChange(v === 'yes' ? true : v === 'no' ? false : null) }}
       className="text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500">
-      <option value="">— pilih —</option>
+      <option value="">â pilih â</option>
       <option value="yes">Home Banner: Yes</option>
       <option value="no">Home Banner: No</option>
     </select>
   )
 }
+
+
+  const QC_STATUS_BADGE: Record<string,string> = {
+    'qc_process': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    'qc_done':    'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    'readiness':  'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  }
+  const QC_STATUS_LABEL: Record<string,string> = {
+    'qc_process': 'QC Process',
+    'qc_done':    'QC Done',
+    'readiness':  'Readiness',
+  }
 
 function ScheduleTable({
   rows, cols, editors, isAdmin, showBanner,
@@ -153,7 +165,7 @@ function ScheduleTable({
             const id = row._id ?? i
             const hasPic = !!row._pic_user_id
 
-            // All KV statuses count as "done" — no Add Job button
+            // All KV statuses count as "done" â no Add Job button
             const jobDone =
               row._job_status === 'added' ||
               row._job_status === 'kv_process' ||
@@ -191,7 +203,7 @@ function ScheduleTable({
                   const displayed = formatCell(c.key, row[c.key])
                   return (
                     <td key={c.key} className="px-3 py-2 text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                      {displayed || <span className="text-gray-300 dark:text-gray-600">—</span>}
+                      {displayed || <span className="text-gray-300 dark:text-gray-600">â</span>}
                     </td>
                   )
                 })}
@@ -203,7 +215,7 @@ function ScheduleTable({
                       <BannerDropdown value={row._banner_home} onChange={val => onSetBanner?.(id, val)} />
                     ) : (
                       <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {row._banner_home === true ? 'Yes' : row._banner_home === false ? 'No' : '—'}
+                        {row._banner_home === true ? 'Yes' : row._banner_home === false ? 'No' : 'â'}
                       </span>
                     )}
                   </td>
@@ -246,7 +258,7 @@ function ScheduleTable({
                         )}
                       </>
                     ) : (
-                      <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>
+                      <span className="text-gray-300 dark:text-gray-600 text-xs">â</span>
                     )}
                   </div>
                 </td>
@@ -254,7 +266,7 @@ function ScheduleTable({
                 {/* Job / KV Status */}
                 <td className="px-3 py-2 whitespace-nowrap">
                   {showBanner ? (
-                    // Catchup / Live Airing — show KV flow status badges
+                    // Catchup / Live Airing â show KV flow status badges
                     isKvLogged ? (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                         Log KV
@@ -277,12 +289,12 @@ function ScheduleTable({
                         <PlusCircle className="w-3 h-3" /> Add Job
                       </button>
                     ) : (
-                      <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>
+                      <span className="text-gray-300 dark:text-gray-600 text-xs">â</span>
                     )
                   ) : (
                     // V+ / Vshort
                     !hasPic && !isAdmin ? (
-                      <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>
+                      <span className="text-gray-300 dark:text-gray-600 text-xs">â</span>
                     ) : jobDone ? (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                         Added
@@ -406,19 +418,19 @@ export default function OnAirPage() {
               <button onClick={handleSync} disabled={syncing}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-sm font-medium transition-colors disabled:opacity-50">
                 <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-                {syncing ? 'Syncing…' : 'Sync Now'}
+                {syncing ? 'Syncingâ¦' : 'Sync Now'}
               </button>
             )}
           </div>
 
           {syncMsg && (
             <div className="mb-4 px-4 py-2 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-sm">
-              ✓ {syncMsg}
+              â {syncMsg}
             </div>
           )}
 
           <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
-            Centang <span className="font-medium">Aired</span> untuk tandai tayang · <span className="font-medium">Assign PIC</span> untuk tugaskan editor · <span className="font-medium">Add Job</span> untuk buat KV/QC job
+            Centang <span className="font-medium">Aired</span> untuk tandai tayang Â· <span className="font-medium">Assign PIC</span> untuk tugaskan editor Â· <span className="font-medium">Add Job</span> untuk buat KV/QC job
           </p>
 
           <div className="flex gap-1 mb-4 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl w-fit">
@@ -447,7 +459,7 @@ export default function OnAirPage() {
             {isLoading ? (
               <div className="flex items-center justify-center py-16 text-gray-400">
                 <RefreshCw className="w-6 h-6 animate-spin mr-2" />
-                <span className="text-sm">Memuat jadwal…</span>
+                <span className="text-sm">Memuat jadwalâ¦</span>
               </div>
             ) : (
               <ScheduleTable
