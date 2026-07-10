@@ -25,11 +25,11 @@ export default function MaterialPage() {
   }, [authLoading, user, router])
 
   const isMaterialAdmin = user?.role === 'material_handling' || user?.role === 'admin'
-  const defaultTab = isMaterialAdmin ? 'material' : 'avail'
-  const [activeTab, setActiveTab] = useState<'material' | 'avail'>(defaultTab)
+  const defaultTab = isMaterialAdmin ? 'material' : 'readiness'
+  const [activeTab, setActiveTab] = useState<'material' | 'readiness'>(defaultTab)
 
   const [search, setSearch] = useState('')
-  const [reAvailling, setReAvailling] = useState<number | null>(null)
+  const [reReadiness, setReReadiness] = useState<number | null>(null)
 
   const params = new URLSearchParams()
   if (search) params.set('search', search)
@@ -61,14 +61,14 @@ export default function MaterialPage() {
   const inQC = items?.filter(i => i.status === 'QC Process' || i.status === 'QC Done') ?? []
 
   const doReAvail = async (id: number) => {
-    setReAvailling(id)
+    setReReadiness(id)
     try {
       await api.patch(`/material/${id}/re-avail`)
       mutate(`/material/queue?${params.toString()}`)
       mutate('/material/queue/count')
     } catch (err: any) {
       alert(err?.response?.data?.detail || 'Gagal re-avail.')
-    } finally { setReAvailling(null) }
+    } finally { setReReadiness(null) }
   }
 
   const doStartCopy = async (id: number) => {
@@ -127,7 +127,7 @@ export default function MaterialPage() {
           </span>
         )}
         <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{item.title}</p>
-        <p className="text-xs text-slate-500">S{item.season} E{item.episode} · {fmt(item.updated_at)}</p>
+        <p className="text-xs text-slate-500">S{item.season} E{item.episode} Â· {fmt(item.updated_at)}</p>
         <div className="mt-1 flex items-center gap-2">
           <StatusBadge status={item.status} />
           {item.editor_name && (
@@ -145,10 +145,10 @@ export default function MaterialPage() {
         {item.status === 'Material Revised' && isMaterialAdmin ? (
           <button
             onClick={() => doReAvail(item.id)}
-            disabled={reAvailling === item.id}
+            disabled={reReadiness === item.id}
             className="flex items-center gap-1.5 rounded-xl bg-teal-600 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
           >
-            {reAvailling === item.id ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+            {reReadiness === item.id ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
             Avail Lagi
           </button>
         ) : (
@@ -181,9 +181,9 @@ export default function MaterialPage() {
               </button>
             )}
             <button
-              onClick={() => setActiveTab('avail')}
+              onClick={() => setActiveTab('readiness')}
               className={`flex-1 py-3 text-sm font-semibold border-b-2 transition-colors ${
-                activeTab === 'avail'
+                activeTab === 'readiness'
                   ? 'border-teal-500 text-teal-600 dark:text-teal-400'
                   : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700'
               }`}
@@ -198,16 +198,16 @@ export default function MaterialPage() {
           </div>
         </div>
 
-        {/* ── MATERIAL TAB ─────────────────────────────── */}
+        {/* ââ MATERIAL TAB âââââââââââââââââââââââââââââââ */}
         {activeTab === 'material' && isMaterialAdmin && (
           <>
             {/* Stats */}
             <div className="border-b border-slate-100 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { label: 'Material Avail', count: counts?.material_avail ?? '—', color: 'teal' },
-                  { label: 'Perlu Diperbaiki', count: counts?.material_revised ?? '—', color: 'rose' },
-                  { label: 'Dalam QC', count: counts?.in_qc ?? '—', color: 'blue' },
+                  { label: 'Material Avail', count: counts?.material_avail ?? 'â', color: 'teal' },
+                  { label: 'Perlu Diperbaiki', count: counts?.material_revised ?? 'â', color: 'rose' },
+                  { label: 'Dalam QC', count: counts?.in_qc ?? 'â', color: 'blue' },
                 ].map(({ label, count, color }) => (
                   <div key={label} className={`rounded-xl bg-${color}-50 p-3 dark:bg-${color}-900/20`}>
                     <p className={`text-xl font-bold text-${color}-700 dark:text-${color}-300`}>{count}</p>
@@ -242,13 +242,13 @@ export default function MaterialPage() {
                             <span className="text-[10px] text-slate-400">{d.delivery_method}</span>
                           </div>
                           <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{d.sender_name}</p>
-                          <p className="text-[11px] text-slate-500">{d.source_category} — {d.source_name}</p>
+                          <p className="text-[11px] text-slate-500">{d.source_category} â {d.source_name}</p>
                           <p className="text-[11px] text-slate-400 mt-0.5">
-                            {d.content_titles.length} judul · {new Date(d.delivery_date).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'})}
+                            {d.content_titles.length} judul Â· {new Date(d.delivery_date).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'})}
                           </p>
                           <div className="mt-1.5 space-y-0.5">
                             {d.content_titles.slice(0, 3).map((t: string, i: number) => (
-                              <p key={i} className="text-[11px] text-slate-600 dark:text-slate-400">· {t}</p>
+                              <p key={i} className="text-[11px] text-slate-600 dark:text-slate-400">Â· {t}</p>
                             ))}
                             {d.content_titles.length > 3 && (
                               <p className="text-[11px] text-slate-400">+{d.content_titles.length - 3} judul lainnya</p>
@@ -309,11 +309,11 @@ export default function MaterialPage() {
                             {r.approved_by && <span className="text-[10px] text-slate-400">oleh {r.approved_by}</span>}
                           </div>
                           <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{r.requestor_name}</p>
-                          <p className="text-[11px] text-slate-500">{r.source_requestor} · {r.total_eps} episode</p>
+                          <p className="text-[11px] text-slate-500">{r.source_requestor} Â· {r.total_eps} episode</p>
                           <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">{r.requestor_need}</p>
                           <div className="mt-1 space-y-0.5">
                             {r.content_titles.slice(0, 2).map((t: string, i: number) => (
-                              <p key={i} className="text-[11px] text-slate-600 dark:text-slate-400">· {t}</p>
+                              <p key={i} className="text-[11px] text-slate-600 dark:text-slate-400">Â· {t}</p>
                             ))}
                             {r.content_titles.length > 2 && (
                               <p className="text-[11px] text-slate-400">+{r.content_titles.length - 2} judul lainnya</p>
@@ -454,8 +454,8 @@ export default function MaterialPage() {
           </>
         )}
 
-        {/* ── AVAILABLE TAB ────────────────────────────── */}
-        {activeTab === 'avail' && (
+        {/* ââ AVAILABLE TAB ââââââââââââââââââââââââââââââ */}
+        {activeTab === 'readiness' && (
           <div className="py-3">
             <div className="px-4 pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="relative">
