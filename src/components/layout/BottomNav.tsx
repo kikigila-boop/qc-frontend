@@ -24,6 +24,7 @@ function getNav(role: string): NavItem[] {
   const Users      = { href: '/admin/users',     label: 'Users',      icon: ShieldCheck }
   const KV         = { href: '/kv',              label: 'KV',         icon: Tv2 }
 
+  const TambahMH    = { href: '/tambah',         label: 'Tambah',     icon: PlusCircle }
   const Library    = { href: '/library',       label: 'Library',    icon: BookOpen }
   switch (role) {
     case 'editor':
@@ -31,7 +32,7 @@ function getNav(role: string): NavItem[] {
     case 'cms':
       return [Dashboard, QCList, Avail, LogBook, Profil]
     case 'material_handling':
-      return [Dashboard, QCList, Material, Tambah, LogBook, OnAir, Profil]
+      return [Dashboard, QCList, Material, TambahMH, LogBook, OnAir, Profil]
     case 'subtitle':
       return [Dashboard, QCList, SubDubb, LogBook, OnAir, Profil]
     case 'pns':
