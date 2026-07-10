@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import api from '@/lib/api'
 import TopBar from '@/components/layout/TopBar'
+import QcResultForm from '@/components/QcResultForm'
 import BottomNav from '@/components/layout/BottomNav'
 import { Loader2, CheckCircle, AlertCircle, Layers, Link, Wand2 } from 'lucide-react'
 import { useRoleGuard } from '@/hooks/useRoleGuard'
@@ -183,7 +184,7 @@ export default function CreateQCPage() {
     // Pre-select platform when coming from on-air
     if (plat) {
       const key = plat.toLowerCase().replace('+', 'plus').replace('vshort', 'vshort')
-      // map: "V+" → "vplus", "Vshort" → "vshort"
+      // map: "V+" â "vplus", "Vshort" â "vshort"
       const mapped = plat === 'V+' ? 'vplus' : plat.toLowerCase()
       setPlatforms([mapped])
     }
@@ -265,7 +266,7 @@ export default function CreateQCPage() {
       } else if (typeof detail === 'string') {
         setSubmitError(detail)
       } else if (!e?.response) {
-        setSubmitError('Koneksi gagal — coba lagi')
+        setSubmitError('Koneksi gagal â coba lagi')
       } else {
         setSubmitError('Gagal menyimpan (status: ' + e?.response?.status + ')')
       }
@@ -278,7 +279,7 @@ export default function CreateQCPage() {
     if (!parsed || parsed.labels.length <= 1) return null
     if (epMode === 'grouped') {
       const sample = parsed.labels.slice(0, 3).join(', ')
-      return `${parsed.labels.length} entry: ${sample}${parsed.labels.length > 3 ? `, … ${parsed.labels[parsed.labels.length-1]}` : ''}`
+      return `${parsed.labels.length} entry: ${sample}${parsed.labels.length > 3 ? `, â¦ ${parsed.labels[parsed.labels.length-1]}` : ''}`
     }
     return `${parsed.labels.length} episode: Ep ${parsed.labels[0]} s/d ${parsed.labels[parsed.labels.length-1]}`
   }
@@ -370,7 +371,7 @@ export default function CreateQCPage() {
                 </div>
               </FIELD>
 
-              {/* Language picker — hanya tampil jika with_subs & platform dipilih */}
+              {/* Language picker â hanya tampil jika with_subs & platform dipilih */}
               {withSubs && platforms.length > 0 && (
                 <FIELD label="Bahasa Subtitle" hint="Pre-filled sesuai platform, bisa ubah manual">
                   <div className="flex flex-wrap gap-2 pt-1">
@@ -382,7 +383,7 @@ export default function CreateQCPage() {
                             ? 'bg-indigo-600 border-indigo-600 text-white'
                             : 'border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400'
                         }`}>
-                        {lang.code} · {lang.name}
+                        {lang.code} Â· {lang.name}
                       </button>
                     ))}
                   </div>
@@ -427,7 +428,7 @@ export default function CreateQCPage() {
                             ? 'bg-violet-600 border-violet-600 text-white'
                             : 'border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400'
                         }`}>
-                        {lang.code} · {lang.name}
+                        {lang.code} Â· {lang.name}
                       </button>
                     ))}
                   </div>
@@ -470,11 +471,11 @@ export default function CreateQCPage() {
                 </div>
 
                 {epMode === 'individual' && (
-                  <p className="mb-2 text-xs text-slate-400">Satu angka (5) atau range (1-90) — tiap eps jadi entry sendiri</p>
+                  <p className="mb-2 text-xs text-slate-400">Satu angka (5) atau range (1-90) â tiap eps jadi entry sendiri</p>
                 )}
                 {epMode === 'grouped' && (
                   <div className="mb-2 space-y-2">
-                    <p className="text-xs text-slate-400">Range (1-90) dibagi per grup — misal "1-2", "3-4", dst</p>
+                    <p className="text-xs text-slate-400">Range (1-90) dibagi per grup â misal "1-2", "3-4", dst</p>
                     <div className="flex items-center gap-2">
                       <label className="shrink-0 text-xs font-medium text-slate-600 dark:text-slate-400">Eps per entry:</label>
                       <input
@@ -496,7 +497,7 @@ export default function CreateQCPage() {
                 {epMode === 'combined' && (
                   <div className="mb-2 flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-2 dark:bg-amber-900/20">
                     <Link size={12} className="shrink-0 text-amber-600" />
-                    <p className="text-xs text-amber-700 dark:text-amber-300">Satu entry dengan label persis seperti yang ditulis — untuk file gabungan dari source</p>
+                    <p className="text-xs text-amber-700 dark:text-amber-300">Satu entry dengan label persis seperti yang ditulis â untuk file gabungan dari source</p>
                   </div>
                 )}
 
@@ -521,12 +522,12 @@ export default function CreateQCPage() {
 
               )}
 
-              <FIELD label="Duration (opsional)" hint="Format wajib HH:MM:SS — contoh: 01:54:32" error={errors.duration?.message}>
+              <FIELD label="Duration (opsional)" hint="Format wajib HH:MM:SS â contoh: 01:54:32" error={errors.duration?.message}>
                 <input
                   {...register('duration', {
                     pattern: {
                       value: /^\d{2}:\d{2}:\d{2}$/,
-                      message: 'Format harus HH:MM:SS — contoh: 01:54:32'
+                      message: 'Format harus HH:MM:SS â contoh: 01:54:32'
                     }
                   })}
                   placeholder="01:54:32"
