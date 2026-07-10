@@ -16,7 +16,7 @@ const LINK_METHODS   = ['GDrive', 'Aspera']
 
 type FormType = '' | 'delivery' | 'request'
 
-// ─── Form Pengiriman Materi ───────────────────────────────────────────────
+// âââ Form Pengiriman Materi âââââââââââââââââââââââââââââââââââââââââââââââ
 function DeliveryForm() {
   const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
@@ -169,7 +169,7 @@ function DeliveryForm() {
   )
 }
 
-// ─── Form Request Konten ──────────────────────────────────────────────────
+// âââ Form Request Konten ââââââââââââââââââââââââââââââââââââââââââââââââââ
 function RequestForm() {
   const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
@@ -250,7 +250,7 @@ function RequestForm() {
       {error && <div className="flex items-center gap-2 rounded-xl bg-red-50 p-3 text-sm text-red-700"><AlertCircle size={16} className="shrink-0" /> {error}</div>}
 
       <div className="rounded-xl bg-amber-50 p-3 border border-amber-100">
-        <p className="text-xs text-amber-700 font-medium">ℹ️ Request akan diproses setelah mendapat persetujuan dari admin.</p>
+        <p className="text-xs text-amber-700 font-medium">â¹ï¸ Request akan diproses setelah mendapat persetujuan dari admin.</p>
       </div>
 
       <button type="submit" disabled={submitting} className="flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 py-3.5 font-semibold text-white shadow-md transition hover:bg-purple-700 disabled:opacity-60">
@@ -260,7 +260,7 @@ function RequestForm() {
   )
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────
+// âââ Main Page ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 export default function KirimPage() {
   const [formType, setFormType] = useState<FormType>('')
   const formRef = useRef<HTMLDivElement>(null)
