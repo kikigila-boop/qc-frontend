@@ -24,6 +24,7 @@ function getNav(role: string): NavItem[] {
   const Users      = { href: '/admin/users',     label: 'Users',      icon: ShieldCheck }
   const KV         = { href: '/kv',              label: 'KV',         icon: Tv2 }
 
+  const Library    = { href: '/library',       label: 'Library',    icon: BookOpen }
   switch (role) {
     case 'editor':
       return [Dashboard, QCList, Avail, Tambah, LogBook, SubDubb, OnAir, Profil]
@@ -40,9 +41,11 @@ function getNav(role: string): NavItem[] {
     case 'designer':
       return [Dashboard, QCList, Tambah, LogBook, OnAir, KV, Profil]
     case 'epg_metadata':
-      return [Dashboard, QCList, OnAir, Profil]
+      return [Dashboard, QCList, OnAir, Library, Profil]
     case 'admin':
-      return [Dashboard, QCList, Tambah, Material, LogBook, CMS, SubDubb, OnAir, KV, Users, Profil]
+      return [Dashboard, QCList, Tambah, Material, LogBook, CMS, SubDubb, OnAir, KV, Library, Users, Profil]
+    case 'supervisor':
+      return [Dashboard, QCList, Material, LogBook, OnAir, Library, Profil]
     default:
       return [Dashboard, Profil]
   }
