@@ -46,6 +46,9 @@ export default function MaterialPage() {
   const [rejectingReq, setRejectingReq] = useState<number | null>(null)
   const [rejectNotes, setRejectNotes] = useState<Record<number, string>>({})
   const [showRejectBox, setShowRejectBox] = useState<number | null>(null)
+  const [libIdInput, setLibIdInput] = useState<Record<number, string>>({})
+  const [creatingJob, setCreatingJob] = useState<number | null>(null)
+  const [showLibInput, setShowLibInput] = useState<number | null>(null)
   const isAdmin = user?.role === 'admin'
   const { data: deliveries, isLoading: deliveriesLoading } = useSWR(
     '/delivery/list', fetcher, { refreshInterval: 20000 }
@@ -119,6 +122,19 @@ export default function MaterialPage() {
     finally { setRejectingReq(null) }
   }
 
+  const doCreateJob = async (id: number, libraryId?: string) => {
+    setCreatingJob(id)
+    try {
+      const url = libraryId ? `/material/${id}/create-job?library_id=${libraryId}` : `/material/${id}/create-job`
+      await api.patch(url)
+      mutate(`/material/queue?${params.toString()}`)
+      mutate('/material/queue/count')
+      setShowLibInput(null)
+    } catch (err: any) {
+      alert(err?.response?.data?.detail || 'Gagal generate Library ID.')
+    } finally { setCreatingJob(null) }
+  }
+
   const ItemRow = ({ item }: { item: QCContent }) => (
     <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
       <div className="flex-1 min-w-0">
@@ -128,7 +144,7 @@ export default function MaterialPage() {
           </span>
         )}
         <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{item.title}</p>
-        <p className="text-xs text-slate-500">S{item.season} E{item.episode} Â· {fmt(item.updated_at)}</p>
+        <p className="text-xs text-slate-500">S{item.season} E{item.episode} ÃÂ· {fmt(item.updated_at)}</p>
         <div className="mt-1 flex items-center gap-2">
           <StatusBadge status={item.status} />
           {item.editor_name && (
@@ -199,16 +215,16 @@ export default function MaterialPage() {
           </div>
         </div>
 
-        {/* ââ MATERIAL TAB âââââââââââââââââââââââââââââââ */}
+        {/* Ã¢ÂÂÃ¢ÂÂ MATERIAL TAB Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ */}
         {activeTab === 'material' && isMaterialAdmin && (
           <>
             {/* Stats */}
             <div className="border-b border-slate-100 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { label: 'Material Avail', count: counts?.material_avail ?? 'â', color: 'teal' },
-                  { label: 'Perlu Diperbaiki', count: counts?.material_revised ?? 'â', color: 'rose' },
-                  { label: 'Dalam QC', count: counts?.in_qc ?? 'â', color: 'blue' },
+                  { label: 'Material Avail', count: counts?.material_avail ?? 'Ã¢ÂÂ', color: 'teal' },
+                  { label: 'Perlu Diperbaiki', count: counts?.material_revised ?? 'Ã¢ÂÂ', color: 'rose' },
+                  { label: 'Dalam QC', count: counts?.in_qc ?? 'Ã¢ÂÂ', color: 'blue' },
                 ].map(({ label, count, color }) => (
                   <div key={label} className={`rounded-xl bg-${color}-50 p-3 dark:bg-${color}-900/20`}>
                     <p className={`text-xl font-bold text-${color}-700 dark:text-${color}-300`}>{count}</p>
@@ -243,13 +259,13 @@ export default function MaterialPage() {
                             <span className="text-[10px] text-slate-400">{d.delivery_method}</span>
                           </div>
                           <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{d.sender_name}</p>
-                          <p className="text-[11px] text-slate-500">{d.source_category} â {d.source_name}</p>
+                          <p className="text-[11px] text-slate-500">{d.source_category} Ã¢ÂÂ {d.source_name}</p>
                           <p className="text-[11px] text-slate-400 mt-0.5">
-                            {d.content_titles.length} judul Â· {new Date(d.delivery_date).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'})}
+                            {d.content_titles.length} judul ÃÂ· {new Date(d.delivery_date).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'})}
                           </p>
                           <div className="mt-1.5 space-y-0.5">
                             {d.content_titles.slice(0, 3).map((t: string, i: number) => (
-                              <p key={i} className="text-[11px] text-slate-600 dark:text-slate-400">Â· {t}</p>
+                              <p key={i} className="text-[11px] text-slate-600 dark:text-slate-400">ÃÂ· {t}</p>
                             ))}
                             {d.content_titles.length > 3 && (
                               <p className="text-[11px] text-slate-400">+{d.content_titles.length - 3} judul lainnya</p>
@@ -310,11 +326,11 @@ export default function MaterialPage() {
                             {r.approved_by && <span className="text-[10px] text-slate-400">oleh {r.approved_by}</span>}
                           </div>
                           <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{r.requestor_name}</p>
-                          <p className="text-[11px] text-slate-500">{r.source_requestor} Â· {r.total_eps} episode</p>
+                          <p className="text-[11px] text-slate-500">{r.source_requestor} ÃÂ· {r.total_eps} episode</p>
                           <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">{r.requestor_need}</p>
                           <div className="mt-1 space-y-0.5">
                             {r.content_titles.slice(0, 2).map((t: string, i: number) => (
-                              <p key={i} className="text-[11px] text-slate-600 dark:text-slate-400">Â· {t}</p>
+                              <p key={i} className="text-[11px] text-slate-600 dark:text-slate-400">ÃÂ· {t}</p>
                             ))}
                             {r.content_titles.length > 2 && (
                               <p className="text-[11px] text-slate-400">+{r.content_titles.length - 2} judul lainnya</p>
@@ -455,7 +471,7 @@ export default function MaterialPage() {
           </>
         )}
 
-                {/* ── READINESS TAB ──────────────────────────────────────────────────── */}
+                {/* ââ READINESS TAB ââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
         {activeTab === 'readiness' && (
           <div className="py-3">
             <div className="px-4 pb-3 border-b border-slate-100 dark:border-slate-800">
@@ -475,74 +491,69 @@ export default function MaterialPage() {
               </div>
             ) : (
               <>
-                {readyDeliveries.length > 0 && (
-                  <section className="mb-2">
-                    <div className="flex items-center gap-2 px-4 py-2 border-b border-green-100 bg-green-50 dark:bg-green-900/10 dark:border-green-900/30">
-                      <PackageCheck size={14} className="text-green-600" />
-                      <p className="text-xs font-semibold uppercase tracking-wider text-green-700 dark:text-green-400">
-                        Siap Dikerjakan ({readyDeliveries.length})
-                      </p>
-                    </div>
-                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {readyDeliveries
-                        .filter((d: any) => !search || d.content_titles.some((t: string) => t.toLowerCase().includes(search.toLowerCase())))
-                        .map((d: any) => (
-                        <div key={d.id} className="px-4 py-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-[10px] font-semibold rounded-full px-2 py-0.5 bg-green-100 text-green-700">Ready to QC</span>
-                                <span className="text-[10px] text-slate-400">{d.delivery_method}</span>
-                              </div>
-                              <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{d.sender_name}</p>
-                              <p className="text-[11px] text-slate-500">{d.source_category} · {d.source_name}</p>
-                              <div className="mt-1 space-y-0.5">
-                                {d.content_titles.slice(0,3).map((t: string, i: number) => (
-                                  <p key={i} className="text-[11px] text-slate-600 dark:text-slate-400">· {t}</p>
-                                ))}
-                                {d.content_titles.length > 3 && <p className="text-[11px] text-slate-400">+{d.content_titles.length - 3} judul lainnya</p>}
-                              </div>
-                              <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 rounded-xl bg-slate-50 dark:bg-slate-800/50 p-2.5">
-                                {[
-                                  {label:'PIC MH', value: d.pic_mh_name||'—'},
-                                  {label:'Tanggal', value: new Date(d.delivery_date).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})},
-                                  {label:'SRT', value: d.link_srt?'✓ Ada':'—'},
-                                  {label:'Video', value: d.link_video?'✓ Ada':'—'},
-                                ].map(({label,value}) => (
-                                  <div key={label} className="text-[10px]">
-                                    <span className="text-slate-400">{label}:</span>
-                                    <span className="ml-1 font-medium text-slate-700 dark:text-slate-300">{value}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                            <div className="shrink-0 flex flex-col gap-1.5">
-                              <Link href={'/tambah?delivery_id='+d.id}
-                                className="flex items-center gap-1 rounded-lg bg-teal-600 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-teal-700">
-                                <PlusCircle size={11}/> Add Job
-                              </Link>
-                              <a href={'/kirim/track/'+d.token} target="_blank" rel="noreferrer"
-                                className="flex items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50">
-                                <ExternalLink size={11}/> Track
-                              </a>
-                            </div>
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {avail.map(i => {
+                    const libId = (i as any).library_id
+                    return (
+                      <div key={i.id} className="px-4 py-3">
+                        {i.qcid && (
+                          <span className="mb-0.5 inline-block rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                            {i.qcid}
+                          </span>
+                        )}
+                        <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{i.title}</p>
+                        <p className="text-xs text-slate-500">S{i.season} E{i.episode} · {fmt(i.updated_at)}</p>
+                        {libId ? (
+                          <div className="mt-2 flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1 rounded-lg bg-teal-50 border border-teal-200 px-2.5 py-1 text-xs font-mono font-semibold text-teal-700 dark:bg-teal-900/20 dark:text-teal-300">
+                              <CheckCircle2 size={11} /> {libId}
+                            </span>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                )}
-                {avail.length > 0 && (
-                  <section>
-                    <div className="flex items-center gap-2 px-4 py-2">
-                      <Package size={13} className="text-teal-500" />
-                      <p className="text-xs font-semibold uppercase tracking-wider text-teal-700 dark:text-teal-400">Material Avail ({avail.length})</p>
-                    </div>
-                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {avail.map(i => <ItemRow key={i.id} item={i} />)}
-                    </div>
-                  </section>
-                )}
+                        ) : isMaterialAdmin ? (
+                          <div className="mt-2 space-y-1.5">
+                            <p className="text-[11px] text-slate-400 italic">Belum ada Library ID</p>
+                            <div className="flex gap-1.5 flex-wrap">
+                              <button
+                                onClick={() => doCreateJob(i.id)}
+                                disabled={creatingJob === i.id}
+                                className="flex items-center gap-1 rounded-lg bg-teal-600 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
+                              >
+                                {creatingJob === i.id ? <Loader2 size={11} className="animate-spin" /> : <PlusCircle size={11} />}
+                                Generate Library ID
+                              </button>
+                              <button
+                                onClick={() => setShowLibInput(showLibInput === i.id ? null : i.id)}
+                                className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50"
+                              >
+                                <FileText size={11} /> Input Manual
+                              </button>
+                            </div>
+                            {showLibInput === i.id && (
+                              <div className="flex gap-1.5">
+                                <input
+                                  value={libIdInput[i.id] ?? ''}
+                                  onChange={e => setLibIdInput(prev => ({ ...prev, [i.id]: e.target.value }))}
+                                  placeholder="Lib-VPlus-000001-2026"
+                                  className="flex-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs focus:border-teal-400 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                />
+                                <button
+                                  onClick={() => doCreateJob(i.id, libIdInput[i.id])}
+                                  disabled={creatingJob === i.id || !libIdInput[i.id]?.trim()}
+                                  className="flex items-center gap-1 rounded-lg bg-slate-700 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-slate-800 disabled:opacity-40"
+                                >
+                                  {creatingJob === i.id ? <Loader2 size={11} className="animate-spin" /> : <CheckCheck size={11} />}
+                                  Simpan
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="mt-1.5 text-[11px] text-slate-400 italic">Belum ada Library ID</p>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               </>
             )}
           </div>
