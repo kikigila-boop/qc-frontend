@@ -144,7 +144,7 @@ export default function MaterialPage() {
           </span>
         )}
         <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{item.title}</p>
-        <p className="text-xs text-slate-500">S{item.season} E{item.episode} ÃÂ· {fmt(item.updated_at)}</p>
+        <p className="text-xs text-slate-500">S{item.season} E{item.episode} ÃÂÃÂ· {fmt(item.updated_at)}</p>
         <div className="mt-1 flex items-center gap-2">
           <StatusBadge status={item.status} />
           {item.editor_name && (
@@ -215,16 +215,16 @@ export default function MaterialPage() {
           </div>
         </div>
 
-        {/* Ã¢ÂÂÃ¢ÂÂ MATERIAL TAB Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ */}
+        {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ MATERIAL TAB ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
         {activeTab === 'material' && isMaterialAdmin && (
           <>
             {/* Stats */}
             <div className="border-b border-slate-100 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { label: 'Material Avail', count: counts?.material_avail ?? 'Ã¢ÂÂ', color: 'teal' },
-                  { label: 'Perlu Diperbaiki', count: counts?.material_revised ?? 'Ã¢ÂÂ', color: 'rose' },
-                  { label: 'Dalam QC', count: counts?.in_qc ?? 'Ã¢ÂÂ', color: 'blue' },
+                  { label: 'Material Avail', count: counts?.material_avail ?? 'ÃÂ¢ÃÂÃÂ', color: 'teal' },
+                  { label: 'Perlu Diperbaiki', count: counts?.material_revised ?? 'ÃÂ¢ÃÂÃÂ', color: 'rose' },
+                  { label: 'Dalam QC', count: counts?.in_qc ?? 'ÃÂ¢ÃÂÃÂ', color: 'blue' },
                 ].map(({ label, count, color }) => (
                   <div key={label} className={`rounded-xl bg-${color}-50 p-3 dark:bg-${color}-900/20`}>
                     <p className={`text-xl font-bold text-${color}-700 dark:text-${color}-300`}>{count}</p>
@@ -259,13 +259,13 @@ export default function MaterialPage() {
                             <span className="text-[10px] text-slate-400">{d.delivery_method}</span>
                           </div>
                           <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{d.sender_name}</p>
-                          <p className="text-[11px] text-slate-500">{d.source_category} Ã¢ÂÂ {d.source_name}</p>
+                          <p className="text-[11px] text-slate-500">{d.source_category} ÃÂ¢ÃÂÃÂ {d.source_name}</p>
                           <p className="text-[11px] text-slate-400 mt-0.5">
-                            {d.content_titles.length} judul ÃÂ· {new Date(d.delivery_date).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'})}
+                            {d.content_titles.length} judul ÃÂÃÂ· {new Date(d.delivery_date).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'})}
                           </p>
                           <div className="mt-1.5 space-y-0.5">
                             {d.content_titles.slice(0, 3).map((t: string, i: number) => (
-                              <p key={i} className="text-[11px] text-slate-600 dark:text-slate-400">ÃÂ· {t}</p>
+                              <p key={i} className="text-[11px] text-slate-600 dark:text-slate-400">ÃÂÃÂ· {t}</p>
                             ))}
                             {d.content_titles.length > 3 && (
                               <p className="text-[11px] text-slate-400">+{d.content_titles.length - 3} judul lainnya</p>
@@ -326,11 +326,11 @@ export default function MaterialPage() {
                             {r.approved_by && <span className="text-[10px] text-slate-400">oleh {r.approved_by}</span>}
                           </div>
                           <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{r.requestor_name}</p>
-                          <p className="text-[11px] text-slate-500">{r.source_requestor} ÃÂ· {r.total_eps} episode</p>
+                          <p className="text-[11px] text-slate-500">{r.source_requestor} ÃÂÃÂ· {r.total_eps} episode</p>
                           <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">{r.requestor_need}</p>
                           <div className="mt-1 space-y-0.5">
                             {r.content_titles.slice(0, 2).map((t: string, i: number) => (
-                              <p key={i} className="text-[11px] text-slate-600 dark:text-slate-400">ÃÂ· {t}</p>
+                              <p key={i} className="text-[11px] text-slate-600 dark:text-slate-400">ÃÂÃÂ· {t}</p>
                             ))}
                             {r.content_titles.length > 2 && (
                               <p className="text-[11px] text-slate-400">+{r.content_titles.length - 2} judul lainnya</p>
@@ -471,7 +471,7 @@ export default function MaterialPage() {
           </>
         )}
 
-                {/* ââ READINESS TAB ââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
+                {/* Ã¢ÂÂÃ¢ÂÂ READINESS TAB Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ */}
         {activeTab === 'readiness' && (
           <div className="py-3">
             <div className="px-4 pb-3 border-b border-slate-100 dark:border-slate-800">
@@ -492,67 +492,54 @@ export default function MaterialPage() {
             ) : (
               <>
                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {avail.map(i => {
-                    const libId = (i as any).library_id
-                    return (
-                      <div key={i.id} className="px-4 py-3">
-                        {i.qcid && (
-                          <span className="mb-0.5 inline-block rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                            {i.qcid}
-                          </span>
-                        )}
-                        <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{i.title}</p>
-                        <p className="text-xs text-slate-500">S{i.season} E{i.episode} · {fmt(i.updated_at)}</p>
-                        {libId ? (
-                          <div className="mt-2 flex items-center gap-2">
-                            <span className="inline-flex items-center gap-1 rounded-lg bg-teal-50 border border-teal-200 px-2.5 py-1 text-xs font-mono font-semibold text-teal-700 dark:bg-teal-900/20 dark:text-teal-300">
-                              <CheckCircle2 size={11} /> {libId}
-                            </span>
-                          </div>
-                        ) : isMaterialAdmin ? (
-                          <div className="mt-2 space-y-1.5">
-                            <p className="text-[11px] text-slate-400 italic">Belum ada Library ID</p>
-                            <div className="flex gap-1.5 flex-wrap">
+                  {avail.map(i => (
+                    <div key={i.id} className="px-4 py-3">
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                        {(i as any).content_title || (i as any).title || '-'}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {(i as any).qcid && <span className="mr-2">{(i as any).qcid}</span>}
+                        {(i as any).episode && <span>Eps {(i as any).episode}</span>}
+                      </p>
+                      {(i as any).library_id ? (
+                        <span className="inline-flex items-center gap-1 text-xs bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 px-2 py-0.5 rounded-full mt-1 font-mono">
+                          {(i as any).library_id}
+                        </span>
+                      ) : isMaterialAdmin ? (
+                        <div className="mt-1.5 flex flex-wrap gap-2">
+                          <button
+                            onClick={() => doCreateJob(i.id)}
+                            disabled={creatingJob === i.id}
+                            className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded hover:bg-blue-700 disabled:opacity-50">
+                            {creatingJob === i.id ? 'Membuat...' : 'Generate Library ID'}
+                          </button>
+                          <button
+                            onClick={() => setShowLibInput(showLibInput === i.id ? null : i.id)}
+                            className="text-xs border border-slate-300 dark:border-slate-600 px-2 py-0.5 rounded hover:bg-slate-50 dark:hover:bg-slate-700">
+                            Input Manual
+                          </button>
+                          {showLibInput === i.id && (
+                            <div className="flex gap-1 w-full mt-1">
+                              <input
+                                type="text"
+                                value={libIdInput[i.id] || ''}
+                                onChange={e => setLibIdInput(prev => ({...prev, [i.id]: e.target.value}))}
+                                placeholder="LIB-VPlus-000001-2026"
+                                className="text-xs border border-slate-300 dark:border-slate-600 dark:bg-slate-800 rounded px-2 py-0.5 flex-1"/>
                               <button
-                                onClick={() => doCreateJob(i.id)}
+                                onClick={() => doCreateJob(i.id, libIdInput[i.id])}
                                 disabled={creatingJob === i.id}
-                                className="flex items-center gap-1 rounded-lg bg-teal-600 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
-                              >
-                                {creatingJob === i.id ? <Loader2 size={11} className="animate-spin" /> : <PlusCircle size={11} />}
-                                Generate Library ID
-                              </button>
-                              <button
-                                onClick={() => setShowLibInput(showLibInput === i.id ? null : i.id)}
-                                className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50"
-                              >
-                                <FileText size={11} /> Input Manual
+                                className="text-xs bg-teal-600 text-white px-2 rounded hover:bg-teal-700 disabled:opacity-50">
+                                Simpan
                               </button>
                             </div>
-                            {showLibInput === i.id && (
-                              <div className="flex gap-1.5">
-                                <input
-                                  value={libIdInput[i.id] ?? ''}
-                                  onChange={e => setLibIdInput(prev => ({ ...prev, [i.id]: e.target.value }))}
-                                  placeholder="Lib-VPlus-000001-2026"
-                                  className="flex-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs focus:border-teal-400 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                />
-                                <button
-                                  onClick={() => doCreateJob(i.id, libIdInput[i.id])}
-                                  disabled={creatingJob === i.id || !libIdInput[i.id]?.trim()}
-                                  className="flex items-center gap-1 rounded-lg bg-slate-700 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-slate-800 disabled:opacity-40"
-                                >
-                                  {creatingJob === i.id ? <Loader2 size={11} className="animate-spin" /> : <CheckCheck size={11} />}
-                                  Simpan
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="mt-1.5 text-[11px] text-slate-400 italic">Belum ada Library ID</p>
-                        )}
-                      </div>
-                    )
-                  })}
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-400 mt-1">Belum ada Library ID</p>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </>
             )}
