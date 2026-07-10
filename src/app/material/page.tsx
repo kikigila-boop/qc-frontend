@@ -48,7 +48,7 @@ export default function MaterialPage() {
   const [showRejectBox, setShowRejectBox] = useState<number | null>(null)
   const isAdmin = user?.role === 'admin'
   const { data: deliveries, isLoading: deliveriesLoading } = useSWR(
-    isMaterialAdmin ? '/delivery/list' : null, fetcher, { refreshInterval: 20000 }
+    '/delivery/list', fetcher, { refreshInterval: 20000 }
   )
   const { data: requests } = useSWR(
     isMaterialAdmin ? '/request/list' : null, fetcher, { refreshInterval: 20000 }
@@ -57,6 +57,7 @@ export default function MaterialPage() {
   if (authLoading || !user) return null
 
   const avail = items?.filter(i => i.status === 'Material Avail') ?? []
+  const readyDeliveries = deliveries?.filter((d: any) => d.status === 'Ready to QC') ?? []
   const revised = items?.filter(i => i.status === 'Material Revised') ?? []
   const inQC = items?.filter(i => i.status === 'QC Process' || i.status === 'QC Done') ?? []
 
@@ -188,10 +189,10 @@ export default function MaterialPage() {
                   : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700'
               }`}
             >
-              Available
-              {avail.length > 0 && (
+              Readiness
+              {(avail.length + readyDeliveries.length) > 0 && (
                 <span className="ml-1.5 rounded-full bg-teal-100 dark:bg-teal-900/40 px-1.5 py-0.5 text-xs text-teal-700 dark:text-teal-300">
-                  {avail.length}
+                  {avail.length + readyDeliveries.length}
                 </span>
               )}
             </button>
@@ -454,46 +455,98 @@ export default function MaterialPage() {
           </>
         )}
 
-        {/* ââ AVAILABLE TAB ââââââââââââââââââââââââââââââ */}
+                {/* ── READINESS TAB ──────────────────────────────────────────────────── */}
         {activeTab === 'readiness' && (
           <div className="py-3">
             <div className="px-4 pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="relative">
                 <Search size={15} className="absolute left-3 top-2.5 text-slate-400" />
-                <input
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  placeholder="Cari judul atau episode..."
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm focus:border-teal-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                />
+                <input value={search} onChange={e => setSearch(e.target.value)}
+                  placeholder="Cari judul..."
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm focus:border-teal-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
               </div>
             </div>
-
-            {isLoading ? (
-              <div className="flex h-40 items-center justify-center">
-                <Loader2 size={24} className="animate-spin text-teal-500" />
-              </div>
-            ) : avail.length === 0 ? (
+            {(isLoading || deliveriesLoading) ? (
+              <div className="flex h-40 items-center justify-center"><Loader2 size={24} className="animate-spin text-teal-500" /></div>
+            ) : (readyDeliveries.length === 0 && avail.length === 0) ? (
               <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
                 <PackageSearch size={40} className="opacity-40" />
                 <p className="text-sm">Tidak ada material yang tersedia saat ini.</p>
               </div>
             ) : (
               <>
-                <div className="px-4 py-2 flex items-center gap-2">
-                  <Package size={13} className="text-teal-500" />
-                  <p className="text-xs font-semibold uppercase tracking-wider text-teal-700 dark:text-teal-400">
-                    Material Tersedia ({avail.length})
-                  </p>
-                </div>
-                <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {avail.map(i => <ItemRow key={i.id} item={i} />)}
-                </div>
+                {readyDeliveries.length > 0 && (
+                  <section className="mb-2">
+                    <div className="flex items-center gap-2 px-4 py-2 border-b border-green-100 bg-green-50 dark:bg-green-900/10 dark:border-green-900/30">
+                      <PackageCheck size={14} className="text-green-600" />
+                      <p className="text-xs font-semibold uppercase tracking-wider text-green-700 dark:text-green-400">
+                        Siap Dikerjakan ({readyDeliveries.length})
+                      </p>
+                    </div>
+                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {readyDeliveries
+                        .filter((d: any) => !search || d.content_titles.some((t: string) => t.toLowerCase().includes(search.toLowerCase())))
+                        .map((d: any) => (
+                        <div key={d.id} className="px-4 py-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[10px] font-semibold rounded-full px-2 py-0.5 bg-green-100 text-green-700">Ready to QC</span>
+                                <span className="text-[10px] text-slate-400">{d.delivery_method}</span>
+                              </div>
+                              <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{d.sender_name}</p>
+                              <p className="text-[11px] text-slate-500">{d.source_category} · {d.source_name}</p>
+                              <div className="mt-1 space-y-0.5">
+                                {d.content_titles.slice(0,3).map((t: string, i: number) => (
+                                  <p key={i} className="text-[11px] text-slate-600 dark:text-slate-400">· {t}</p>
+                                ))}
+                                {d.content_titles.length > 3 && <p className="text-[11px] text-slate-400">+{d.content_titles.length - 3} judul lainnya</p>}
+                              </div>
+                              <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 rounded-xl bg-slate-50 dark:bg-slate-800/50 p-2.5">
+                                {[
+                                  {label:'PIC MH', value: d.pic_mh_name||'—'},
+                                  {label:'Tanggal', value: new Date(d.delivery_date).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})},
+                                  {label:'SRT', value: d.link_srt?'✓ Ada':'—'},
+                                  {label:'Video', value: d.link_video?'✓ Ada':'—'},
+                                ].map(({label,value}) => (
+                                  <div key={label} className="text-[10px]">
+                                    <span className="text-slate-400">{label}:</span>
+                                    <span className="ml-1 font-medium text-slate-700 dark:text-slate-300">{value}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="shrink-0 flex flex-col gap-1.5">
+                              <Link href={'/tambah?delivery_id='+d.id}
+                                className="flex items-center gap-1 rounded-lg bg-teal-600 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-teal-700">
+                                <PlusCircle size={11}/> Add Job
+                              </Link>
+                              <a href={'/kirim/track/'+d.token} target="_blank" rel="noreferrer"
+                                className="flex items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50">
+                                <ExternalLink size={11}/> Track
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+                {avail.length > 0 && (
+                  <section>
+                    <div className="flex items-center gap-2 px-4 py-2">
+                      <Package size={13} className="text-teal-500" />
+                      <p className="text-xs font-semibold uppercase tracking-wider text-teal-700 dark:text-teal-400">Material Avail ({avail.length})</p>
+                    </div>
+                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {avail.map(i => <ItemRow key={i.id} item={i} />)}
+                    </div>
+                  </section>
+                )}
               </>
             )}
           </div>
         )}
-
       </main>
       <BottomNav />
     </div>
