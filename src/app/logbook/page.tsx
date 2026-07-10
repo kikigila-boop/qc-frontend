@@ -21,7 +21,7 @@ const fmt = (d: string | null) => {
   catch { return d }
 }
 
-// ─── Status badge ─────────────────────────────────────────────────────────────
+// âââ Status badge âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 const STATUS_COLORS: Record<string, string> = {
   'Pending':         'bg-slate-100 text-slate-600',
   'Approved':        'bg-blue-100 text-blue-700',
@@ -45,7 +45,7 @@ const Badge = ({ label }: { label: string }) => (
   </span>
 )
 
-// ─── Re-QC Modal ──────────────────────────────────────────────────────────────
+// âââ Re-QC Modal ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function ReQCModal({ item, onClose, onDone }: { item: any; onClose: () => void; onDone: () => void }) {
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
@@ -91,7 +91,7 @@ function ReQCModal({ item, onClose, onDone }: { item: any; onClose: () => void; 
   )
 }
 
-// ─── Tab: Traffic ─────────────────────────────────────────────────────────────
+// âââ Tab: Traffic âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function TrafficTab() {
   const { data, isLoading } = useSWR('/logbook/traffic', fetcher, { refreshInterval: 30000 })
   const [search, setSearch] = useState('')
@@ -116,10 +116,11 @@ function TrafficTab() {
               <th className="px-3 py-2.5">Dari</th>
               <th className="px-3 py-2.5">Metode</th>
               <th className="px-3 py-2.5">Status</th>
+              <th className="px-3 py-2.5">Link</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {rows.length === 0 && <tr><td colSpan={6} className="py-10 text-center text-slate-400">Belum ada data</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={7} className="py-10 text-center text-slate-400">Belum ada data</td></tr>}
             {rows.map((r: any, i: number) => (
               <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
                 <td className="px-3 py-2.5 whitespace-nowrap text-slate-500">{fmt(r.created_at)}</td>
@@ -130,6 +131,18 @@ function TrafficTab() {
                 <td className="px-3 py-2.5 text-slate-600 whitespace-nowrap">{r.from || '-'}</td>
                 <td className="px-3 py-2.5 text-slate-500 whitespace-nowrap">{r.method || '-'}</td>
                 <td className="px-3 py-2.5"><Badge label={r.status} /></td>
+                <td className="px-3 py-2.5">
+                  {r.type === 'Kiriman' ? (
+                    <div className="flex flex-wrap gap-1">
+                      {r.link_video    && <a href={r.link_video}    target="_blank" rel="noreferrer" className="text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 hover:underline">Video</a>}
+                      {r.link_trailer  && <a href={r.link_trailer}  target="_blank" rel="noreferrer" className="text-xs px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 hover:underline">Trailer</a>}
+                      {r.link_poster   && <a href={r.link_poster}   target="_blank" rel="noreferrer" className="text-xs px-1.5 py-0.5 rounded bg-pink-50 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400 hover:underline">Poster</a>}
+                      {r.link_metadata && <a href={r.link_metadata} target="_blank" rel="noreferrer" className="text-xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 hover:underline">Metadata</a>}
+                      {r.link_other    && <a href={r.link_other}    target="_blank" rel="noreferrer" className="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 hover:underline">Lainnya</a>}
+                      {!r.link_video && !r.link_trailer && !r.link_poster && !r.link_metadata && !r.link_other && <span className="text-slate-300 dark:text-slate-600">—</span>}
+                    </div>
+                  ) : <span className="text-slate-300 dark:text-slate-600">—</span>}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -139,7 +152,7 @@ function TrafficTab() {
   )
 }
 
-// ─── Tab: QC Log ──────────────────────────────────────────────────────────────
+// âââ Tab: QC Log ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function QCLogTab() {
   const { data, isLoading, mutate } = useSWR('/logbook/qc', fetcher, { refreshInterval: 30000 })
   const [search, setSearch] = useState('')
@@ -212,7 +225,7 @@ function QCLogTab() {
                           <div key={i} className="flex items-start gap-2 text-[11px]">
                             <span className="shrink-0 text-slate-400 w-28">{fmt(h.at)}</span>
                             <span className="shrink-0 font-medium text-slate-600 w-24">{h.by || '-'}</span>
-                            <span className="text-slate-500">{h.field}: <span className="line-through text-red-400">{h.old || '-'}</span> → <span className="text-emerald-600 font-medium">{h.new || '-'}</span></span>
+                            <span className="text-slate-500">{h.field}: <span className="line-through text-red-400">{h.old || '-'}</span> â <span className="text-emerald-600 font-medium">{h.new || '-'}</span></span>
                           </div>
                         ))}
                       </div>
@@ -231,7 +244,7 @@ function QCLogTab() {
   )
 }
 
-// ─── Tab: Library Sync ────────────────────────────────────────────────────────
+// âââ Tab: Library Sync ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function LibraryTab() {
   const [syncing, setSyncing] = useState(false)
   const [result, setResult] = useState<string | null>(null)
@@ -242,16 +255,16 @@ function LibraryTab() {
     setSyncing(true); setResult(null)
     try {
       const res = await api.post('/logbook/sync-library')
-      setResult(`✅ ${res.data.message}`)
+      setResult(`â ${res.data.message}`)
     } catch (e: any) {
-      setResult(`❌ ${e?.response?.data?.detail || 'Gagal sync'}`)
+      setResult(`â ${e?.response?.data?.detail || 'Gagal sync'}`)
     } finally { setSyncing(false) }
   }
 
   return (
     <div className="p-4 space-y-4">
       <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 dark:border-blue-900/40 dark:bg-blue-900/10">
-        <p className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-1">Library — {month}</p>
+        <p className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-1">Library â {month}</p>
         <p className="text-xs text-blue-600 dark:text-blue-400 leading-relaxed">
           Sync akan menulis semua data QC + Traffic bulan ini ke tab <span className="font-mono font-bold">{tabName}</span> di Google Sheet master.
         </p>
@@ -273,13 +286,13 @@ function LibraryTab() {
         {syncing ? 'Sedang Sync...' : 'Sync ke Google Sheet Sekarang'}
       </button>
       {result && (
-        <div className={`rounded-xl p-3 text-sm font-medium ${result.startsWith('✅') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>{result}</div>
+        <div className={`rounded-xl p-3 text-sm font-medium ${result.startsWith('â') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>{result}</div>
       )}
     </div>
   )
 }
 
-// ─── Tab: Log Airing ──────────────────────────────────────────────────────────
+// âââ Tab: Log Airing ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 const PLATFORM_COLORS: Record<string, string> = {
   vplus:  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   vshort: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
@@ -325,10 +338,10 @@ function LogAiringTab() {
                       {row._platform === 'vplus' ? 'V+' : 'Vshort'}
                     </span>
                   </td>
-                  <td className="px-3 py-2 font-medium text-slate-700 dark:text-slate-300">{row['Title'] || row['Title EN'] || '—'}</td>
-                  <td className="px-3 py-2 text-slate-500">{row['Release Schedule'] || row['Release Date'] || '—'}</td>
-                  <td className="px-3 py-2 text-slate-500 whitespace-nowrap">{row._aired_at ? fmt(row._aired_at) : '—'}</td>
-                  <td className="px-3 py-2 text-slate-500">{row._aired_by || '—'}</td>
+                  <td className="px-3 py-2 font-medium text-slate-700 dark:text-slate-300">{row['Title'] || row['Title EN'] || 'â'}</td>
+                  <td className="px-3 py-2 text-slate-500">{row['Release Schedule'] || row['Release Date'] || 'â'}</td>
+                  <td className="px-3 py-2 text-slate-500 whitespace-nowrap">{row._aired_at ? fmt(row._aired_at) : 'â'}</td>
+                  <td className="px-3 py-2 text-slate-500">{row._aired_by || 'â'}</td>
                 </tr>
               ))}
             </tbody>
@@ -339,7 +352,7 @@ function LogAiringTab() {
   )
 }
 
-// ─── Tab: Log KV ─────────────────────────────────────────────────────────────
+// âââ Tab: Log KV âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function LogKVTab() {
   const [search, setSearch] = useState('')
   const { data, isLoading } = useSWR('/on-air/kv/log', fetcher, { refreshInterval: 30000 })
@@ -378,23 +391,23 @@ function LogKVTab() {
             )}
             {filtered.map((entry: any, i: number) => {
               const exclusive = String(entry['EXCLUSIVE?'] || '').toUpperCase()
-              const exclusiveLabel = exclusive === 'TRUE' ? 'Yes' : exclusive === 'FALSE' ? 'No' : '—'
+              const exclusiveLabel = exclusive === 'TRUE' ? 'Yes' : exclusive === 'FALSE' ? 'No' : 'â'
               return (
                 <tr key={entry._id ?? i} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
                   <td className="px-3 py-2.5 font-medium text-slate-800 dark:text-white max-w-[200px]">
-                    <p className="leading-snug line-clamp-2">{entry['EVENTS'] || '—'}</p>
+                    <p className="leading-snug line-clamp-2">{entry['EVENTS'] || 'â'}</p>
                   </td>
-                  <td className="px-3 py-2.5 text-slate-600 dark:text-slate-400 whitespace-nowrap">{entry['Channel'] || '—'}</td>
-                  <td className="px-3 py-2.5 text-slate-500 whitespace-nowrap">{entry['TX DATE'] || '—'}</td>
+                  <td className="px-3 py-2.5 text-slate-600 dark:text-slate-400 whitespace-nowrap">{entry['Channel'] || 'â'}</td>
+                  <td className="px-3 py-2.5 text-slate-500 whitespace-nowrap">{entry['TX DATE'] || 'â'}</td>
                   <td className="px-3 py-2.5">
-                    {exclusiveLabel !== '—' && (
+                    {exclusiveLabel !== 'â' && (
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${exclusiveLabel === 'Yes' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
                         {exclusiveLabel}
                       </span>
                     )}
                   </td>
-                  <td className="px-3 py-2.5 text-slate-600 dark:text-slate-400 whitespace-nowrap">{entry._pic_name || '—'}</td>
-                  <td className="px-3 py-2.5 text-slate-500 whitespace-nowrap">{entry._kv_logged_at ? fmt(entry._kv_logged_at) : '—'}</td>
+                  <td className="px-3 py-2.5 text-slate-600 dark:text-slate-400 whitespace-nowrap">{entry._pic_name || 'â'}</td>
+                  <td className="px-3 py-2.5 text-slate-500 whitespace-nowrap">{entry._kv_logged_at ? fmt(entry._kv_logged_at) : 'â'}</td>
                 </tr>
               )
             })}
@@ -405,7 +418,7 @@ function LogKVTab() {
   )
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// âââ Main Page ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 export default function LogbookPage() {
   const { user, isLoading: authLoading } = useAuth()
   const router = useRouter()
