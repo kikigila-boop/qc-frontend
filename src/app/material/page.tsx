@@ -222,9 +222,9 @@ export default function MaterialPage() {
             <div className="border-b border-slate-100 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { label: 'Material Avail', count: counts?.material_avail ?? 'ÃÂ¢ÃÂÃÂ', color: 'teal' },
-                  { label: 'Perlu Diperbaiki', count: counts?.material_revised ?? 'ÃÂ¢ÃÂÃÂ', color: 'rose' },
-                  { label: 'Dalam QC', count: counts?.in_qc ?? 'ÃÂ¢ÃÂÃÂ', color: 'blue' },
+                  { label: 'Material Avail', count: counts?.material_avail ?? '·', color: 'teal' },
+                  { label: 'Perlu Diperbaiki', count: counts?.material_revised ?? '·', color: 'rose' },
+                  { label: 'Dalam QC', count: counts?.in_qc ?? '·', color: 'blue' },
                 ].map(({ label, count, color }) => (
                   <div key={label} className={`rounded-xl bg-${color}-50 p-3 dark:bg-${color}-900/20`}>
                     <p className={`text-xl font-bold text-${color}-700 dark:text-${color}-300`}>{count}</p>
@@ -259,7 +259,7 @@ export default function MaterialPage() {
                             <span className="text-[10px] text-slate-400">{d.delivery_method}</span>
                           </div>
                           <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{d.sender_name}</p>
-                          <p className="text-[11px] text-slate-500">{d.source_category} ÃÂ¢ÃÂÃÂ {d.source_name}</p>
+                          <p className="text-[11px] text-slate-500">{d.source_category} · {d.source_name}</p>
                           <p className="text-[11px] text-slate-400 mt-0.5">
                             {d.content_titles.length} judul · {new Date(d.delivery_date).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'})}
                           </p>
