@@ -8,7 +8,7 @@ import BottomNav from '@/components/layout/BottomNav'
 import StatusBadge from '@/components/ui/StatusBadge'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
-import { Package, Search, Loader2, RefreshCw, ChevronRight, AlertCircle, Inbox, CheckCircle2, ExternalLink, PlusCircle, FileText, CheckCheck, X, Copy, PackageCheck, Truck, PackageSearch } from 'lucide-react'
+import { Package, Search, Loader2, RefreshCw, ChevronRight, AlertCircle, Inbox, CheckCircle2, ExternalLink, PlusCircle, FileText, CheckCheck, X, Copy, PackageCheck, Truck, PackageSearch, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import Link from 'next/link'
@@ -30,6 +30,8 @@ export default function MaterialPage() {
 
   const [search, setSearch] = useState('')
   const [reReadiness, setReReadiness] = useState<number | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
+  const [deletingItem, setDeletingItem] = useState<number | null>(null)
 
   const params = new URLSearchParams()
   if (search) params.set('search', search)
@@ -73,6 +75,19 @@ export default function MaterialPage() {
     } catch (err: any) {
       alert(err?.response?.data?.detail || 'Gagal re-avail.')
     } finally { setReReadiness(null) }
+  }
+
+
+  const doDelete = async (id: number) => {
+    setDeletingItem(id)
+    try {
+      await api.delete(`/material/${id}`)
+      mutate(`/material/queue?${params.toString()}`)
+      mutate('/material/queue/count')
+      setConfirmDeleteId(null)
+    } catch (err: any) {
+      alert(err?.response?.data?.detail || 'Gagal hapus.')
+    } finally { setDeletingItem(null) }
   }
 
   const doStartCopy = async (id: number) => {
@@ -158,8 +173,29 @@ export default function MaterialPage() {
           </div>
         )}
       </div>
-      <div className="shrink-0">
-        {item.status === 'Material Revised' && isMaterialAdmin ? (
+      <div className="shrink-0 flex items-center gap-1">
+        {isAdmin && confirmDeleteId !== item.id && (
+          <button
+            onClick={() => setConfirmDeleteId(item.id)}
+            className="p-1.5 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+            title="Hapus"
+          >
+            <Trash2 size={13} />
+          </button>
+        )}
+        {confirmDeleteId === item.id ? (
+          <div className="flex items-center gap-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 px-2 py-1">
+            <p className="text-[10px] text-red-700 dark:text-red-400 whitespace-nowrap">Hapus?</p>
+            <button
+              onClick={() => doDelete(item.id)}
+              disabled={deletingItem === item.id}
+              className="rounded bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white hover:bg-red-700 disabled:opacity-50"
+            >
+              {deletingItem === item.id ? <Loader2 size={9} className="animate-spin inline" /> : 'Ya'}
+            </button>
+            <button onClick={() => setConfirmDeleteId(null)} className="text-[10px] text-slate-400 hover:text-slate-600">Batal</button>
+          </div>
+        ) : item.status === 'Material Revised' && isMaterialAdmin ? (
           <button
             onClick={() => doReAvail(item.id)}
             disabled={reReadiness === item.id}
