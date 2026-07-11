@@ -7,7 +7,7 @@ import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
 import {
   BookOpen, Plus, Search, Filter, Download, X,
-  CheckCircle2, AlertCircle, ChevronRight, Loader2,
+  CheckCircle2, AlertCircle, ChevronRight, Loader2, Bell,
   Database, FileSpreadsheet
 } from 'lucide-react'
 
@@ -136,6 +136,7 @@ export default function LibraryPage() {
   const [editing, setEditing]     = useState(false)
   const [editForm, setEditForm]   = useState<Record<string, any>>({})
   const [saving, setSaving]       = useState(false)
+  const [poking, setPoking]       = useState(false)
 
   // Add entry modal
   const [showAdd, setShowAdd]     = useState(false)
@@ -231,6 +232,22 @@ export default function LibraryPage() {
 
   const genres = ref?.genre_map[editForm.show_type ?? selected?.show_type ?? ''] ?? []
   const addGenres = ref?.genre_map[addForm.show_type] ?? []
+
+  // ── Poke metadata ──────────────────────────────────────────────────────────────────
+  const handlePoke = async () => {
+    if (!selected) return
+    setPoking(true)
+    try {
+      await api.post('/notifications/poke-metadata', {
+        title: selected.title_en || selected.library_id,
+        library_id: selected.library_id,
+      })
+      alert('Notifikasi berhasil dikirim ke tim metadata.')
+    } catch {
+      alert('Gagal mengirim poke.')
+    }
+    setPoking(false)
+  }
 
   // ── Platform from library_id ──────────────────────────────────────────────
   const getPlatform = (lid: string) => lid.includes('-VPlus-') ? 'V+' : 'VShort'
@@ -395,7 +412,15 @@ export default function LibraryPage() {
                     </button>
                   </>
                 ) : (
-                  <button onClick={() => openEdit(selected)} className="px-3 py-1.5 text-xs rounded-lg bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 font-medium">Edit</button>
+                  <>
+                    <button onClick={() => openEdit(selected)} className="px-3 py-1.5 text-xs rounded-lg bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 font-medium">Edit</button>
+                    {(user?.role === 'admin' || user?.role === 'supervisor') && (
+                      <button onClick={handlePoke} disabled={poking}
+                        className="px-3 py-1.5 text-xs rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1 disabled:opacity-60">
+                        {poking ? <Loader2 className="w-3 h-3 animate-spin" /> : <Bell className="w-3 h-3" />} Poke
+                      </button>
+                    )}
+                  </>
                 )}
                 <button onClick={() => { setSelected(null); setEditing(false) }}><X className="w-4 h-4 text-slate-400" /></button>
               </div>
