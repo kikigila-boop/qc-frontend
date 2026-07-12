@@ -564,7 +564,13 @@ export default function MaterialPage() {
                         {(i as any).qcid && <span className="mr-2">{(i as any).qcid}</span>}
                         {(i as any).episode && <span>Eps {(i as any).episode}</span>}
                       </p>
-                      {(i as any).library_id ? (
+                      {(i as any).library_id && user?.role !== 'material_handling' && (
+                  <button
+                    onClick={() => doClaim(i.id)}
+                    className="mt-1 px-2 py-1 rounded bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold"
+                  >Ambil Job</button>
+                )}
+                {(i as any).library_id ? (
                         <span className="inline-flex items-center gap-1 text-xs bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 px-2 py-0.5 rounded-full mt-1 font-mono">
                           {(i as any).library_id}
                         </span>
