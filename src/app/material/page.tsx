@@ -40,6 +40,10 @@ export default function MaterialPage() {
     `/material/queue?${params.toString()}`, fetcher, { refreshInterval: 15000 }
   )
   const { data: counts } = useSWR('/material/queue/count', fetcher, { refreshInterval: 15000 })
+  const { data: readinessItems, mutate: mutateReadiness } = useSWR<QCContent[]>(
+    !isMaterialAdmin ? `/material/readiness${search ? '?search=' + encodeURIComponent(search) : ''}` : null,
+    fetcher, { refreshInterval: 15000 }
+  )
   const [copying, setCopying] = useState<number | null>(null)
   const [completing, setCompleting] = useState<number | null>(null)
   const [approvingReq, setApprovingReq] = useState<number | null>(null)
@@ -77,6 +81,15 @@ export default function MaterialPage() {
     } finally { setReReadiness(null) }
   }
 
+
+  const doClaim = async (id: number) => {
+    try {
+      await api.post('/material/claim', { content_ids: [id] })
+      mutateReadiness()
+    } catch (err: any) {
+      alert(err?.response?.data?.detail || 'Gagal ambil job.')
+    }
+  }
 
   const doDelete = async (id: number) => {
     setDeletingItem(id)
@@ -483,7 +496,21 @@ export default function MaterialPage() {
                     </p>
                   </div>
                   {avail.length === 0 ? (
-                    <p className="px-4 text-sm text-slate-400">Semua material sudah di-claim editor.</p>
+                    {(!readinessItems || readinessItems.length === 0)
+              ? <p className="px-4 text-sm text-slate-400">Semua material sudah di-claim editor.</p>
+              : readinessItems.map(item => (
+                  <div key={item.id} className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+                    <div>
+                      <p className="font-medium text-white">{item.title}</p>
+                      <p className="text-xs text-slate-400">{item.season && `S${item.season} `}{item.episode && `E${item.episode}`}</p>
+                      {item.library_id && <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-mono bg-teal-900/50 text-teal-300">{item.library_id}</span>}
+                    </div>
+                    <button onClick={() => doClaim(item.id)} className="px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold">
+                      Ambil Job
+                    </button>
+                  </div>
+                ))
+            }
                   ) : (
                     <div className="divide-y divide-slate-100 dark:divide-slate-800">
                       {avail.map(i => <ItemRow key={i.id} item={i} />)}
