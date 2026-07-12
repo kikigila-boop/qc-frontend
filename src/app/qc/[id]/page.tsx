@@ -146,13 +146,13 @@ export default function QCDetailPage() {
     if (item.with_subs && subsData.length > 0) {
       const notDone = subsData.filter((t: any) => t.status !== 'done')
       if (notDone.length > 0 && !window.confirm(
-        `⚠️ ${notDone.length} bahasa subtitle belum selesai.\n\nLanjut tanpa menunggu subtitle selesai?`
+        `â ï¸ ${notDone.length} bahasa subtitle belum selesai.\n\nLanjut tanpa menunggu subtitle selesai?`
       )) return
     }
     // Warn editor if naming_asset is empty and they're going to Ready To Ingest
     if (target === 'Ready To Ingest' && !item.naming_asset) {
       const proceed = window.confirm(
-        '⚠️ Naming Asset belum diisi oleh tim CMS.\n\nKamu bisa isi sendiri atau tetap lanjut.\n\nKlik OK untuk lanjut tanpa Naming Asset, atau Cancel untuk isi dulu.'
+        'â ï¸ Naming Asset belum diisi oleh tim CMS.\n\nKamu bisa isi sendiri atau tetap lanjut.\n\nKlik OK untuk lanjut tanpa Naming Asset, atau Cancel untuk isi dulu.'
       )
       if (!proceed) return
     }
@@ -167,11 +167,11 @@ export default function QCDetailPage() {
     }
   }
 
-  // Editor re-submits: Need Revised → Ready To Ingest
+  // Editor re-submits: Need Revised â Ready To Ingest
   const resubmit = async () => {
     if (item && !item.naming_asset) {
       const proceed = window.confirm(
-        '⚠️ Naming Asset belum diisi oleh tim CMS.\n\nKamu bisa isi sendiri atau tetap lanjut.\n\nKlik OK untuk lanjut tanpa Naming Asset, atau Cancel untuk isi dulu.'
+        'â ï¸ Naming Asset belum diisi oleh tim CMS.\n\nKamu bisa isi sendiri atau tetap lanjut.\n\nKlik OK untuk lanjut tanpa Naming Asset, atau Cancel untuk isi dulu.'
       )
       if (!proceed) return
     }
@@ -200,7 +200,7 @@ export default function QCDetailPage() {
     }
   }
 
-  // CMS revise (via cms router, QCID-based) — only from detail page
+  // CMS revise (via cms router, QCID-based) â only from detail page
   const handleRevise = async (notes: string) => {
     if (!item?.qcid) return
     setRevising(true)
@@ -267,7 +267,7 @@ export default function QCDetailPage() {
       <TopBar title="Detail QC" />
       <main className="flex-1 space-y-3 p-4 pb-nav">
 
-        {/* Material Avail banner — editor can claim */}
+        {/* Material Avail banner â editor can claim */}
         {item.status === 'Material Avail' && isEditor && (
           <div className="flex items-start gap-2 rounded-2xl border border-teal-200 bg-teal-50 p-3 dark:border-teal-800/40 dark:bg-teal-900/20">
             <AlertCircle size={16} className="mt-0.5 shrink-0 text-teal-500" />
@@ -326,7 +326,7 @@ export default function QCDetailPage() {
             </span>
           )}
           <h2 className="text-lg font-bold text-slate-900 dark:text-white">{item.title}</h2>
-          <p className="text-sm text-slate-500">Season {item.season} · Episode {item.episode}</p>
+          <p className="text-sm text-slate-500">Season {item.season} Â· Episode {item.episode}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <StatusBadge status={item.status} />
             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
@@ -343,7 +343,7 @@ export default function QCDetailPage() {
         <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Informasi</p>
 
-          {/* Naming Asset — editable by CMS and Editor */}
+          {/* Naming Asset â editable by CMS and Editor */}
           <div className="mb-3 rounded-xl border border-blue-100 bg-blue-50 dark:border-blue-900/40 dark:bg-blue-900/10 px-3 py-2.5">
             <div className="flex items-center justify-between mb-1">
               <span className="text-[10px] font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">Naming Asset</span>
@@ -370,11 +370,11 @@ export default function QCDetailPage() {
               </div>
             ) : (
               <p className={`text-sm font-mono font-semibold ${item.naming_asset ? 'text-blue-800 dark:text-blue-300' : 'text-slate-400 italic'}`}>
-                {item.naming_asset || 'Belum diisi — tim CMS akan mengisi segera'}
+                {item.naming_asset || 'Belum diisi â tim CMS akan mengisi segera'}
               </p>
             )}
             {!item.naming_asset && (
-              <p className="mt-1 text-[10px] text-orange-500">⚠ Naming Asset diperlukan sebelum proses Ingest</p>
+              <p className="mt-1 text-[10px] text-orange-500">â  Naming Asset diperlukan sebelum proses Ingest</p>
             )}
           </div>
           {[
@@ -393,7 +393,7 @@ export default function QCDetailPage() {
               <span className="text-xs font-medium text-slate-800 dark:text-slate-200 max-w-[60%] text-right">{value}</span>
             </div>
           ))}
-          {/* ── Subtitle Section ── */}
+          {/* ââ Subtitle Section ââ */}
           {item.with_subs !== undefined && (
             <div className="mt-3 rounded-xl border border-indigo-100 bg-indigo-50 dark:border-indigo-900/40 dark:bg-indigo-900/10 px-3 py-2.5">
               <div className="flex items-center justify-between mb-2">
@@ -406,7 +406,7 @@ export default function QCDetailPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  {/* With/Without Subs toggle — editable by subtitle, editor, MH */}
+                  {/* With/Without Subs toggle â editable by subtitle, editor, MH */}
                   {(role === 'subtitle' || role === 'editor' || role === 'chef_editor' || role === 'material_handling' || role === 'admin') && (
                     withSubsEditing ? (
                       <div className="flex gap-1">
@@ -416,7 +416,7 @@ export default function QCDetailPage() {
                       </div>
                     ) : (
                       <button onClick={() => setWithSubsEditing(true)} className="text-[10px] text-indigo-500 hover:text-indigo-700">
-                        {item.with_subs ? 'Dengan Subs ✏' : 'Tanpa Subs ✏'}
+                        {item.with_subs ? 'Dengan Subs â' : 'Tanpa Subs â'}
                       </button>
                     )
                   )}
@@ -432,7 +432,7 @@ export default function QCDetailPage() {
                 <div>
                   <button onClick={() => { setSubsExpanded(e => !e); if (!subsExpanded) loadSubtasks() }}
                     className="text-[11px] text-indigo-600 dark:text-indigo-400 underline">
-                    {subsExpanded ? 'Sembunyikan detail' : 'Lihat progress bahasa →'}
+                    {subsExpanded ? 'Sembunyikan detail' : 'Lihat progress bahasa â'}
                   </button>
 
                   {subsExpanded && (
@@ -460,7 +460,7 @@ export default function QCDetailPage() {
                           ) : (
                             <span className="text-xs text-slate-400 w-24 text-right truncate">{task.pic || '-'}</span>
                           )}
-                          {/* Status cycle button — subtitle & admin only */}
+                          {/* Status cycle button â subtitle & admin only */}
                           {(role === 'subtitle' || role === 'admin') ? (
                             <button onClick={() => {
                               const next = task.status === 'pending' ? 'in_progress' : task.status === 'in_progress' ? 'done' : 'pending'
@@ -485,7 +485,7 @@ export default function QCDetailPage() {
             </div>
           )}
 
-          {/* ── Dubbing Section ── */}
+          {/* ââ Dubbing Section ââ */}
           {item.with_dubb !== undefined && (
             <div className="mt-3 rounded-xl border border-violet-100 bg-violet-50 dark:border-violet-900/40 dark:bg-violet-900/10 px-3 py-2.5">
               <div className="flex items-center justify-between mb-2">
@@ -507,7 +507,7 @@ export default function QCDetailPage() {
                       </div>
                     ) : (
                       <button onClick={() => setWithDubbEditing(true)} className="text-[10px] text-violet-500 hover:text-violet-700">
-                        {item.with_dubb ? 'Dengan Dubb ✏' : 'Tanpa Dubb ✏'}
+                        {item.with_dubb ? 'Dengan Dubb â' : 'Tanpa Dubb â'}
                       </button>
                     )
                   )}
@@ -523,7 +523,7 @@ export default function QCDetailPage() {
                 <div>
                   <button onClick={() => { setDubbExpanded(e => !e); if (!dubbExpanded) loadDubbTasks() }}
                     className="text-[11px] text-violet-600 dark:text-violet-400 underline">
-                    {dubbExpanded ? 'Sembunyikan detail' : 'Lihat progress bahasa →'}
+                    {dubbExpanded ? 'Sembunyikan detail' : 'Lihat progress bahasa â'}
                   </button>
 
                   {dubbExpanded && (
@@ -627,7 +627,7 @@ export default function QCDetailPage() {
             </button>
           )}
 
-          {/* Backward compat: old Revised → QC Process */}
+          {/* Backward compat: old Revised â QC Process */}
           {showOldResubmit && (
             <button
               onClick={() => advanceStatus('QC Process')}
@@ -639,7 +639,7 @@ export default function QCDetailPage() {
             </button>
           )}
 
-          {/* Editor: return to MH — material has issues */}
+          {/* Editor: return to MH â material has issues */}
           {showReturnToMH && (
             <button
               onClick={() => setShowReviseModal(true)}
