@@ -41,7 +41,7 @@ export default function MaterialPage() {
   )
   const { data: counts } = useSWR('/material/queue/count', fetcher, { refreshInterval: 15000 })
   const { data: readinessItems, mutate: mutateReadiness } = useSWR<QCContent[]>(
-    !isMaterialAdmin ? `/material/readiness${search ? '?search=' + encodeURIComponent(search) : ''}` : null,
+    `/material/readiness${search ? '?search=' + encodeURIComponent(search) : ''}`,
     fetcher, { refreshInterval: 15000 }
   )
   const [copying, setCopying] = useState<number | null>(null)
