@@ -12,7 +12,7 @@ import { useAuth } from '@/hooks/useAuth'
 
 const fetcher = (url: string) => api.get(url).then(r => r.data)
 
-const STATUSES: StatusEnum[] = ['Material Avail','QC Process','QC Done','Uploading','Ready To Ingest','Ingesting','Done Ingest','Need Revised','Material Revised','Revised']
+const STATUSES: StatusEnum[] = ['QC Process','QC Done','Uploading','Ready To Ingest','Ingesting','Done Ingest','Need Revised','Material Revised','Revised']
 
 export default function QCListPage() {
   const [search, setSearch] = useState('')
@@ -35,7 +35,7 @@ export default function QCListPage() {
     `/qc?${params.toString()}`, fetcher, { refreshInterval: 15000 }
   )
 
-  const items = rawItems ? [...rawItems].sort((a, b) => {
+  const items = rawItems ? [...rawItems].filter(i => i.status !== 'Material Avail').sort((a, b) => {
     const da = new Date(a.created_at ?? a.updated_at).getTime()
     const db = new Date(b.created_at ?? b.updated_at).getTime()
     return sortOrder === 'newest' ? db - da : da - db
