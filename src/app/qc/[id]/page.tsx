@@ -1,6 +1,6 @@
 'use client'
 import useSWR, { mutate } from 'swr'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import api from '@/lib/api'
 import { QCContentDetail, STATUS_ORDER, StatusEnum } from '@/types'
@@ -9,7 +9,7 @@ import BottomNav from '@/components/layout/BottomNav'
 import StatusBadge from '@/components/ui/StatusBadge'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
-import { ArrowRight, Loader2, ChevronDown, RefreshCw, X, AlertCircle } from 'lucide-react'
+import { ArrowRight, Loader2, ChevronDown, RefreshCw, X, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 const fetcher = (url: string) => api.get(url).then(r => r.data)
@@ -77,6 +77,16 @@ export default function QCDetailPage() {
   const [editingDubbPic, setEditingDubbPic] = useState<number | null>(null)
   const [dubbPicVal, setDubbPicVal] = useState('')
   const [withDubbEditing, setWithDubbEditing] = useState(false)
+  // QC Form state
+  const [qcErrorTypes, setQcErrorTypes] = useState<Record<string, any[]>>({})
+  const [qcItems, setQcItems] = useState<Record<number, 'pass' | 'fail'>>({})
+  const [intimateScene, setIntimateScene] = useState<'pass' | 'fail'>('pass')
+  const [goreScene, setGoreScene] = useState<'pass' | 'fail'>('pass')
+  const [ratingAge, setRatingAge] = useState('')
+  const [finalResult, setFinalResult] = useState<'PASS' | 'CONDITIONAL' | 'FAIL'>('PASS')
+  const [conditionNote, setConditionNote] = useState('')
+  const [submittingQC, setSubmittingQC] = useState(false)
+  const [loadingErrorTypes, setLoadingErrorTypes] = useState(false)
 
   // Subtitle helpers
   const loadSubtasks = async () => {
@@ -118,6 +128,19 @@ export default function QCDetailPage() {
     setWithDubbEditing(false)
   }
 
+  useEffect(() => {
+    if (item?.status === 'QC Process' && (role === 'editor' || role === 'chef_editor' || role === 'admin')) {
+      setLoadingErrorTypes(true)
+      api.get('/qc-error-types').then(r => {
+        setQcErrorTypes(r.data)
+        const init: Record<number, 'pass' | 'fail'> = {}
+        Object.values(r.data as Record<string, any[]>).flat().forEach((et: any) => { init[et.id] = 'pass' })
+        setQcItems(init)
+      }).finally(() => setLoadingErrorTypes(false))
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item?.status])
+
   const STATUS_COLORS: Record<string, string> = {
     pending: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
     in_progress: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
@@ -146,13 +169,13 @@ export default function QCDetailPage() {
     if (item.with_subs && subsData.length > 0) {
       const notDone = subsData.filter((t: any) => t.status !== 'done')
       if (notDone.length > 0 && !window.confirm(
-        `â ï¸ ${notDone.length} bahasa subtitle belum selesai.\n\nLanjut tanpa menunggu subtitle selesai?`
+        `Ã¢ÂÂ Ã¯Â¸Â ${notDone.length} bahasa subtitle belum selesai.\n\nLanjut tanpa menunggu subtitle selesai?`
       )) return
     }
     // Warn editor if naming_asset is empty and they're going to Ready To Ingest
     if (target === 'Ready To Ingest' && !item.naming_asset) {
       const proceed = window.confirm(
-        'â ï¸ Naming Asset belum diisi oleh tim CMS.\n\nKamu bisa isi sendiri atau tetap lanjut.\n\nKlik OK untuk lanjut tanpa Naming Asset, atau Cancel untuk isi dulu.'
+        'Ã¢ÂÂ Ã¯Â¸Â Naming Asset belum diisi oleh tim CMS.\n\nKamu bisa isi sendiri atau tetap lanjut.\n\nKlik OK untuk lanjut tanpa Naming Asset, atau Cancel untuk isi dulu.'
       )
       if (!proceed) return
     }
@@ -167,11 +190,11 @@ export default function QCDetailPage() {
     }
   }
 
-  // Editor re-submits: Need Revised â Ready To Ingest
+  // Editor re-submits: Need Revised Ã¢ÂÂ Ready To Ingest
   const resubmit = async () => {
     if (item && !item.naming_asset) {
       const proceed = window.confirm(
-        'â ï¸ Naming Asset belum diisi oleh tim CMS.\n\nKamu bisa isi sendiri atau tetap lanjut.\n\nKlik OK untuk lanjut tanpa Naming Asset, atau Cancel untuk isi dulu.'
+        'Ã¢ÂÂ Ã¯Â¸Â Naming Asset belum diisi oleh tim CMS.\n\nKamu bisa isi sendiri atau tetap lanjut.\n\nKlik OK untuk lanjut tanpa Naming Asset, atau Cancel untuk isi dulu.'
       )
       if (!proceed) return
     }
@@ -200,21 +223,47 @@ export default function QCDetailPage() {
     }
   }
 
-  // CMS revise (via cms router, QCID-based) â only from detail page
+  // CMS revise (via cms router, QCID-based) Ã¢ÂÂ only from detail page
   const handleRevise = async (notes: string) => {
-    if (!item?.qcid) return
     setRevising(true)
     try {
-      await api.patch(`/cms/item/${item.qcid}/revised`, {
-        operator_name: user?.name ?? 'CMS',
-        revised_notes: notes,
-      })
+      if (item?.qcid) {
+        await api.patch(`/cms/item/${item.qcid}/revised`, {
+          operator_name: user?.name ?? 'CMS',
+          revised_notes: notes,
+        })
+      } else {
+        await api.patch(`/qc/${id}/revise`, { revised_notes: notes })
+      }
       mutate(`/qc/${id}`)
       setShowReviseModal(false)
     } catch (err: any) {
       alert(err?.response?.data?.detail || 'Gagal mengirim revisi.')
     } finally {
       setRevising(false)
+    }
+  }
+
+  const submitQCResult = async (autoPass = false) => {
+    setSubmittingQC(true)
+    try {
+      const itemsPayload = Object.entries(qcItems).map(([eid, st]) => ({ error_type_id: Number(eid), status: st }))
+      await api.post('/qc-results/', {
+        library_id: (item as any)?.library_id || null,
+        qc_content_id: Number(id),
+        intimate_scene: autoPass ? 'pass' : intimateScene,
+        gore_scene: autoPass ? 'pass' : goreScene,
+        rating_age: ratingAge || null,
+        final_result: autoPass ? 'PASS' : finalResult,
+        condition_note: finalResult === 'CONDITIONAL' && !autoPass ? conditionNote : null,
+        auto_pass: autoPass,
+        items: autoPass ? [] : itemsPayload,
+      })
+      mutate(`/qc/${id}`)
+    } catch (err: any) {
+      alert(err?.response?.data?.detail || 'Gagal submit QC result.')
+    } finally {
+      setSubmittingQC(false)
     }
   }
 
@@ -267,7 +316,7 @@ export default function QCDetailPage() {
       <TopBar title="Detail QC" />
       <main className="flex-1 space-y-3 p-4 pb-nav">
 
-        {/* Material Avail banner â editor can claim */}
+        {/* Material Avail banner Ã¢ÂÂ editor can claim */}
         {item.status === 'Material Avail' && isEditor && (
           <div className="flex items-start gap-2 rounded-2xl border border-teal-200 bg-teal-50 p-3 dark:border-teal-800/40 dark:bg-teal-900/20">
             <AlertCircle size={16} className="mt-0.5 shrink-0 text-teal-500" />
@@ -326,7 +375,7 @@ export default function QCDetailPage() {
             </span>
           )}
           <h2 className="text-lg font-bold text-slate-900 dark:text-white">{item.title}</h2>
-          <p className="text-sm text-slate-500">Season {item.season} Â· Episode {item.episode}</p>
+          <p className="text-sm text-slate-500">Season {item.season} ÃÂ· Episode {item.episode}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <StatusBadge status={item.status} />
             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
@@ -343,7 +392,7 @@ export default function QCDetailPage() {
         <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Informasi</p>
 
-          {/* Naming Asset â editable by CMS and Editor */}
+          {/* Naming Asset Ã¢ÂÂ editable by CMS and Editor */}
           <div className="mb-3 rounded-xl border border-blue-100 bg-blue-50 dark:border-blue-900/40 dark:bg-blue-900/10 px-3 py-2.5">
             <div className="flex items-center justify-between mb-1">
               <span className="text-[10px] font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">Naming Asset</span>
@@ -370,11 +419,11 @@ export default function QCDetailPage() {
               </div>
             ) : (
               <p className={`text-sm font-mono font-semibold ${item.naming_asset ? 'text-blue-800 dark:text-blue-300' : 'text-slate-400 italic'}`}>
-                {item.naming_asset || 'Belum diisi â tim CMS akan mengisi segera'}
+                {item.naming_asset || 'Belum diisi Ã¢ÂÂ tim CMS akan mengisi segera'}
               </p>
             )}
             {!item.naming_asset && (
-              <p className="mt-1 text-[10px] text-orange-500">â  Naming Asset diperlukan sebelum proses Ingest</p>
+              <p className="mt-1 text-[10px] text-orange-500">Ã¢ÂÂ  Naming Asset diperlukan sebelum proses Ingest</p>
             )}
           </div>
           {[
@@ -393,7 +442,7 @@ export default function QCDetailPage() {
               <span className="text-xs font-medium text-slate-800 dark:text-slate-200 max-w-[60%] text-right">{value}</span>
             </div>
           ))}
-          {/* ââ Subtitle Section ââ */}
+          {/* Ã¢ÂÂÃ¢ÂÂ Subtitle Section Ã¢ÂÂÃ¢ÂÂ */}
           {item.with_subs !== undefined && (
             <div className="mt-3 rounded-xl border border-indigo-100 bg-indigo-50 dark:border-indigo-900/40 dark:bg-indigo-900/10 px-3 py-2.5">
               <div className="flex items-center justify-between mb-2">
@@ -406,7 +455,7 @@ export default function QCDetailPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  {/* With/Without Subs toggle â editable by subtitle, editor, MH */}
+                  {/* With/Without Subs toggle Ã¢ÂÂ editable by subtitle, editor, MH */}
                   {(role === 'subtitle' || role === 'editor' || role === 'chef_editor' || role === 'material_handling' || role === 'admin') && (
                     withSubsEditing ? (
                       <div className="flex gap-1">
@@ -416,7 +465,7 @@ export default function QCDetailPage() {
                       </div>
                     ) : (
                       <button onClick={() => setWithSubsEditing(true)} className="text-[10px] text-indigo-500 hover:text-indigo-700">
-                        {item.with_subs ? 'Dengan Subs â' : 'Tanpa Subs â'}
+                        {item.with_subs ? 'Dengan Subs Ã¢ÂÂ' : 'Tanpa Subs Ã¢ÂÂ'}
                       </button>
                     )
                   )}
@@ -432,7 +481,7 @@ export default function QCDetailPage() {
                 <div>
                   <button onClick={() => { setSubsExpanded(e => !e); if (!subsExpanded) loadSubtasks() }}
                     className="text-[11px] text-indigo-600 dark:text-indigo-400 underline">
-                    {subsExpanded ? 'Sembunyikan detail' : 'Lihat progress bahasa â'}
+                    {subsExpanded ? 'Sembunyikan detail' : 'Lihat progress bahasa Ã¢ÂÂ'}
                   </button>
 
                   {subsExpanded && (
@@ -460,7 +509,7 @@ export default function QCDetailPage() {
                           ) : (
                             <span className="text-xs text-slate-400 w-24 text-right truncate">{task.pic || '-'}</span>
                           )}
-                          {/* Status cycle button â subtitle & admin only */}
+                          {/* Status cycle button Ã¢ÂÂ subtitle & admin only */}
                           {(role === 'subtitle' || role === 'admin') ? (
                             <button onClick={() => {
                               const next = task.status === 'pending' ? 'in_progress' : task.status === 'in_progress' ? 'done' : 'pending'
@@ -485,7 +534,7 @@ export default function QCDetailPage() {
             </div>
           )}
 
-          {/* ââ Dubbing Section ââ */}
+          {/* Ã¢ÂÂÃ¢ÂÂ Dubbing Section Ã¢ÂÂÃ¢ÂÂ */}
           {item.with_dubb !== undefined && (
             <div className="mt-3 rounded-xl border border-violet-100 bg-violet-50 dark:border-violet-900/40 dark:bg-violet-900/10 px-3 py-2.5">
               <div className="flex items-center justify-between mb-2">
@@ -507,7 +556,7 @@ export default function QCDetailPage() {
                       </div>
                     ) : (
                       <button onClick={() => setWithDubbEditing(true)} className="text-[10px] text-violet-500 hover:text-violet-700">
-                        {item.with_dubb ? 'Dengan Dubb â' : 'Tanpa Dubb â'}
+                        {item.with_dubb ? 'Dengan Dubb Ã¢ÂÂ' : 'Tanpa Dubb Ã¢ÂÂ'}
                       </button>
                     )
                   )}
@@ -523,7 +572,7 @@ export default function QCDetailPage() {
                 <div>
                   <button onClick={() => { setDubbExpanded(e => !e); if (!dubbExpanded) loadDubbTasks() }}
                     className="text-[11px] text-violet-600 dark:text-violet-400 underline">
-                    {dubbExpanded ? 'Sembunyikan detail' : 'Lihat progress bahasa â'}
+                    {dubbExpanded ? 'Sembunyikan detail' : 'Lihat progress bahasa Ã¢ÂÂ'}
                   </button>
 
                   {dubbExpanded && (
@@ -588,7 +637,98 @@ export default function QCDetailPage() {
           )}
         </div>
 
-        {/* Action buttons */}
+        {/* QC Intake Form */}
+          {item.status === 'QC Process' && (role === 'editor' || role === 'chef_editor' || role === 'admin') && (
+          <div className="rounded-2xl bg-white shadow-sm dark:bg-slate-900 overflow-hidden">
+            <div className="px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">QC Intake Form</p>
+              <p className="text-xs text-slate-400 mt-0.5">Tandai item yang FAIL — default semua PASS</p>
+            </div>
+            <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+              <button onClick={() => submitQCResult(true)} disabled={submittingQC}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
+                {submittingQC ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                Auto PASS — semua item lolos
+              </button>
+            </div>
+            <div className="px-4 py-3 space-y-3 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Rating Usia</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {['SU', '2+', '7+', '13+', '17+', '21+'].map(r => (
+                    <button key={r} onClick={() => setRatingAge(r)} className={`px-3 py-1 rounded-full text-xs font-semibold border ${ratingAge === r ? 'bg-brand-600 text-white border-brand-600' : 'border-slate-200 text-slate-500 dark:border-slate-700'}`}>{r}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-600 dark:text-slate-400">Adegan Intim</span>
+                <div className="flex gap-1.5">
+                  {(['pass', 'fail'] as const).map(v => (
+                    <button key={v} onClick={() => setIntimateScene(v)} className={`px-3 py-1 rounded-full text-xs font-bold ${intimateScene === v ? (v === 'pass' ? 'bg-green-500 text-white' : 'bg-red-500 text-white') : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>{v.toUpperCase()}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-600 dark:text-slate-400">Adegan Gore/Kekerasan</span>
+                <div className="flex gap-1.5">
+                  {(['pass', 'fail'] as const).map(v => (
+                    <button key={v} onClick={() => setGoreScene(v)} className={`px-3 py-1 rounded-full text-xs font-bold ${goreScene === v ? (v === 'pass' ? 'bg-green-500 text-white' : 'bg-red-500 text-white') : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>{v.toUpperCase()}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-600 dark:text-slate-400">Final Result</span>
+                <div className="flex gap-1.5">
+                  {(['PASS', 'CONDITIONAL', 'FAIL'] as const).map(v => (
+                    <button key={v} onClick={() => setFinalResult(v)} className={`px-2.5 py-1 rounded-full text-xs font-bold ${finalResult === v ? (v === 'PASS' ? 'bg-green-500 text-white' : v === 'CONDITIONAL' ? 'bg-amber-500 text-white' : 'bg-red-500 text-white') : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>{v}</button>
+                  ))}
+                </div>
+              </div>
+              {finalResult === 'CONDITIONAL' && (
+                <textarea value={conditionNote} onChange={e => setConditionNote(e.target.value)} placeholder="Kondisi yang harus dipenuhi..." rows={2}
+                  className="w-full rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 dark:text-white px-3 py-2 text-xs focus:outline-none resize-none" />
+              )}
+            </div>
+            {loadingErrorTypes ? (
+              <div className="flex h-20 items-center justify-center"><Loader2 size={20} className="animate-spin text-slate-400" /></div>
+            ) : (
+              <div>
+                {Object.entries(qcErrorTypes).map(([cat, errors]) => (
+                  <div key={cat}>
+                    <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-y border-slate-100 dark:border-slate-700">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{cat}</p>
+                    </div>
+                    <div className="divide-y divide-slate-50 dark:divide-slate-800/50">
+                      {errors.map((et: any) => (
+                        <div key={et.id} className="flex items-center gap-3 px-4 py-2.5">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-slate-800 dark:text-slate-200">{et.error_name}</p>
+                            <p className="text-[10px] text-slate-400 mt-0.5">{et.short_description}</p>
+                          </div>
+                          <div className="flex gap-1 shrink-0">
+                            {(['pass', 'fail'] as const).map(v => (
+                              <button key={v} onClick={() => setQcItems(prev => ({...prev, [et.id]: v}))} className={`w-8 py-0.5 rounded text-[10px] font-bold ${qcItems[et.id] === v ? (v === 'pass' ? 'bg-green-500 text-white' : 'bg-red-500 text-white') : 'bg-slate-100 dark:bg-slate-700 text-slate-400'}`}>{v === 'pass' ? 'P' : 'F'}</button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-800">
+              <button onClick={() => submitQCResult(false)} disabled={submittingQC || !ratingAge}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-brand-600 py-3 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50">
+                {submittingQC ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+                Submit QC Result
+              </button>
+              {!ratingAge && <p className="text-center text-xs text-amber-500 mt-1.5">⚠ Pilih Rating Usia dahulu</p>}
+            </div>
+          </div>
+          )}
+
+          {/* Action buttons */}
         <div className="flex flex-col gap-2">
 
           {/* Normal advance */}
@@ -627,7 +767,7 @@ export default function QCDetailPage() {
             </button>
           )}
 
-          {/* Backward compat: old Revised â QC Process */}
+          {/* Backward compat: old Revised Ã¢ÂÂ QC Process */}
           {showOldResubmit && (
             <button
               onClick={() => advanceStatus('QC Process')}
@@ -639,7 +779,7 @@ export default function QCDetailPage() {
             </button>
           )}
 
-          {/* Editor: return to MH â material has issues */}
+          {/* Editor: return to MH Ã¢ÂÂ material has issues */}
           {showReturnToMH && (
             <button
               onClick={() => setShowReviseModal(true)}
