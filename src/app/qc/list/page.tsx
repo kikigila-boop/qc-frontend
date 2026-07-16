@@ -20,7 +20,7 @@ const STATUSES: StatusEnum[] = [
   'Ingesting', 'Done Ingest', 'Need Revised', 'Material Revised', 'Revised',
 ]
 
-// ── ReviseModal ───────────────────────────────────────────────────────────────
+// ââ ReviseModal âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function ReviseModal({
   onClose, onSubmit, loading, mode,
 }: {
@@ -60,7 +60,7 @@ function ReviseModal({
   )
 }
 
-// ── InfoRow helper ────────────────────────────────────────────────────────────
+// ââ InfoRow helper ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-2">
@@ -70,7 +70,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-// ── QCFormPanel (popup form at z-50) ─────────────────────────────────────────
+// ââ QCFormPanel (popup form at z-50) âââââââââââââââââââââââââââââââââââââââââ
 function QCFormPanel({ item, onClose, onSubmitted }: {
   item: any
   onClose: () => void
@@ -144,13 +144,13 @@ function QCFormPanel({ item, onClose, onSubmitted }: {
     <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
       <div className="absolute inset-0 bg-black/30 dark:bg-black/50" />
       <div
-        className="relative w-full max-w-lg bg-white dark:bg-slate-900 h-full overflow-y-auto shadow-2xl flex flex-col"
+        className="relative w-full max-w-lg bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex items-center justify-between gap-2">
+        <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex items-center justify-between gap-2 shrink-0">
           <div>
-            <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">{item?.qcid ?? '—'}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">{item?.qcid ?? 'â'}</p>
             <p className="font-semibold text-slate-900 dark:text-slate-100">Form QC Intake</p>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
@@ -158,8 +158,8 @@ function QCFormPanel({ item, onClose, onSubmitted }: {
           </button>
         </div>
 
-        {/* Body */}
-        <div className="p-4 space-y-4 pb-8">
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {loading ? (
             <div className="flex items-center justify-center py-16 gap-2 text-slate-500">
               <Loader2 className="w-5 h-5 animate-spin" /> Memuat error types...
@@ -231,7 +231,7 @@ function QCFormPanel({ item, onClose, onSubmitted }: {
                       onChange={e => setRatingAge(e.target.value)}
                       className="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="">— Pilih Rating —</option>
+                      <option value="">â Pilih Rating â</option>
                       {['SU', 'P', '13+', '17+', '21+', 'D'].map(r => (
                         <option key={r} value={r}>{r}</option>
                       ))}
@@ -269,32 +269,34 @@ function QCFormPanel({ item, onClose, onSubmitted }: {
                   )}
                 </div>
               </div>
-
-              {/* Submit buttons */}
-              <div className="flex gap-2">
-                <button
-                  onClick={autoPass}
-                  disabled={submitting}
-                  className="px-4 py-2.5 rounded-xl border border-green-500 text-green-600 dark:text-green-400 text-sm font-medium disabled:opacity-50"
-                >Auto Pass</button>
-                <button
-                  onClick={submitQCResult}
-                  disabled={submitting}
-                  className="flex-1 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {submitting ? 'Submitting...' : 'Submit QC'}
-                </button>
-              </div>
             </>
           )}
         </div>
+
+        {/* Sticky footer â always visible */}
+        {!loading && (
+          <div className="shrink-0 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 flex gap-2">
+            <button
+              onClick={autoPass}
+              disabled={submitting}
+              className="px-4 py-2.5 rounded-xl border border-green-500 text-green-600 dark:text-green-400 text-sm font-medium disabled:opacity-50"
+            >Auto Pass</button>
+            <button
+              onClick={submitQCResult}
+              disabled={submitting}
+              className="flex-1 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              {submitting ? 'Submitting...' : 'Submit QC'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
-// ── QCDetailPanel (side panel) ────────────────────────────────────────────────
+// ââ QCDetailPanel (side panel) ââââââââââââââââââââââââââââââââââââââââââââââââ
 function QCDetailPanel({ id, onClose, onListRefresh }: {
   id: number; onClose: () => void; onListRefresh: () => void
 }) {
@@ -323,9 +325,9 @@ function QCDetailPanel({ id, onClose, onListRefresh }: {
   const [withDubbEditing, setWithDubbEditing]   = useState(false)
 
   const SC: Record<string, string> = {
-    pending:     'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
+    pending:      'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
     in_progress: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-    done:        'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    done:         'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   }
   const SL: Record<string, string> = { pending: 'Pending', in_progress: 'In Progress', done: 'Done' }
 
@@ -363,559 +365,295 @@ function QCDetailPanel({ id, onClose, onListRefresh }: {
     finally { setSavingNaming(false) }
   }
   const advanceStatus = async (targetStatus?: string) => {
-    const currentIdx = item ? STATUS_ORDER.indexOf(item.status as StatusEnum) : -1
-    const target = targetStatus ?? (item ? STATUS_ORDER[currentIdx + 1] ?? null : null)
-    if (!target || !item) return
-    if (item.with_subs && subsData.length > 0) {
-      const notDone = subsData.filter((t: any) => t.status !== 'done')
-      if (notDone.length > 0 && !window.confirm(`⚠️ ${notDone.length} bahasa subtitle belum selesai.\n\nLanjut?`)) return
-    }
-    if (target === 'Ready To Ingest' && !item.naming_asset) {
-      if (!window.confirm('⚠️ Naming Asset belum diisi.\n\nKlik OK untuk lanjut tanpa Naming Asset.')) return
-    }
-    setAdvancing(true)
-    try {
-      await api.patch(`/qc/${id}/status`, { new_status: target })
-      mutate(); onListRefresh()
-    } catch (err: any) { alert(err?.response?.data?.detail || 'Gagal mengubah status.') }
-    finally { setAdvancing(false) }
-  }
-  const resubmit = async () => {
-    if (item && !item.naming_asset) {
-      if (!window.confirm('⚠️ Naming Asset belum diisi.\n\nKlik OK untuk lanjut.')) return
-    }
-    setAdvancing(true)
-    try {
-      await api.patch(`/qc/${id}/status`, { new_status: 'Ready To Ingest' })
-      mutate(); onListRefresh()
-    } catch (err: any) { alert(err?.response?.data?.detail || 'Gagal mengirim ulang.') }
-    finally { setAdvancing(false) }
-  }
-  const returnToMH = async (notes: string) => {
-    setRevising(true)
-    try {
-      await api.patch(`/material/${id}/return-to-mh`, { notes })
-      mutate(); onListRefresh(); setShowReviseModal(false)
-    } catch (err: any) { alert(err?.response?.data?.detail || 'Gagal mengembalikan ke MH.') }
-    finally { setRevising(false) }
-  }
-  const handleRevise = async (notes: string) => {
-    setRevising(true)
-    try {
-      if (item?.qcid) {
-        await api.patch(`/cms/item/${item.qcid}/revised`, { operator_name: user?.name ?? 'CMS', revised_notes: notes })
-      } else {
-        await api.patch(`/qc/${id}/revise`, { revised_notes: notes })
-      }
-      mutate(); onListRefresh(); setShowReviseModal(false)
-    } catch (err: any) { alert(err?.response?.data?.detail || 'Gagal revise.') }
-    finally { setRevising(false) }
-  }
+    const cur[YH][HÈÕUT×ÓÔT[^Ù][KÝ]\È\ÈÝ]\Ñ[[JHLBÛÛÝ\Ù]H\Ù]Ý]\ÈÏÈ
+][HÈÕUT×ÓÔTØÝ\[Y
+ÈWHÏÈ[[
+BY
+]\Ù]Z][JH]\Y
+][KÚ]ÜÝXÈ	ÝXÑ]K[Ý
+HÂÛÛÝÝÛHHÝXÑ]K[\
+[JHOÝ]\ÈOOH	ÙÛIÊBY
+ÝÛK[Ý	]Ú[ÝËÛÛ\J8¦¨;î#È	ÛÝÛK[ÝHZ\ØHÝX]H[[HÙ[\ØZK[]Ø
+JH]\BY
+\Ù]OOH	ÔXYHÈ[Ù\Ý	È	Z][K[Z[×Ø\ÜÙ]
+HÂY
+]Ú[ÝËÛÛ\J	ø¦¨;î#È[Z[È\ÜÙ][[HZ\ÚKÛZÈÒÈ[ZÈ[][H[Z[È\ÜÙ]ÊJH]\BÙ]Y[Ú[ÊYJBHÂ]ØZ]\K]Ú
+ÜXËÉÚYKÜÝ]\ØÈ]×ÜÝ]\Î\Ù]JB]]]J
+NÈÛ\ÝY\Ú
 
-  const isEditor = role === 'editor' || role === 'chef_editor' || role === 'admin'
-  const isSupervisor = role === 'admin' || role === 'chef_editor'
+BHØ]Ú
+\[JHÈ[\
+\Ë\ÜÛÙOË]OË]Z[	ÑØYØ[Y[ÝXZÝ]\ËÊHB[[HÈÙ]Y[Ú[Ê[ÙJHBBÛÛÝ\ÝXZ]H\Þ[È
 
-  return (
-    <div className="fixed inset-0 z-40 flex justify-end" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/20 dark:bg-black/40" />
-      <div
-        className="relative w-full max-w-lg bg-white dark:bg-slate-900 h-full overflow-y-auto shadow-2xl flex flex-col"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* sticky header */}
-        <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="text-xs font-mono text-slate-400 dark:text-slate-500">{item?.qcid ?? '—'}</p>
-            <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{item?.title ?? '…'}</p>
-            {item?.season && (
-              <p className="text-xs text-slate-500 dark:text-slate-400">S{item.season} E{item.episode}</p>
-            )}
-          </div>
-          <button onClick={onClose} className="shrink-0 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-            <X className="w-5 h-5 text-slate-500" />
-          </button>
-        </div>
+HOÂY
+][H	Z][K[Z[×Ø\ÜÙ]
+HÂY
+]Ú[ÝËÛÛ\J	ø¦¨;î#È[Z[È\ÜÙ][[HZ\ÚKÛZÈÒÈ[ZÈ[]ÊJH]\BÙ]Y[Ú[ÊYJBHÂ]ØZ]\K]Ú
+ÜXËÉÚYKÜÝ]\ØÈ]×ÜÝ]\Î	ÔXYHÈ[Ù\Ý	ÈJB]]]J
+NÈÛ\ÝY\Ú
 
-        {isLoading && (
-          <div className="flex-1 flex items-center justify-center py-16">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
-          </div>
-        )}
+BHØ]Ú
+\[JHÈ[\
+\Ë\ÜÛÙOË]OË]Z[	ÑØYØ[Y[Ú\[H[[ËÊHB[[HÈÙ]Y[Ú[Ê[ÙJHBBÛÛÝ]\ÓRH\Þ[È
+Ý\ÎÝ[ÊHOÂÙ]]\Ú[ÊYJBHÂ]ØZ]\K]Ú
+ÛX]\X[ÉÚYKÜ]\]Ë[ZÈÝ\ÈJB]]]J
+NÈÛ\ÝY\Ú
 
-        {!isLoading && item && (
-          <div className="p-4 space-y-4 pb-8">
-            {/* Status badges */}
-            <div className="flex flex-wrap gap-2">
-              <StatusBadge status={item.status} />
-              {item.qc_result && (
-                <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                  item.qc_result === 'PASS'
-                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                    : item.qc_result === 'FAIL'
-                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                    : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                }`}>{item.qc_result}</span>
-              )}
-            </div>
+NÈÙ]ÚÝÔ]\ÙS[Ù[
+[ÙJBHØ]Ú
+\[JHÈ[\
+\Ë\ÜÛÙOË]OË]Z[	ÑØYØ[Y[Ù[X[ZØ[ÙHRÊHB[[HÈÙ]]\Ú[Ê[ÙJHBBÛÛÝ[T]\ÙHH\Þ[È
+Ý\ÎÝ[ÊHOÂÙ]]\Ú[ÊYJBHÂY
+][OËXÚY
+HÂ]ØZ]\K]Ú
+ØÛ\ËÚ][KÉÚ][KXÚYKÜ]\ÙYÈÜ\]ÜÛ[YN\Ù\Ë[YHÏÈ	ÐÓTÉË]\ÙYÛÝ\ÎÝ\ÈJBH[ÙHÂ]ØZ]\K]Ú
+ÜXËÉÚYKÜ]\ÙXÈ]\ÙYÛÝ\ÎÝ\ÈJBB]]]J
+NÈÛ\ÝY\Ú
 
-            {/* Revisi banner */}
-            {item.status === 'Need Revised' && item.revised_notes && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                <p className="text-xs font-semibold text-red-600 dark:text-red-400 mb-1 flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3" /> Catatan Revisi
-                </p>
-                <p className="text-xs text-red-700 dark:text-red-300 whitespace-pre-wrap">{item.revised_notes}</p>
-              </div>
-            )}
+NÈÙ]ÚÝÔ]\ÙS[Ù[
+[ÙJBHØ]Ú
+\[JHÈ[\
+\Ë\ÜÛÙOË]OË]Z[	ÑØYØ[]\ÙKÊHB[[HÈÙ]]\Ú[Ê[ÙJHBBÛÛÝ\ÑY]ÜHÛHOOH	ÙY]ÜÈÛHOOH	ØÚYÙY]ÜÈÛHOOH	ØYZ[ÂÛÛÝ\ÔÝ\\\ÛÜHÛHOOH	ØYZ[ÈÛHOOH	ØÚYÙY]ÜÂ]\
+]Û\ÜÓ[YOH^Y[Ù]LM^\ÝYKY[ÛÛXÚÏ^ÛÛÛÜÙ_O]Û\ÜÓ[YOHXÛÛ]H[Ù]LËXXÚËÌ\ÎËXXÚËÍÏ]Û\ÜÓ[YOH[]]HËY[X^]Ë[ÈË]Ú]H\ÎË\Û]KNLY[Ý\ÝË^KX]]ÈÚYÝËL^^XÛÛÛÛXÚÏ^ÙHOKÝÜÜYØ][Û
+_BËÊÝXÚÞHXY\
+ßB]Û\ÜÓ[YOHÝXÚÞHÜLLLË]Ú]H\ÎË\Û]KNLÜ\XÜ\\Û]KL\ÎÜ\\Û]KMÌMKLÈ^][\Ë\Ý\\ÝYKX]ÙY[Ø\L]Û\ÜÓ[YOHZ[]ËLÛ\ÜÓ[YOH^^ÈÛ[[ÛÈ^\Û]KM\Î^\Û]KMLÚ][OËXÚYÏÈ	ø %	ßOÜÛ\ÜÓ[YOHÛ\Ù[ZXÛ^\Û]KNL\Î^\Û]KLL[Ø]HÚ][OË]HÏÈ	ø )ßOÜÚ][OËÙX\ÛÛ	
+Û\ÜÓ[YOH^^È^\Û]KML\Î^\Û]KMÞÚ][KÙX\ÛÛH^Ú][K\\ÛÙ_OÜ
+_BÙ]]ÛÛÛXÚÏ^ÛÛÛÜÙ_HÛ\ÜÓ[YOHÚ[ËLLHÝ[Y[ÈÝ\Ë\Û]KLL\ÎÝ\Ë\Û]KNÛ\ÜÓ[YOHËMHMH^\Û]KMLÏØ]ÛÙ]Ú\ÓØY[È	
+]Û\ÜÓ[YOH^LH^][\ËXÙ[\\ÝYKXÙ[\KLMØY\Û\ÜÓ[YOHËMM[[X]K\Ü[^XYKMLÏÙ]
+_BÈZ\ÓØY[È	][H	
+]Û\ÜÓ[YOHMÜXÙK^KMNËÊÝ]\ÈYÙ\È
+ßB]Û\ÜÓ[YOH^^]Ü\Ø\LÝ]\ÐYÙHÝ]\Ï^Ú][KÝ]\ßHÏÚ][KX×Ü\Ý[	
+Ü[Û\ÜÓ[YO^Ø^^ÈÛ\Ù[ZXÛLKLHÝ[YY[	Â][KX×Ü\Ý[OOH	ÔTÔÉÂÈ	ØËYÜY[LL^YÜY[MÌ\ÎËYÜY[NLÌÌ\Î^YÜY[M	Â][KX×Ü\Ý[OOH	ÑRS	ÂÈ	ØË\YLL^\YMÌ\ÎË\YNLÌÌ\Î^\YM	Â	ØË^Y[ÝËLL^^Y[ÝËMÌ\ÎË^Y[ÝËNLÌÌ\Î^^Y[ÝËM	ÂXOÚ][KX×Ü\Ý[OÜÜ[
+_BÙ]ËÊ]\ÚH[\
+ßBÚ][KÝ]\ÈOOH	ÓYY]\ÙY	È	][K]\ÙYÛÝ\È	
+]Û\ÜÓ[YOHË\YML\ÎË\YNLÌÜ\Ü\\YL\ÎÜ\\YNÝ[Y[ÈLÈÛ\ÜÓ[YOH^^ÈÛ\Ù[ZXÛ^\YM\Î^\YMXLH^][\ËXÙ[\Ø\LH[\X[ÛHÛ\ÜÓ[YOHËLÈLÈÏØ]][]\ÚBÜÛ\ÜÓ[YOH^^È^\YMÌ\Î^\YLÌÚ]\ÜXÙK\K]Ü\Ú][K]\ÙYÛÝ\ßOÜÙ]
+_BËÊ[ÈØ\
+ßB]Û\ÜÓ[YOHË\Û]KML\ÎË\Û]KNÝ[Y^MÜXÙK^KL[ÔÝÈX[HX\HQ[YO^Ú][KX\WÚYÏÈ	ø %	ßHÏ[ÔÝÈX[H]ÜH[YO^Ú][K]ÜHÏÈ	ø %	ßHÏ[ÔÝÈX[H\H[YO^Ú][KÛÛ[Ý\HÏÈ	ø %	ßHÏ[ÔÝÈX[HY]Ü[YO^Ú][KX×ÙY]ÜÛ[YHÏÈ	ø %	ßHÏ[ÔÝÈX[H[ÙØ[[YO^Ú][KÜX]YØ]È]È]J][KÜX]YØ]
+KÓØØ[Q]TÝ[Ê	ÚYRQ	ÊH	ø %	ßHÏ]Û\ÜÓ[YOH^][\ËXÙ[\\ÝYKX]ÙY[Ø\LLÜ\]Ü\\Û]KL\ÎÜ\\Û]KMÌÜ[Û\ÜÓ[YOH^\Û]KML\Î^\Û]KM^\ÛH[Z[È\ÜÙ]ÜÜ[ÙY][Ó[Z[ÈÈ
+]Û\ÜÓ[YOH^][\ËXÙ[\Ø\LH^LH\ÝYKY[[][YO^Û[Z[Õ[BÛÚ[ÙO^ÙHOÙ][Z[Õ[
+K\Ù][YJ_BÛ\ÜÓ[YOHÜ\Ü\\Û]KL\ÎÜ\\Û]KMÝ[YLKLH^^ÈËLÌË]Ú]H\ÎË\Û]KMÌ^\Û]KNL\Î^\Û]KLLXÙZÛ\H[Z[È\ÜÙ]]]ÑØÝ\ÂÏ]ÛÛÛXÚÏ^ÜØ]S[Z[ßH\ØXY^ÜØ][Ó[Z[ßBÛ\ÜÓ[YOH^^ÈËXYKML^]Ú]HLKLHÝ[Y\ØXYÜXÚ]KMLÜØ][Ó[Z[ÈÈ	ø )È	ÔØ]IßOØ]Û]ÛÛÛXÚÏ^Ê
+HOÙ]Y][Ó[Z[Ê[ÙJ_HÛ\ÜÓ[YOH^^È^\Û]KMLLH¸§%OØ]ÛÙ]
+H
+]Û\ÜÓ[YOH^][\ËXÙ[\Ø\LÜ[Û\ÜÓ[YOHÛ[YY][H^\Û]KNL\Î^\Û]KLL^\ÛH^\YÚÚ][K[Z[×Ø\ÜÙ]ÏÈ	ø %	ßBÜÜ[Ú\ÑY]Ü	
+]ÛÛÛXÚÏ^Ê
+HOÈÙ][Z[Õ[
+][K[Z[×Ø\ÜÙ]ÏÈ	ÉÊNÈÙ]Y][Ó[Z[ÊYJH_BÛ\ÜÓ[YOH^^È^XYKMLÝ\^XYKMÌY]Ø]Û
+_BÙ]
+_BÙ]Ù]ËÊPÈÜH]Û8 %ÛH[PÈØÙ\ÜÈ
+ßBÚ][KÝ]\ÈOOH	ÔPÈØÙ\ÜÉÈ	\ÑY]Ü	
+]ÛÛÛXÚÏ^Ê
+HOÙ]ÚÝÔPÑÜJYJ_BÛ\ÜÓ[YOHËY[^][\ËXÙ[\\ÝYKXÙ[\Ø\LKLÈÝ[Y^ËXYKML^]Ú]H^\ÛHÛ\Ù[ZXÛÝ\ËXYKM[Ú][ÛXÛÛÜÈÛ\Ø\\ÝÛ\ÜÓ[YOHËMMÏZØHÜHPÈ[ZÙBØ]Û
+_BËÊÝX]HÙXÝ[Û
+ßBÊ][KÚ]ÜÝXÈÚ]ÝXÑY][È\ÔÝ\\\ÛÜH	
+]Û\ÜÓ[YOHÜ\Ü\\Û]KL\ÎÜ\\Û]KMÌÝ[Y^Ý\ÝËZY[]ÛÛ\ÜÓ[YOHËY[^][\ËXÙ[\\ÝYKX]ÙY[MKLÈË\Û]KML\ÎË\Û]KN^\ÛHÛ[YY][H^\Û]KMÌ\Î^\Û]KLÌÛÛXÚÏ^Ê
+HOÂY
+\ÝXÑ^[Y
+HÈÙ]ÝXÑ^[Y
+YJNÈY
+][KÚ]ÜÝXÊHØYÝX\ÚÜÊ
+HB[ÙHÙ]ÝXÑ^[Y
+[ÙJB_BÜ[Û\ÜÓ[YOH^][\ËXÙ[\Ø\LÝX]BÜ[Û\ÜÓ[YO^Ø^^ÈLKLHÝ[YY[	Â][KÚ]ÜÝXÂÈ	ØËXYKLL^XYKMÌ\ÎËXYKNLÌÌ\Î^XYKM	Â	ØË\Û]KLL^\Û]KML\ÎË\Û]KMÌ\Î^\Û]KM	ÂXOÚ][KÚ]ÜÝXÈÈ	ÐZÝYÈ	ÓÛZÝYßOÜÜ[ÜÜ[ÜÝXÑ^[YÈÚ]Û\Û\ÜÓ[YOHËMMÏÚ]ÛÝÛÛ\ÜÓ[YOHËMMÏBØ]ÛÜÝXÑ^[Y	
+]Û\ÜÓ[YOHMKLÈÜXÙK^KLÈÚ\ÔÝ\\\ÛÜ	
+]Û\ÜÓ[YOH^][\ËXÙ[\Ø\LÝÚ]ÝXÑY][ÈÈ
+]ÛÛÛXÚÏ^Ê
+HOÙÙÛUÚ]ÝXÊYJ_BÛ\ÜÓ[YOH^^ÈËXYKML^]Ú]HLÈKLHÝ[YY[ZÝYØ[Ø]Û]ÛÛÛXÚÏ^Ê
+HOÙÙÛUÚ]ÝXÊ[ÙJ_BÛ\ÜÓ[YOH^^ÈË\Û]KL\ÎË\Û]KMÌ^\Û]KMÌ\Î^\Û]KLÌLÈKLHÝ[YY[ÛZÝYØ[Ø]Û]ÛÛÛXÚÏ^Ê
+HOÙ]Ú]ÝXÑY][Ê[ÙJ_HÛ\ÜÓ[YOH^^È^\Û]KML][Ø]ÛÏ
+H
+]ÛÛÛXÚÏ^Ê
+HOÙ]Ú]ÝXÑY][ÊYJ_HÛ\ÜÓ[YOH^^È^XYKMLÝ\^XYKMÌXZÝ]\ÈÝX]BØ]Û
+_BÙ]
+_BÚ][KÚ]ÜÝXÈ	
+ØY[ÔÝXÈÈ
+]Û\ÜÓ[YOH^][\ËXÙ[\Ø\L^^È^\Û]KMLØY\Û\ÜÓ[YOHËLÈLÈ[[X]K\Ü[ÏØY[ËÙ]
+HÝXÑ]K[ÝOOHÈ
+Û\ÜÓ[YOH^^È^\Û]KM[[HYHÝX]H\ÚËÜ
+H
+]Û\ÜÓ[YOHÜXÙK^KLÜÝXÑ]KX\
 
-            {/* Info card */}
-            <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4 space-y-2">
-              <InfoRow label="Library ID" value={item.library_id ?? '—'} />
-              <InfoRow label="Platform" value={item.platform ?? '—'} />
-              <InfoRow label="Tipe" value={item.content_type ?? '—'} />
-              <InfoRow label="Editor" value={item.pic_editor_name ?? '—'} />
-              <InfoRow label="Tanggal" value={item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID') : '—'} />
-              <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200 dark:border-slate-700">
-                <span className="text-slate-500 dark:text-slate-400 text-sm">Naming Asset</span>
-                {editingNaming ? (
-                  <div className="flex items-center gap-1 flex-1 justify-end">
-                    <input
-                      value={namingVal}
-                      onChange={e => setNamingVal(e.target.value)}
-                      className="border border-slate-200 dark:border-slate-600 rounded px-2 py-0.5 text-xs w-32 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-                      placeholder="Naming asset..."
-                      autoFocus
-                    />
-                    <button onClick={saveNaming} disabled={savingNaming}
-                      className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded disabled:opacity-50"
-                    >{savingNaming ? '…' : 'Save'}</button>
-                    <button onClick={() => setEditingNaming(false)} className="text-xs text-slate-500 px-1">✕</button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-slate-900 dark:text-slate-100 text-sm text-right">
-                      {item.naming_asset ?? '—'}
-                    </span>
-                    {isEditor && (
-                      <button
-                        onClick={() => { setNamingVal(item.naming_asset ?? ''); setEditingNaming(true) }}
-                        className="text-xs text-blue-500 hover:text-blue-700"
-                      >Edit</button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
+[JHO
+]Ù^O^ÝYHÛ\ÜÓ[YOH^][\ËXÙ[\\ÝYKX]ÙY[Ø\L^^ÈÜ[Û\ÜÓ[YOH^\Û]KMÌ\Î^\Û]KLÌÛ[YY][HÝ[ÝXYÙ_OÜÜ[]Û\ÜÓ[YOH^][\ËXÙ[\Ø\LÙY][ÔÝXÔXÈOOHYÈ
+[][YO^ÜXÕ[HÛÚ[ÙO^ÙHOÙ]XÕ[
+K\Ù][YJ_BÛ\ÜÓ[YOHÜ\Ý[YLHKLHËL^^È\ÎË\Û]KMÌ\ÎÜ\\Û]KMXÙZÛ\H[XHPÈÏ]ÛÛÛXÚÏ^Ê
+HOÈ\]TÝX\ÚÊYÈXÎXÕ[JNÈÙ]Y][ÔÝXÔXÊ[
+H_BÛ\ÜÓ[YOH^XYKML¸§$ÏØ]Û]ÛÛÛXÚÏ^Ê
+HOÙ]Y][ÔÝXÔXÊ[
+_HÛ\ÜÓ[YOH^\Û]KM¸§%OØ]ÛÏ
+H
+]ÛÛÛXÚÏ^Ê
+HOÈÙ]Y][ÔÝXÔXÊY
+NÈÙ]XÕ[
+XÈÏÈ	ÉÊH_BÛ\ÜÓ[YOH^\Û]KMÝ\^XYKMLÝXÈÏÈ	ÔÙ]PÉßOØ]Û
+_BÜ[Û\ÜÓ[YO^ØLKLHÝ[YY[	ÔÐÖÝÝ]\×HÏÈ	ÉßXOÔÓÝÝ]\×HÏÈÝ]\ßOÜÜ[ÝÝ]\ÈOOH	ÙÛIÈ	
+]ÛÛÛXÚÏ^Ê
+HO\]TÝX\ÚÊYÈÝ]\ÎÝ]\ÈOOH	Ü[[ÉÈÈ	Ú[ÜÙÜ\ÜÉÈ	ÙÛIÈJ_BÛ\ÜÓ[YOH^^ÈËXYKML^]Ú]HLKLHÝ[YY[ÝÝ]\ÈOOH	Ü[[ÉÈÈ	Ó][ZIÈ	ÔÙ[\ØZIßOØ]Û
+_BÙ]Ù]
+J_BÙ]
+B
+_BÙ]
+_BÙ]
+_BËÊX[ÈÙXÝ[Û
+ßBÊ][KÚ]ÙXÚ]XY][È\ÔÝ\\\ÛÜH	
+]Û\ÜÓ[YOHÜ\Ü\\Û]KL\ÎÜ\\Û]KMÌÝ[Y^Ý\ÝËZY[]ÛÛ\ÜÓ[YOHËY[^][\ËXÙ[\\ÝYKX]ÙY[MKLÈË\Û]KML\ÎË\Û]KN^\ÛHÛ[YY][H^\Û]KMÌ\Î^\Û]KLÌÛÛXÚÏ^Ê
+HOÂY
+YX^[Y
+HÈÙ]X^[Y
+YJNÈY
+][KÚ]ÙXHØYX\ÚÜÊ
+HB[ÙHÙ]X^[Y
+[ÙJB_BÜ[Û\ÜÓ[YOH^][\ËXÙ[\Ø\LX[ÂÜ[Û\ÜÓ[YO^Ø^^ÈLKLHÝ[YY[	Â][KÚ]ÙXÈ	ØË\\KLL^\\KMÌ\ÎË\\KNLÌÌ\Î^\\KM	Â	ØË\Û]KLL^\Û]KML\ÎË\Û]KMÌ\Î^\Û]KM	ÂXOÚ][KÚ]ÙXÈ	ÐZÝYÈ	ÓÛZÝYßOÜÜ[ÜÜ[ÙX^[YÈÚ]Û\Û\ÜÓ[YOHËMMÏÚ]ÛÝÛÛ\ÜÓ[YOHËMMÏBØ]ÛÙX^[Y	
+]Û\ÜÓ[YOHMKLÈÜXÙK^KLÈÚ\ÔÝ\\\ÛÜ	
+]Û\ÜÓ[YOH^][\ËXÙ[\Ø\LÝÚ]XY][ÈÈ
+]ÛÛÛXÚÏ^Ê
+HOÙÙÛUÚ]XYJ_BÛ\ÜÓ[YOH^^ÈË\\KML^]Ú]HLÈKLHÝ[YY[ZÝYØ[Ø]Û]ÛÛÛXÚÏ^Ê
+HOÙÙÛUÚ]X[ÙJ_BÛ\ÜÓ[YOH^^ÈË\Û]KL\ÎË\Û]KMÌ^\Û]KMÌ\Î^\Û]KLÌLÈKLHÝ[YY[ÛZÝYØ[Ø]Û]ÛÛÛXÚÏ^Ê
+HOÙ]Ú]XY][Ê[ÙJ_HÛ\ÜÓ[YOH^^È^\Û]KML][Ø]ÛÏ
+H
+]ÛÛÛXÚÏ^Ê
+HOÙ]Ú]XY][ÊYJ_HÛ\ÜÓ[YOH^^È^\\KMLÝ\^\\KMÌXZÝ]\ÈX[ÂØ]Û
+_BÙ]
+_BÚ][KÚ]ÙX	
+ØY[ÑXÈ
+]Û\ÜÓ[YOH^][\ËXÙ[\Ø\L^^È^\Û]KMLØY\Û\ÜÓ[YOHËLÈLÈ[[X]K\Ü[ÏØY[ËÙ]
+HX]K[ÝOOHÈ
+Û\ÜÓ[YOH^^È^\Û]KM[[HYHX[È\ÚËÜ
+H
+]Û\ÜÓ[YOHÜXÙK^KLÙX]KX\
 
-            {/* QC Form button — only in QC Process */}
-            {item.status === 'QC Process' && isEditor && (
-              <button
-                onClick={() => setShowQCForm(true)}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors"
-              >
-                <ClipboardList className="w-4 h-4" />
-                Buka Form QC Intake
-              </button>
-            )}
+[JHO
+]Ù^O^ÝYHÛ\ÜÓ[YOH^][\ËXÙ[\\ÝYKX]ÙY[Ø\L^^ÈÜ[Û\ÜÓ[YOH^\Û]KMÌ\Î^\Û]KLÌÛ[YY][HÝ[ÝXYÙ_OÜÜ[]Û\ÜÓ[YOH^][\ËXÙ[\Ø\LÙY][ÑXXÈOOHYÈ
+[][YO^ÙXXÕ[HÛÚ[ÙO^ÙHOÙ]XXÕ[
+K\Ù][YJ_BÛ\ÜÓ[YOHÜ\Ý[YLHKLHËL^^È\ÎË\Û]KMÌ\ÎÜ\\Û]KMXÙZÛ\H[XHPÈÏ]ÛÛÛXÚÏ^Ê
+HOÈ\]QX\ÚÊYÈXÎXXÕ[JNÈÙ]Y][ÑXXÊ[
+H_BÛ\ÜÓ[YOH^\\KML¸§$ÏØ]Û]ÛÛÛXÚÏ^Ê
+HOÙ]Y][ÑXXÊ[
+_HÛ\ÜÓ[YOH^\Û]KM¸§%OØ]ÛÏ
+H
+]ÛÛÛXÚÏ^Ê
+HOÈÙ]Y][ÑXXÊY
+NÈÙ]XXÕ[
+XÈÏÈ	ÉÊH_BÛ\ÜÓ[YOH^\Û]KMÝ\^\\KMLÝXÈÏÈ	ÔÙ]PÉßOØ]Û
+_BÜ[Û\ÜÓ[YO^ØLKLHÝ[YY[	ÔÐÖÝÝ]\×HÏÈ	ÉßXOÔÓÝÝ]\×HÏÈÝ]\ßOÜÜ[ÝÝ]\ÈOOH	ÙÛIÈ	
+]ÛÛÛXÚÏ^Ê
+HO\]QX\ÚÊYÈÝ]\ÎÝ]\ÈOOH	Ü[[ÉÈÈ	Ú[ÜÙÜ\ÜÉÈ	ÙÛIÈJ_BÛ\ÜÓ[YOH^^ÈË\\KML^]Ú]HLKLHÝ[YY[ÝÝ]\ÈOOH	Ü[[ÉÈÈ	Ó][ZIÈ	ÔÙ[\ØZIßOØ]Û
+_BÙ]Ù]
+J_BÙ]
+B
+_BÙ]
+_BÙ]
+_BËÊXÝ[Û]ÛÈ
+ßB]Û\ÜÓ[YOHÜXÙK^KLÚ][H	ÕUT×ÓÔT[^Ù][KÝ]\È\ÈÝ]\Ñ[[JHH	ÕUT×ÓÔT[^Ù][KÝ]\È\ÈÝ]\Ñ[[JHÕUT×ÓÔT[ÝHH	VÉÔPÈØÙ\ÜÉË	ÓYY]\ÙY	×K[ÛY\Ê][KÝ]\ÊH	\ÑY]Ü	
+]ÛÛÛXÚÏ^Ê
+HOY[ÙTÝ]\Ê
+_B\ØXY^ØY[Ú[ßBÛ\ÜÓ[YOHËY[KLHÝ[Y^ËXYKML^]Ú]H^\ÛHÛ\Ù[ZXÛ\ØXYÜXÚ]KML^][\ËXÙ[\\ÝYKXÙ[\Ø\LØY[Ú[È	ØY\Û\ÜÓ[YOHËMM[[X]K\Ü[ÏBØY[Ú[ÈÈ	ÓY[\ÜÙ\ËÈ[]8¡¤	ÔÕUT×ÓÔTÔÕUT×ÓÔT[^Ù][KÝ]\È\ÈÝ]\Ñ[[JH
+ÈWHÏÈ	ÉßXBØ]Û
+_BÚ][KÝ]\ÈOOH	ÓYY]\ÙY	È	\ÔÝ\\\ÛÜ	
+]ÛÛÛXÚÏ^Ê
+HOÙ]ÚÝÔ]\ÙS[Ù[
+YJ_BÛ\ÜÓ[YOHËY[KLHÝ[Y^Ü\Ü\\YML^\YML^\ÛHÛ\Ù[ZXÛ]\ÙOØ]Û
+_BÚ][KÝ]\ÈOOH	ÓYY]\ÙY	È	ÛHOOH	ÙY]ÜÈ	
+]ÛÛÛXÚÏ^Ü\ÝXZ]H\ØXY^ØY[Ú[ßBÛ\ÜÓ[YOHËY[KLHÝ[Y^ËXYKML^]Ú]H^\ÛHÛ\Ù[ZXÛ\ØXYÜXÚ]KMLØY[Ú[ÈÈ	ÓY[\ÜÙ\ËÈ	ÒÚ\[H[[ÉßOØ]Û
+_BÖÉÔPÈØÙ\ÜÉË	ÔPÈÛI×K[ÛY\Ê][KÝ]\ÊH	\ÔÝ\\\ÛÜ	
+]ÛÛÛXÚÏ^Ê
+HOÙ]ÚÝÔ]\ÙS[Ù[
+YJ_BÛ\ÜÓ[YOHËY[KLHÝ[Y^Ü\Ü\[Ü[ÙKML^[Ü[ÙKML^\ÛHÛ[YY][HÙ[X[ZØ[ÙHRØ]Û
+_BÙ]ËÊ\ÝÜH
+ßB]Û\ÜÓ[YOHÜ\Ü\\Û]KL\ÎÜ\\Û]KMÌÝ[Y^Ý\ÝËZY[]ÛÛ\ÜÓ[YOHËY[^][\ËXÙ[\\ÝYKX]ÙY[MKLÈË\Û]KML\ÎË\Û]KN^\ÛHÛ[YY][H^\Û]KMÌ\Î^\Û]KLÌÛÛXÚÏ^Ê
+HOÙ]ÚÝÒ\ÝÜJ\ÚÝÒ\ÝÜJ_BÜ[]Ø^X]Ý]\ÏÜÜ[ÜÚÝÒ\ÝÜHÈÚ]Û\Û\ÜÓ[YOHËMMÏÚ]ÛÝÛÛ\ÜÓ[YOHËMMÏBØ]ÛÜÚÝÒ\ÝÜH	
+]Û\ÜÓ[YOHMKLÈÈZ][K\ÝÜH][K\ÝÜK[ÝOOHÈ
+Û\ÜÓ[YOH^^È^\Û]KM[[HYH]Ø^X]Ü
+H
+]Û\ÜÓ[YOHÜXÙK^KLÚ][K\ÝÜKX\
 
-            {/* Subtitle section */}
-            {(item.with_subs || withSubsEditing || isSupervisor) && (
-              <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-                <button
-                  className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300"
-                  onClick={() => {
-                    if (!subsExpanded) { setSubsExpanded(true); if (item.with_subs) loadSubtasks() }
-                    else setSubsExpanded(false)
-                  }}
-                >
-                  <span className="flex items-center gap-2">
-                    Subtitle
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      item.with_subs
-                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                        : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
-                    }`}>{item.with_subs ? 'Aktif' : 'Nonaktif'}</span>
-                  </span>
-                  {subsExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
-                {subsExpanded && (
-                  <div className="px-4 py-3 space-y-3">
-                    {isSupervisor && (
-                      <div className="flex items-center gap-2">
-                        {withSubsEditing ? (
-                          <>
-                            <button onClick={() => toggleWithSubs(true)}
-                              className="text-xs bg-blue-500 text-white px-3 py-1 rounded-full">Aktifkan</button>
-                            <button onClick={() => toggleWithSubs(false)}
-                              className="text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1 rounded-full">Nonaktifkan</button>
-                            <button onClick={() => setWithSubsEditing(false)} className="text-xs text-slate-500">Batal</button>
-                          </>
-                        ) : (
-                          <button onClick={() => setWithSubsEditing(true)} className="text-xs text-blue-500 hover:text-blue-700">
-                            Ubah Status Subtitle
-                          </button>
-                        )}
-                      </div>
-                    )}
-                    {item.with_subs && (
-                      loadingSubs ? (
-                        <div className="flex items-center gap-2 text-xs text-slate-500">
-                          <Loader2 className="w-3 h-3 animate-spin" /> Loading...
-                        </div>
-                      ) : subsData.length === 0 ? (
-                        <p className="text-xs text-slate-400">Belum ada subtitle task.</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {subsData.map((t: any) => (
-                            <div key={t.id} className="flex items-center justify-between gap-2 text-xs">
-                              <span className="text-slate-700 dark:text-slate-300 font-medium">{t.language}</span>
-                              <div className="flex items-center gap-2">
-                                {editingSubsPic === t.id ? (
-                                  <>
-                                    <input value={picVal} onChange={e => setPicVal(e.target.value)}
-                                      className="border rounded px-1 py-0.5 w-24 text-xs dark:bg-slate-700 dark:border-slate-600"
-                                      placeholder="Nama PIC" />
-                                    <button onClick={() => { updateSubTask(t.id, { pic: picVal }); setEditingSubsPic(null) }}
-                                      className="text-blue-500">✓</button>
-                                    <button onClick={() => setEditingSubsPic(null)} className="text-slate-400">✕</button>
-                                  </>
-                                ) : (
-                                  <button onClick={() => { setEditingSubsPic(t.id); setPicVal(t.pic ?? '') }}
-                                    className="text-slate-400 hover:text-blue-500">{t.pic ?? 'Set PIC'}</button>
-                                )}
-                                <span className={`px-2 py-0.5 rounded-full ${SC[t.status] ?? ''}`}>{SL[t.status] ?? t.status}</span>
-                                {t.status !== 'done' && (
-                                  <button
-                                    onClick={() => updateSubTask(t.id, { status: t.status === 'pending' ? 'in_progress' : 'done' })}
-                                    className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full"
-                                  >{t.status === 'pending' ? 'Mulai' : 'Selesai'}</button>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
+[KN[X\HO
+]Ù^O^Ú_HÛ\ÜÓ[YOH^][\Ë\Ý\Ø\L^^È]Û\ÜÓ[YOHËLKHLKHÝ[YY[ËXYKM]LKHÚ[ËLÏ]Û\ÜÓ[YOHÛ[YY][H^\Û]KMÌ\Î^\Û]KLÌÚÝ]\ßOÜÛ\ÜÓ[YOH^\Û]KMÚÚ[ÙYØHÏÈ	ø %	ßH0­ÈÚÚ[ÙYØ]È]È]JÚ[ÙYØ]
+KÓØØ[TÝ[Ê	ÚYRQ	ÊH	ø %	ßOÜÙ]Ù]
+J_BÙ]
+_BÙ]
+_BÙ]Ù]
+_BÙ]ÜÚÝÔ]\ÙS[Ù[	
+]\ÙS[Ù[ÛÛÜÙO^Ê
+HOÙ]ÚÝÔ]\ÙS[Ù[
+[ÙJ_BÛÝXZ]^ÖÉÔPÈØÙ\ÜÉË	ÔPÈÛI×K[ÛY\Ê][OËÝ]\ÈÏÈ	ÉÊHÈ]\ÓR[T]\Ù_BØY[Ï^Ü]\Ú[ßB[ÙO^ÖÉÔPÈØÙ\ÜÉË	ÔPÈÛI×K[ÛY\Ê][OËÝ]\ÈÏÈ	ÉÊHÈ	Ü]\È	Ü]\ÙIßBÏ
+_BÜÚÝÔPÑÜH	][H	
+PÑÜT[[][O^Ú][_BÛÛÜÙO^Ê
+HOÙ]ÚÝÔPÑÜJ[ÙJ_BÛÝXZ]Y^Ê
+HOÈ]]]J
+NÈÛ\ÝY\Ú
 
-            {/* Dubbing section */}
-            {(item.with_dubb || withDubbEditing || isSupervisor) && (
-              <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-                <button
-                  className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300"
-                  onClick={() => {
-                    if (!dubbExpanded) { setDubbExpanded(true); if (item.with_dubb) loadDubbTasks() }
-                    else setDubbExpanded(false)
-                  }}
-                >
-                  <span className="flex items-center gap-2">
-                    Dubbing
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      item.with_dubb
-                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                        : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
-                    }`}>{item.with_dubb ? 'Aktif' : 'Nonaktif'}</span>
-                  </span>
-                  {dubbExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
-                {dubbExpanded && (
-                  <div className="px-4 py-3 space-y-3">
-                    {isSupervisor && (
-                      <div className="flex items-center gap-2">
-                        {withDubbEditing ? (
-                          <>
-                            <button onClick={() => toggleWithDubb(true)}
-                              className="text-xs bg-purple-500 text-white px-3 py-1 rounded-full">Aktifkan</button>
-                            <button onClick={() => toggleWithDubb(false)}
-                              className="text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1 rounded-full">Nonaktifkan</button>
-                            <button onClick={() => setWithDubbEditing(false)} className="text-xs text-slate-500">Batal</button>
-                          </>
-                        ) : (
-                          <button onClick={() => setWithDubbEditing(true)} className="text-xs text-purple-500 hover:text-purple-700">
-                            Ubah Status Dubbing
-                          </button>
-                        )}
-                      </div>
-                    )}
-                    {item.with_dubb && (
-                      loadingDubb ? (
-                        <div className="flex items-center gap-2 text-xs text-slate-500">
-                          <Loader2 className="w-3 h-3 animate-spin" /> Loading...
-                        </div>
-                      ) : dubbData.length === 0 ? (
-                        <p className="text-xs text-slate-400">Belum ada dubbing task.</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {dubbData.map((t: any) => (
-                            <div key={t.id} className="flex items-center justify-between gap-2 text-xs">
-                              <span className="text-slate-700 dark:text-slate-300 font-medium">{t.language}</span>
-                              <div className="flex items-center gap-2">
-                                {editingDubbPic === t.id ? (
-                                  <>
-                                    <input value={dubbPicVal} onChange={e => setDubbPicVal(e.target.value)}
-                                      className="border rounded px-1 py-0.5 w-24 text-xs dark:bg-slate-700 dark:border-slate-600"
-                                      placeholder="Nama PIC" />
-                                    <button onClick={() => { updateDubbTask(t.id, { pic: dubbPicVal }); setEditingDubbPic(null) }}
-                                      className="text-purple-500">✓</button>
-                                    <button onClick={() => setEditingDubbPic(null)} className="text-slate-400">✕</button>
-                                  </>
-                                ) : (
-                                  <button onClick={() => { setEditingDubbPic(t.id); setDubbPicVal(t.pic ?? '') }}
-                                    className="text-slate-400 hover:text-purple-500">{t.pic ?? 'Set PIC'}</button>
-                                )}
-                                <span className={`px-2 py-0.5 rounded-full ${SC[t.status] ?? ''}`}>{SL[t.status] ?? t.status}</span>
-                                {t.status !== 'done' && (
-                                  <button
-                                    onClick={() => updateDubbTask(t.id, { status: t.status === 'pending' ? 'in_progress' : 'done' })}
-                                    className="text-xs bg-purple-500 text-white px-2 py-0.5 rounded-full"
-                                  >{t.status === 'pending' ? 'Mulai' : 'Selesai'}</button>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
+H_BÏ
+_BÙ]
+BBËÈ8¥ 8¥ XZ[PÓ\ÝYÙH8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ ^ÜY][[Ý[ÛPÓ\ÝYÙJ
+HÂÛÛÝÜÙX\ÚÙ]ÙX\ÚHH\ÙTÝ]J	ÉÊBÛÛÝÜÝ]\ËÙ]Ý]\×HH\ÙTÝ]OÝ]\Ñ[[H	ÉÏ	ÉÊBÛÛÝÜ\Ý[Ù]\Ý[HH\ÙTÝ]O	ÔTÔÉÈ	ÓÕTÔÉÈ	ÉÏ	ÉÊBÛÛÝÜÚÝÑ[\Ù]ÚÝÑ[\HH\ÙTÝ]J[ÙJBÛÛÝÜÙ[XÝYYÙ]Ù[XÝYYHH\ÙTÝ]O[X\[[
+BÛÛÝÈ\Ù\HH\ÙP]]
 
-            {/* Action buttons */}
-            <div className="space-y-2">
-              {item && STATUS_ORDER.indexOf(item.status as StatusEnum) >= 0 &&
-                STATUS_ORDER.indexOf(item.status as StatusEnum) < STATUS_ORDER.length - 1 &&
-                !['QC Process', 'Need Revised'].includes(item.status) &&
-                isEditor && (
-                <button
-                  onClick={() => advanceStatus()}
-                  disabled={advancing}
-                  className="w-full py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {advancing && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {advancing ? 'Memproses...' : `Lanjut → ${STATUS_ORDER[STATUS_ORDER.indexOf(item.status as StatusEnum) + 1] ?? ''}`}
-                </button>
-              )}
-              {item.status === 'Need Revised' && isSupervisor && (
-                <button onClick={() => setShowReviseModal(true)}
-                  className="w-full py-2.5 rounded-xl border border-red-500 text-red-500 text-sm font-semibold"
-                >Revise</button>
-              )}
-              {item.status === 'Need Revised' && role === 'editor' && (
-                <button onClick={resubmit} disabled={advancing}
-                  className="w-full py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold disabled:opacity-50"
-                >{advancing ? 'Memproses...' : 'Kirim Ulang'}</button>
-              )}
-              {['QC Process', 'QC Done'].includes(item.status) && isSupervisor && (
-                <button onClick={() => setShowReviseModal(true)}
-                  className="w-full py-2.5 rounded-xl border border-orange-500 text-orange-500 text-sm font-medium"
-                >Kembalikan ke MH</button>
-              )}
-            </div>
+BÛÛÝÛHH\Ù\ËÛHÏÈ	ÉÂÛÛÝZ[Ù^HH
 
-            {/* History */}
-            <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-              <button
-                className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300"
-                onClick={() => setShowHistory(!showHistory)}
-              >
-                <span>Riwayat Status</span>
-                {showHistory ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
-              {showHistory && (
-                <div className="px-4 py-3">
-                  {!item.history || item.history.length === 0 ? (
-                    <p className="text-xs text-slate-400">Belum ada riwayat.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {item.history.map((h: any, i: number) => (
-                        <div key={i} className="flex items-start gap-2 text-xs">
-                          <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
-                          <div>
-                            <p className="font-medium text-slate-700 dark:text-slate-300">{h.status}</p>
-                            <p className="text-slate-400">{h.changed_by ?? '—'} · {h.changed_at ? new Date(h.changed_at).toLocaleString('id-ID') : '—'}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+HOÂÛÛÝH]ÈTÙX\Ú\[\Ê
+BY
+ÙX\Ú
+HÙ]
+	ÜÙX\Ú	ËÙX\Ú
+BY
+Ý]\ÊHÙ]
+	ÜÝ]\ÉËÝ]\ÊBY
+\Ý[
+HÙ]
+	Ü\Ý[	Ë\Ý[
+B]\ÜXÏÉÜÔÝ[Ê
+_XBÛÛÝÈ]K\ÓØY[ÈHH\ÙTÕÔPÐÛÛ[×OZ[Ù^J
+K]Ú\È][Y]SÛØÝ\Î[ÙHJBÛÛÝÛ\ÝY\ÚH
 
-      {showReviseModal && (
-        <ReviseModal
-          onClose={() => setShowReviseModal(false)}
-          onSubmit={['QC Process', 'QC Done'].includes(item?.status ?? '') ? returnToMH : handleRevise}
-          loading={revising}
-          mode={['QC Process', 'QC Done'].includes(item?.status ?? '') ? 'return' : 'revise'}
-        />
-      )}
+HOÂÛØ[]]]J
+Î[JHO\[ÙÈOOH	ÜÝ[ÉÈ	ËÝ\ÕÚ]
+	ËÜXÏÉÊJBBÛÛÝ^Ü^Ù[H\Þ[È
 
-      {showQCForm && item && (
-        <QCFormPanel
-          item={item}
-          onClose={() => setShowQCForm(false)}
-          onSubmitted={() => { mutate(); onListRefresh() }}
-        />
-      )}
-    </div>
-  )
-}
+HOÂHÂÛÛÝ\ÈH]ØZ]\KÙ]
+	ËÜXËÙ^ÜÙ^Ù[	ËÈ\ÜÛÙU\N	ØØÈJBÛÛÝ\HTÜX]SØXÝT
+\Ë]JBÛÛÝHHØÝ[Y[ÜX]Q[[Y[
+	ØIÊBKYH\ÈKÝÛØYH	ÜX×Û\ÝÞ	ÎÈKÛXÚÊ
+BT]ÚÙSØXÝT
+\
+BHØ]ÚÈ[\
+	ÑØYØ[^Ü^Ù[	ÊHBB]\
+]Û\ÜÓ[YOHZ[Z\ØÜY[Ë\Û]KML\ÎË\Û]KNMLLÜ\]OHPÈ\ÝÏ]Û\ÜÓ[YOHMKLÈÜXÙK^KLÈ]Û\ÜÓ[YOH^Ø\L]Û\ÜÓ[YOH^LH[]]HÙX\ÚÛ\ÜÓ[YOHXÛÛ]HYLÈÜLKÌ][Û]K^KLKÌËMM^\Û]KMÏ[][YO^ÜÙX\ÚBÛÚ[ÙO^ÙHOÙ]ÙX\Ú
+K\Ù][YJ_BXÙZÛ\HØ\HY[Û\ÜÓ[YOHËY[NHLÈKLÜ\Ü\\Û]KL\ÎÜ\\Û]KMÌÝ[Y^^\ÛHË]Ú]H\ÎË\Û]KN^\Û]KNL\Î^\Û]KLLØÝ\ÎÝ][K[ÛHØÝ\Î[ËLØÝ\Î[ËXYKMLÏÙ]]ÛÛÛXÚÏ^Ê
+HOÙ]ÚÝÑ[\\ÚÝÑ[\_BÛ\ÜÓ[YO^ØLHÝ[Y^Ü\	ÜÚÝÑ[\È	ØÜ\XYKMLËXYKML\ÎËXYKNLÌ^XYKML	È	ØÜ\\Û]KL\ÎÜ\\Û]KMÌ^\Û]KML\Î^\Û]KMË]Ú]H\ÎË\Û]KN	ßXB[\Û\ÜÓ[YOHËMMÏØ]ÛÊÛHOOH	ØYZ[ÈÛHOOH	ØÚYÙY]ÜÊH	
+]ÛÛÛXÚÏ^Ù^Ü^Ù[BÛ\ÜÓ[YOHLHÝ[Y^Ü\Ü\\Û]KL\ÎÜ\\Û]KMÌ^\Û]KML\Î^\Û]KMË]Ú]H\ÎË\Û]KNÝÛØYÛ\ÜÓ[YOHËMMÏØ]Û
+_BÙ]ÜÚÝÑ[\	
+]Û\ÜÓ[YOHË]Ú]H\ÎË\Û]KNÜ\Ü\\Û]KL\ÎÜ\\Û]KMÌÝ[Y^LÈÜXÙK^KLÈ]Û\ÜÓ[YOH^^ÈÛ[YY][H^\Û]KML\Î^\Û]KMXLKHÝ]\ÏÜ]Û\ÜÓ[YOH^^]Ü\Ø\LKH]ÛÛÛXÚÏ^Ê
+HOÙ]Ý]\Ê	ÉÊ_BÛ\ÜÓ[YO^Ø^^ÈLÈKLHÝ[YY[	ÜÝ]\ÈOOH	ÉÈÈ	ØËXYKML^]Ú]IÈ	ØË\Û]KLL\ÎË\Û]KMÌ^\Û]KM\Î^\Û]KLÌ	ßXBÙ[]XOØ]ÛÔÕUTÑTËX\
+ÈO
+]ÛÙ^O^ÜßHÛÛXÚÏ^Ê
+HOÙ]Ý]\ÊÊ_BÛ\ÜÓ[YO^Ø^^ÈLÈKLHÝ[YY[	ÜÝ]\ÈOOHÈÈ	ØËXYKML^]Ú]IÈ	ØË\Û]KLL\ÎË\Û]KMÌ^\Û]KM\Î^\Û]KLÌ	ßXBÜßOØ]Û
+J_BÙ]Ù]]Û\ÜÓ[YOH^^ÈÛ[YY][H^\Û]KML\Î^\Û]KMXLKHPÈ\Ý[Ü]Û\ÜÓ[YOH^Ø\LKHÖÖÉÉË	ÔÙ[]XI×KÉÔTÔÉË	ÔTÔÉ×KÉÓÕTÔÉË	ÓÕTÔÉ×WKX\
 
-// ── Main QCListPage ───────────────────────────────────────────────────────────
-export default function QCListPage() {
-  const [search, setSearch]         = useState('')
-  const [status, setStatus]         = useState<StatusEnum | ''>('')
-  const [result, setResult]         = useState<'PASS' | 'NOT PASS' | ''>('')
-  const [showFilter, setShowFilter] = useState(false)
-  const [selectedId, setSelectedId] = useState<number | null>(null)
-  const { user } = useAuth()
-  const role = user?.role ?? ''
-
-  const buildKey = () => {
-    const p = new URLSearchParams()
-    if (search) p.set('search', search)
-    if (status) p.set('status', status)
-    if (result) p.set('result', result)
-    return `/qc?${p.toString()}`
-  }
-  const { data, isLoading } = useSWR<QCContent[]>(buildKey(), fetcher, { revalidateOnFocus: false })
-
-  const onListRefresh = () => {
-    globalMutate((k: any) => typeof k === 'string' && k.startsWith('/qc?'))
-  }
-
-  const exportExcel = async () => {
-    try {
-      const res = await api.get('/qc/export/excel', { responseType: 'blob' })
-      const url = URL.createObjectURL(res.data)
-      const a = document.createElement('a')
-      a.href = url; a.download = 'qc_list.xlsx'; a.click()
-      URL.revokeObjectURL(url)
-    } catch { alert('Gagal export Excel') }
-  }
-
-  return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24">
-      <TopBar title="QC List" />
-      <div className="px-4 py-3 space-y-3">
-        <div className="flex gap-2">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Cari judul..."
-              className="w-full pl-9 pr-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <button
-            onClick={() => setShowFilter(!showFilter)}
-            className={`p-2.5 rounded-xl border ${showFilter ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-500' : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800'}`}
-          >
-            <Filter className="w-4 h-4" />
-          </button>
-          {(role === 'admin' || role === 'chef_editor') && (
-            <button onClick={exportExcel}
-              className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800"
-            >
-              <Download className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-
-        {showFilter && (
-          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 space-y-3">
-            <div>
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">Status</p>
-              <div className="flex flex-wrap gap-1.5">
-                <button onClick={() => setStatus('')}
-                  className={`text-xs px-3 py-1 rounded-full ${status === '' ? 'Hg-blue-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
-                >Semua</button>
-                {STATUSES.map(s => (
-                  <button key={s} onClick={() => setStatus(s)}
-                    className={`text-xs px-3 py-1 rounded-full ${status === s ? 'bg-blue-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
-                  >{s}</button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">QC Result</p>
-              <div className="flex gap-1.5">
-                {[['', 'Semua'], ['PASS', 'PASS'], ['NOT PASS', 'NOT PASS']].map(([v, label]) => (
-                  <button key={v} onClick={() => setResult(v as 'PASS' | 'NOT PASS' | '')}
-                    className={`text-xs px-3 py-1 rounded-full ${result === v ? 'bg-blue-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
-                  >{label}</button>
-                ))}
-              </div>
-            </div>
-            <button onClick={() => { setStatus(''); setResult(''); setSearch(''); setShowFilter(false) }}
-              className="text-xs text-red-500 hover:text-red-700"
-            >Reset Filter</button>
-          </div>
-        )}
-
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
-          </div>
-        ) : !data || data.length === 0 ? (
-          <div className="text-center py-12">
-            <Archive className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
-            <p className="text-sm text-slate-400">Tidak ada data.</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {data.map(item => (
-              <button
-                key={item.id}
-                onClick={() => setSelectedId(item.id)}
-                className="w-full text-left bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-mono text-slate-400 dark:text-slate-500">{item.qcid ?? '—'}</p>
-                    <p className="font-medium text-slate-900 dark:text-slate-100 truncate">{item.title}</p>
-                    {item.season && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400">S{item.season} E{item.episode}</p>
-                    )}
-                  </div>
-                  <div className="shrink-0 flex flex-col items-end gap-1">
-                    <StatusBadge status={item.status} />
-                    {item.qc_result && (
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                        item.qc_result === 'PASS' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                        : item.qc_result === 'FAIL' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                        : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                      }`}>{item.qc_result}</span>
-                    )}
-                  </div>
-                </div>
-                {item.pic_editor_name && (
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{item.pic_editor_name}</p>
-                )}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <BottomNav />
-
-      {selectedId !== null && (
-        <QCDetailPanel
-          id={selectedId}
-          onClose={() => setSelectedId(null)}
-          onListRefresh={onListRefresh}
-        />
-      )}
-    </div>
-  )
-}
+ÝX[JHO
+]ÛÙ^O^ÝHÛÛXÚÏ^Ê
+HOÙ]\Ý[
+\È	ÔTÔÉÈ	ÓÕTÔÉÈ	ÉÊ_BÛ\ÜÓ[YO^Ø^^ÈLÈKLHÝ[YY[	Ü\Ý[OOHÈ	ØËXYKML^]Ú]IÈ	ØË\Û]KLL\ÎË\Û]KMÌ^\Û]KM\Î^\Û]KLÌ	ßXBÛX[OØ]Û
+J_BÙ]Ù]]ÛÛÛXÚÏ^Ê
+HOÈÙ]Ý]\Ê	ÉÊNÈÙ]\Ý[
+	ÉÊNÈÙ]ÙX\Ú
+	ÉÊNÈÙ]ÚÝÑ[\[ÙJH_BÛ\ÜÓ[YOH^^È^\YMLÝ\^\YMÌ\Ù][\Ø]ÛÙ]
+_BÚ\ÓØY[ÈÈ
+]Û\ÜÓ[YOH^][\ËXÙ[\\ÝYKXÙ[\KLLØY\Û\ÜÓ[YOHËMM[[X]K\Ü[^XYKMLÏÙ]
+HY]H]K[ÝOOHÈ
+]Û\ÜÓ[YOH^XÙ[\KLL\Ú]HÛ\ÜÓ[YOHËLLLL^X]]È^\Û]KLÌ\Î^\Û]KMXLÏÛ\ÜÓ[YOH^\ÛH^\Û]KMYZÈYH]KÜÙ]
+H
+]Û\ÜÓ[YOHÜXÙK^KLÙ]KX\
+][HO
+]ÛÙ^O^Ú][KYBÛÛXÚÏ^Ê
+HOÙ]Ù[XÝYY
+][KY
+_BÛ\ÜÓ[YOHËY[^[YË]Ú]H\ÎË\Û]KNÜ\Ü\\Û]KL\ÎÜ\\Û]KMÌÝ[Y^MKLÈÝ\Ü\XYKM\ÎÝ\Ü\XYKML[Ú][ÛXÛÛÜÈ]Û\ÜÓ[YOH^][\Ë\Ý\\ÝYKX]ÙY[Ø\L]Û\ÜÓ[YOHZ[]ËL^LHÛ\ÜÓ[YOH^^ÈÛ[[ÛÈ^\Û]KM\Î^\Û]KMLÚ][KXÚYÏÈ	ø %	ßOÜÛ\ÜÓ[YOHÛ[YY][H^\Û]KNL\Î^\Û]KLL[Ø]HÚ][K]_OÜÚ][KÙX\ÛÛ	
+Û\ÜÓ[YOH^^È^\Û]KML\Î^\Û]KMÞÚ][KÙX\ÛÛH^Ú][K\\ÛÙ_OÜ
+_BÙ]]Û\ÜÓ[YOHÚ[ËL^^XÛÛ][\ËY[Ø\LHÝ]\ÐYÙHÝ]\Ï^Ú][KÝ]\ßHÏÚ][KX×Ü\Ý[	
+Ü[Û\ÜÓ[YO^Ø^^ÈÛ\Ù[ZXÛLKLHÝ[YY[	Â][KX×Ü\Ý[OOH	ÔTÔÉÈÈ	ØËYÜY[LL^YÜY[MÌ\ÎËYÜY[NLÌÌ\Î^YÜY[M	Â][KX×Ü\Ý[OOH	ÑRS	ÈÈ	ØË\YLL^\YMÌ\ÎË\YNLÌÌ\Î^\YM	Â	ØË^Y[ÝËLL^^Y[ÝËMÌ\ÎË^Y[ÝËNLÌÌ\Î^^Y[ÝËM	ÂXOÚ][KX×Ü\Ý[OÜÜ[
+_BÙ]Ù]Ú][KX×ÙY]ÜÛ[YH	
+Û\ÜÓ[YOH^^È^\Û]KM\Î^\Û]KML]LHÚ][KX×ÙY]ÜÛ[Y_OÜ
+_BØ]Û
+J_BÙ]
+_BÙ]ÝÛS]ÏÜÙ[XÝYYOOH[	
+PÑ]Z[[[Y^ÜÙ[XÝYYBÛÛÜÙO^Ê
+HOÙ]Ù[XÝYY
