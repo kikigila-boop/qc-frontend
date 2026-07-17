@@ -263,7 +263,7 @@ function QCDetailPanel({ id, onClose, onListRefresh }: {
         <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="text-xs font-mono text-slate-400 dark:text-slate-500">{item?.qcid ?? 'â'}</p>
-            <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{item?.title ?? 'â¦'}|/p>
+            <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{item?.title ?? 'â¦'}</p>
             {item?.season && (
               <p className="text-xs text-slate-500 dark:text-slate-400">S{item.season} E{item.episode}</p>
             )}
