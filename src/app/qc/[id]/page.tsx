@@ -6,7 +6,7 @@ import api from '@/lib/api'
 import { QCContentDetail, STATUS_ORDER, StatusEnum } from '@/types'
 import TopBar from '@/components/layout/TopBar'
 import BottomNav from '@/components/layout/BottomNav'
-import StatusBadge from '@/components/ui/StatusBadge'h
+import StatusBadge from '@/components/ui/StatusBadge'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import { ArrowRight, Loader2, ChevronDown, RefreshCw, X, AlertCircle, ClipboardList, CheckCircle2 } from 'lucide-react'
