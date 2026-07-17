@@ -6,7 +6,7 @@ import api from '@/lib/api'
 import { QCContentDetail, STATUS_ORDER, StatusEnum } from '@/types'
 import TopBar from '@/components/layout/TopBar'
 import BottomNav from '@/components/layout/BottomNav'
-import StatusBadge from '@/components/ui/StatusBadge'
+import StatusBadge from '@/components/ui/StatusBadge'h
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import { ArrowRight, Loader2, ChevronDown, RefreshCw, X, AlertCircle, ClipboardList, CheckCircle2 } from 'lucide-react'
@@ -147,7 +147,7 @@ export default function QCDetailPage() {
     setSubmittingQC(true)
     try {
       const itemsPayload = Object.entries(qcItems).map(([eid, st]) => ({ error_type_id: Number(eid), status: st }))
-      await api.post('/qc-results/', {
+      await api.post('/qc-results', {
         library_id: (item as any)?.library_id || null,
         qc_content_id: Number(id),
         intimate_scene: autoPass ? 'pass' : intimateScene,
@@ -841,7 +841,7 @@ export default function QCDetailPage() {
                           <div key={et.id} className="flex items-center gap-3 px-4 py-2.5">
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-medium text-slate-800 dark:text-slate-200">{et.error_name}</p>
-                              <p className="text-[10px] text-slate-400 mt-0.5">{et.short_description}</p>
+                              <p className="text-[10px] text-slate-400 mt-0.5">{et.description}</p>
                             </div>
                             <div className="flex gap-1 shrink-0">
                               {(['pass', 'fail'] as const).map(v => (
