@@ -6,7 +6,7 @@ import { QCContent, StatusEnum } from '@/types'
 import TopBar from '@/components/layout/TopBar'
 import BottomNav from '@/components/layout/BottomNav'
 import StatusBadge from '@/components/ui/StatusBadge'
-import { Search, Filter, Loader2, Download, X, AlertTriangle, Archive, ChevronDown, ChevronUp, ClipboardList } from 'lucide-react'
+import { Search, Filter, Loader2, Download, X, AlertTriangle, Archive, ChevronDown, ChevronUp } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 const fetcher = (url: string) => api.get(url).then(r => r.data)
@@ -20,7 +20,7 @@ const STATUSES: StatusEnum[] = [
   'Ingesting', 'Done Ingest', 'Need Revised', 'Material Revised', 'Revised',
 ]
 
-// -- ReviseModal ---------------------------------------------------------------
+// ââ ReviseModal âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function ReviseModal({
   onClose, onSubmit, loading, mode,
 }: {
@@ -60,7 +60,7 @@ function ReviseModal({
   )
 }
 
-// -- InfoRow helper ------------------------------------------------------------
+// ââ InfoRow helper ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-2">
@@ -70,266 +70,61 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-// -- QCFormPanel (popup form at z-50) -----------------------------------------
-function QCFormPanel({ item, onClose, onSubmitted }: {
-  item: any
-  onClose: () => void
-  onSubmitted: () => void
-}) {
-  const [qcErrorTypes, setQcErrorTypes] = useState<Record<string, any[]>>({})
-  const [qcItems, setQcItems] = useState<Record<number, 'pass' | 'fail'>>({})
-  const [intimateScene, setIntimateScene] = useState<'pass' | 'fail'>('pass')
-  const [goreScene, setGoreScene] = useState<'pass' | 'fail'>('pass')
-  const [ratingAge, setRatingAge] = useState('')
-  const [finalResult, setFinalResult] = useState<'PASS' | 'CONDITIONAL' | 'FAIL'>('PASS')
-  const [conditionNote, setConditionNote] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    setLoading(true)
-    api.get('/qc-error-types').then(r => {
-      setQcErrorTypes(r.data)
-      const init: Record<number, 'pass' | 'fail'> = {}
-      Object.values(r.data as Record<string, any[]>).flat().forEach((et: any) => { init[et.id] = 'pass' })
-      setQcItems(init)
-    }).finally(() => setLoading(false))
-  }, [])
-
-  const submitQCResult = async () => {
-    setSubmitting(true)
-    try {
-      const items = Object.entries(qcItems).map(([etId, status]) => ({
-        error_type_id: Number(etId), status,
-      }))
-      await api.post('/qc-results/', {
-        qc_content_id: item?.id,
-        library_id: item?.library_id,
-        intimate_scene: intimateScene,
-        gore_scene: goreScene,
-        rating_age: ratingAge || null,
-        final_result: finalResult,
-        condition_note: conditionNote || null,
-        auto_pass: false,
-        items,
-      })
-      onSubmitted()
-      onClose()
-    } catch (err: any) { alert(err?.response?.data?.detail || 'Gagal submit QC.') }
-    finally { setSubmitting(false) }
-  }
-
-  const autoPass = async () => {
-    if (!window.confirm('Auto Pass: semua item akan ditandai PASS. Lanjut?')) return
-    setSubmitting(true)
-    try {
-      await api.post('/qc-results/', {
-        qc_content_id: item?.id,
-        library_id: item?.library_id,
-        intimate_scene: 'pass',
-        gore_scene: 'pass',
-        rating_age: ratingAge || null,
-        final_result: 'PASS',
-        condition_note: null,
-        auto_pass: true,
-        items: [],
-      })
-      onSubmitted()
-      onClose()
-    } catch (err: any) { alert(err?.response?.data?.detail || 'Gagal auto pass.') }
-    finally { setSubmitting(false) }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/30 dark:bg-black/50" />
-      <div
-        className="relative w-full max-w-lg bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Header - shrink-0 so it never shrinks */}
-        <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex items-center justify-between gap-2 shrink-0">
-          <div>
-            <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">{item?.qcid ?? '-'}</p>
-            <p className="font-semibold text-slate-900 dark:text-slate-100">Form QC Intake</p>
-          </div>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-            <X className="w-5 h-5 text-slate-500" />
-          </button>
-        </div>
-
-        {/* Scrollable body - flex-1 takes remaining space, overflow-y-auto enables scroll */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {loading ? (
-            <div className="flex items-center justify-center py-16 gap-2 text-slate-500">
-              <Loader2 className="w-5 h-5 animate-spin" /> Memuat error types...
-            </div>
-          ) : (
-            <>
-              {/* Error type items */}
-              {Object.entries(qcErrorTypes).map(([category, errors]) => (
-                <div key={category} className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-                  <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{category}</p>
-                  </div>
-                  <div className="px-4 py-3 space-y-2.5">
-                    {errors.map((et: any) => (
-                      <div key={et.id} className="flex items-center justify-between gap-2">
-                        <span className="text-sm text-slate-700 dark:text-slate-300 flex-1">{et.error_name}</span>
-                        <div className="flex gap-1 shrink-0">
-                          <button
-                            onClick={() => setQcItems(p => ({ ...p, [et.id]: 'pass' }))}
-                            className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
-                              qcItems[et.id] === 'pass' ? 'bg-green-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
-                            }`}
-                          >Pass</button>
-                          <button
-                            onClick={() => setQcItems(p => ({ ...p, [et.id]: 'fail' }))}
-                            className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
-                              qcItems[et.id] === 'fail' ? 'bg-red-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
-                            }`}
-                          >Fail</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-
-              {/* Scene & Rating */}
-              <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Scene & Rating</p>
-                </div>
-                <div className="px-4 py-3 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm text-slate-700 dark:text-slate-300">Intimate Scene</span>
-                    <div className="flex gap-1">
-                      <button onClick={() => setIntimateScene('pass')}
-                        className={`text-xs px-2.5 py-1 rounded-full font-medium ${intimateScene === 'pass' ? 'bg-green-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}
-                      >Pass</button>
-                      <button onClick={() => setIntimateScene('fail')}
-                        className={`text-xs px-2.5 py-1 rounded-full font-medium ${intimateScene === 'fail' ? 'bg-red-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}
-                      >Fail</button>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm text-slate-700 dark:text-slate-300">Gore Scene</span>
-                    <div className="flex gap-1">
-                      <button onClick={() => setGoreScene('pass')}
-                        className={`text-xs px-2.5 py-1 rounded-full font-medium ${goreScene === 'pass' ? 'bg-green-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}
-                      >Pass</button>
-                      <button onClick={() => setGoreScene('fail')}
-                        className={`text-xs px-2.5 py-1 rounded-full font-medium ${goreScene === 'fail' ? 'bg-red-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}
-                      >Fail</button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">Rating Usia</label>
-                    <select
-                      value={ratingAge}
-                      onChange={e => setRatingAge(e.target.value)}
-                      className="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">- Pilih Rating -</option>
-                      {['SU', 'P', '13+', '17+', '21+', 'D'].map(r => (
-                        <option key={r} value={r}>{r}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Final Result */}
-              <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Final Result</p>
-                </div>
-                <div className="px-4 py-3 space-y-3">
-                  <div className="flex gap-2">
-                    {(['PASS', 'CONDITIONAL', 'FAIL'] as const).map(r => (
-                      <button
-                        key={r}
-                        onClick={() => setFinalResult(r)}
-                        className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors ${
-                          finalResult === r
-                            ? r === 'PASS' ? 'bg-green-500 text-white' : r === 'FAIL' ? 'bg-red-500 text-white' : 'bg-yellow-500 text-white'
-                            : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-                        }`}
-                      >{r}</button>
-                    ))}
-                  </div>
-                  {finalResult === 'CONDITIONAL' && (
-                    <textarea
-                      value={conditionNote}
-                      onChange={e => setConditionNote(e.target.value)}
-                      placeholder="Catatan kondisi..."
-                      className="w-full border border-slate-200 dark:border-slate-600 rounded-lg p-3 text-sm h-20 resize-none bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Sticky footer - shrink-0 so it always stays visible */}
-        {!loading && (
-          <div className="shrink-0 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 flex gap-2">
-            <button
-              onClick={autoPass}
-              disabled={submitting}
-              className="px-4 py-2.5 rounded-xl border border-green-500 text-green-600 dark:text-green-400 text-sm font-medium disabled:opacity-50"
-            >Auto Pass</button>
-            <button
-              onClick={submitQCResult}
-              disabled={submitting}
-              className="flex-1 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {submitting ? 'Submitting...' : 'Submit QC'}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// -- QCDetailPanel (side panel) ------------------------------------------------
+// ââ QCDetailPanel (side panel) ââââââââââââââââââââââââââââââââââââââââââââââââ
 function QCDetailPanel({ id, onClose, onListRefresh }: {
   id: number; onClose: () => void; onListRefresh: () => void
 }) {
   const { user } = useAuth()
   const role = user?.role ?? ''
   const { data: item, isLoading, mutate } = useSWR<any>(`/qc/${id}`, fetcher)
-  const [advancing, setAdvancing] = useState(false)
-  const [showHistory, setShowHistory] = useState(false)
-  const [showReviseModal, setShowReviseModal] = useState(false)
-  const [showQCForm, setShowQCForm] = useState(false)
-  const [revising, setRevising] = useState(false)
-  const [editingNaming, setEditingNaming] = useState(false)
-  const [namingVal, setNamingVal] = useState('')
-  const [savingNaming, setSavingNaming] = useState(false)
-  const [subsExpanded, setSubsExpanded] = useState(false)
-  const [subsData, setSubsData] = useState<any[]>([])
-  const [loadingSubs, setLoadingSubs] = useState(false)
-  const [editingSubsPic, setEditingSubsPic] = useState<number | null>(null)
-  const [picVal, setPicVal] = useState('')
-  const [withSubsEditing, setWithSubsEditing] = useState(false)
-  const [dubbExpanded, setDubbExpanded] = useState(false)
-  const [dubbData, setDubbData] = useState<any[]>([])
-  const [loadingDubb, setLoadingDubb] = useState(false)
-  const [editingDubbPic, setEditingDubbPic] = useState<number | null>(null)
-  const [dubbPicVal, setDubbPicVal] = useState('')
-  const [withDubbEditing, setWithDubbEditing] = useState(false)
+  const [advancing, setAdvancing]               = useState(false)
+  const [showHistory, setShowHistory]           = useState(false)
+  const [showReviseModal, setShowReviseModal]   = useState(false)
+  const [revising, setRevising]                 = useState(false)
+  const [editingNaming, setEditingNaming]       = useState(false)
+  const [namingVal, setNamingVal]               = useState('')
+  const [savingNaming, setSavingNaming]         = useState(false)
+  const [subsExpanded, setSubsExpanded]         = useState(false)
+  const [subsData, setSubsData]                 = useState<any[]>([])
+  const [loadingSubs, setLoadingSubs]           = useState(false)
+  const [editingSubsPic, setEditingSubsPic]     = useState<number | null>(null)
+  const [picVal, setPicVal]                     = useState('')
+  const [withSubsEditing, setWithSubsEditing]   = useState(false)
+  const [dubbExpanded, setDubbExpanded]         = useState(false)
+  const [dubbData, setDubbData]                 = useState<any[]>([])
+  const [loadingDubb, setLoadingDubb]           = useState(false)
+  const [editingDubbPic, setEditingDubbPic]     = useState<number | null>(null)
+  const [dubbPicVal, setDubbPicVal]             = useState('')
+  const [withDubbEditing, setWithDubbEditing]   = useState(false)
+  const [qcErrorTypes, setQcErrorTypes]         = useState<Record<string, any[]>>({})
+  const [qcItems, setQcItems]                   = useState<Record<number, 'pass' | 'fail'>>({})
+  const [intimateScene, setIntimateScene]       = useState<'pass' | 'fail'>('pass')
+  const [goreScene, setGoreScene]               = useState<'pass' | 'fail'>('pass')
+  const [ratingAge, setRatingAge]               = useState('')
+  const [finalResult, setFinalResult]           = useState<'PASS' | 'CONDITIONAL' | 'FAIL'>('PASS')
+  const [conditionNote, setConditionNote]       = useState('')
+  const [submittingQC, setSubmittingQC]         = useState(false)
+  const [loadingErrorTypes, setLoadingErrorTypes] = useState(false)
 
   const SC: Record<string, string> = {
-    pending: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
+    pending:     'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
     in_progress: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-    done: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    done:        'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   }
   const SL: Record<string, string> = { pending: 'Pending', in_progress: 'In Progress', done: 'Done' }
+
+  useEffect(() => {
+    if (item?.status === 'QC Process' && (role === 'editor' || role === 'chef_editor' || role === 'admin')) {
+      setLoadingErrorTypes(true)
+      api.get('/qc-error-types').then(r => {
+        setQcErrorTypes(r.data)
+        const init: Record<number, 'pass' | 'fail'> = {}
+        Object.values(r.data as Record<string, any[]>).flat().forEach((et: any) => { init[et.id] = 'pass' })
+        setQcItems(init)
+      }).finally(() => setLoadingErrorTypes(false))
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item?.status])
 
   const loadSubtasks = async () => {
     setLoadingSubs(true)
@@ -370,10 +165,10 @@ function QCDetailPanel({ id, onClose, onListRefresh }: {
     if (!target || !item) return
     if (item.with_subs && subsData.length > 0) {
       const notDone = subsData.filter((t: any) => t.status !== 'done')
-      if (notDone.length > 0 && !window.confirm(`! ${notDone.length} bahasa subtitle belum selesai.\n\nLanjut?`)) return
+      if (notDone.length > 0 && !window.confirm(`â ï¸ ${notDone.length} bahasa subtitle belum selesai.\n\nLanjut?`)) return
     }
     if (target === 'Ready To Ingest' && !item.naming_asset) {
-      if (!window.confirm('! Naming Asset belum diisi.\n\nKlik OK untuk lanjut tanpa Naming Asset.')) return
+      if (!window.confirm('â ï¸ Naming Asset belum diisi.\n\nKlik OK untuk lanjut tanpa Naming Asset.')) return
     }
     setAdvancing(true)
     try {
@@ -384,7 +179,7 @@ function QCDetailPanel({ id, onClose, onListRefresh }: {
   }
   const resubmit = async () => {
     if (item && !item.naming_asset) {
-      if (!window.confirm('! Naming Asset belum diisi.\n\nKlik OK untuk lanjut.')) return
+      if (!window.confirm('â ï¸ Naming Asset belum diisi.\n\nKlik OK untuk lanjut.')) return
     }
     setAdvancing(true)
     try {
@@ -413,6 +208,46 @@ function QCDetailPanel({ id, onClose, onListRefresh }: {
     } catch (err: any) { alert(err?.response?.data?.detail || 'Gagal revise.') }
     finally { setRevising(false) }
   }
+  const submitQCResult = async () => {
+    setSubmittingQC(true)
+    try {
+      const items = Object.entries(qcItems).map(([etId, status]) => ({
+        error_type_id: Number(etId), status,
+      }))
+      await api.post('/qc-results/', {
+        qc_content_id: item?.id,
+        library_id: item?.library_id,
+        intimate_scene: intimateScene,
+        gore_scene: goreScene,
+        rating_age: ratingAge || null,
+        final_result: finalResult,
+        condition_note: conditionNote || null,
+        auto_pass: false,
+        items,
+      })
+      mutate(); onListRefresh()
+    } catch (err: any) { alert(err?.response?.data?.detail || 'Gagal submit QC.') }
+    finally { setSubmittingQC(false) }
+  }
+  const autoPass = async () => {
+    if (!window.confirm('Auto Pass: semua item akan ditandai PASS. Lanjut?')) return
+    setSubmittingQC(true)
+    try {
+      await api.post('/qc-results/', {
+        qc_content_id: item?.id,
+        library_id: item?.library_id,
+        intimate_scene: 'pass',
+        gore_scene: 'pass',
+        rating_age: ratingAge || null,
+        final_result: 'PASS',
+        condition_note: null,
+        auto_pass: true,
+        items: [],
+      })
+      mutate(); onListRefresh()
+    } catch (err: any) { alert(err?.response?.data?.detail || 'Gagal auto pass.') }
+    finally { setSubmittingQC(false) }
+  }
 
   const isEditor = role === 'editor' || role === 'chef_editor' || role === 'admin'
   const isSupervisor = role === 'admin' || role === 'chef_editor'
@@ -427,8 +262,8 @@ function QCDetailPanel({ id, onClose, onListRefresh }: {
         {/* sticky header */}
         <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-xs font-mono text-slate-400 dark:text-slate-500">{item?.qcid ?? '-'}</p>
-            <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{item?.title ?? '...'}</p>
+            <p className="text-xs font-mono text-slate-400 dark:text-slate-500">{item?.qcid ?? 'â'}</p>
+            <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{item?.title ?? 'â¦'}|/p>
             {item?.season && (
               <p className="text-xs text-slate-500 dark:text-slate-400">S{item.season} E{item.episode}</p>
             )}
@@ -472,11 +307,11 @@ function QCDetailPanel({ id, onClose, onListRefresh }: {
 
             {/* Info card */}
             <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4 space-y-2">
-              <InfoRow label="Library ID" value={item.library_id ?? '-'} />
-              <InfoRow label="Platform" value={item.platform ?? '-'} />
-              <InfoRow label="Tipe" value={item.content_type ?? '-'} />
-              <InfoRow label="Editor" value={item.pic_editor_name ?? '-'} />
-              <InfoRow label="Tanggal" value={item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID') : '-'} />
+              <InfoRow label="Library ID" value={item.library_id ?? 'â'} />
+              <InfoRow label="Platform" value={item.platform ?? 'â'} />
+              <InfoRow label="Tipe" value={item.content_type ?? 'â'} />
+              <InfoRow label="Editor" value={item.pic_editor_name ?? 'â'} />
+              <InfoRow label="Tanggal" value={item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID') : 'â'} />
               <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200 dark:border-slate-700">
                 <span className="text-slate-500 dark:text-slate-400 text-sm">Naming Asset</span>
                 {editingNaming ? (
@@ -490,13 +325,13 @@ function QCDetailPanel({ id, onClose, onListRefresh }: {
                     />
                     <button onClick={saveNaming} disabled={savingNaming}
                       className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded disabled:opacity-50"
-                    >{savingNaming ? '...' : 'Save'}</button>
-                    <button onClick={() => setEditingNaming(false)} className="text-xs text-slate-500 px-1">x</button>
+                    >{savingNaming ? 'â¦' : 'Save'}</button>
+                    <button onClick={() => setEditingNaming(false)} className="text-xs text-slate-500 px-1">â</button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-slate-900 dark:text-slate-100 text-sm text-right">
-                      {item.naming_asset ?? '-'}
+                      {item.naming_asset ?? 'â'}
                     </span>
                     {isEditor && (
                       <button
@@ -508,17 +343,6 @@ function QCDetailPanel({ id, onClose, onListRefresh }: {
                 )}
               </div>
             </div>
-
-            {/* QC Form button - only in QC Process */}
-            {item.status === 'QC Process' && isEditor && (
-              <button
-                onClick={() => setShowQCForm(true)}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors"
-              >
-                <ClipboardList className="w-4 h-4" />
-                Buka Form QC Intake
-              </button>
-            )}
 
             {/* Subtitle section */}
             {(item.with_subs || withSubsEditing || isSupervisor) && (
@@ -578,8 +402,8 @@ function QCDetailPanel({ id, onClose, onListRefresh }: {
                                       className="border rounded px-1 py-0.5 w-24 text-xs dark:bg-slate-700 dark:border-slate-600"
                                       placeholder="Nama PIC" />
                                     <button onClick={() => { updateSubTask(t.id, { pic: picVal }); setEditingSubsPic(null) }}
-                                      className="text-blue-500">OK</button>
-                                    <button onClick={() => setEditingSubsPic(null)} className="text-slate-400">x</button>
+                                      className="text-blue-500">â</button>
+                                    <button onClick={() => setEditingSubsPic(null)} className="text-slate-400">â</button>
                                   </>
                                 ) : (
                                   <button onClick={() => { setEditingSubsPic(t.id); setPicVal(t.pic ?? '') }}
@@ -661,8 +485,8 @@ function QCDetailPanel({ id, onClose, onListRefresh }: {
                                       className="border rounded px-1 py-0.5 w-24 text-xs dark:bg-slate-700 dark:border-slate-600"
                                       placeholder="Nama PIC" />
                                     <button onClick={() => { updateDubbTask(t.id, { pic: dubbPicVal }); setEditingDubbPic(null) }}
-                                      className="text-purple-500">OK</button>
-                                    <button onClick={() => setEditingDubbPic(null)} className="text-slate-400">x</button>
+                                      className="text-purple-500">â</button>
+                                    <button onClick={() => setEditingDubbPic(null)} className="text-slate-400">â</button>
                                   </>
                                 ) : (
                                   <button onClick={() => { setEditingDubbPic(t.id); setDubbPicVal(t.pic ?? '') }}
@@ -686,6 +510,124 @@ function QCDetailPanel({ id, onClose, onListRefresh }: {
               </div>
             )}
 
+            {/* QC Form */}
+            {item.status === 'QC Process' && isEditor && (
+              <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Form QC</p>
+                </div>
+                <div className="p-4 space-y-4">
+                  {loadingErrorTypes ? (
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                      <Loader2 className="w-4 h-4 animate-spin" /> Memuat error types...
+                    </div>
+                  ) : (
+                    <>
+                      {Object.entries(qcErrorTypes).map(([category, errors]) => (
+                        <div key={category}>
+                          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">{category}</p>
+                          <div className="space-y-2">
+                            {errors.map((et: any) => (
+                              <div key={et.id} className="flex items-center justify-between gap-2">
+                                <span className="text-sm text-slate-700 dark:text-slate-300 flex-1">{et.error_name}</span>
+                                <div className="flex gap-1">
+                                  <button
+                                    onClick={() => setQcItems(p => ({ ...p, [et.id]: 'pass' }))}
+                                    className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
+                                      qcItems[et.id] === 'pass' ? 'bg-green-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                                    }`}
+                                  >Pass</button>
+                                  <button
+                                    onClick={() => setQcItems(p => ({ ...p, [et.id]: 'fail' }))}
+                                    className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
+                                      qcItems[et.id] === 'fail' ? 'bg-red-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                                    }`}
+                                  >Fail</button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                      <div className="border-t border-slate-200 dark:border-slate-700 pt-3 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm text-slate-700 dark:text-slate-300">Intimate Scene</span>
+                          <div className="flex gap-1">
+                            <button onClick={() => setIntimateScene('pass')}
+                              className={`text-xs px-2.5 py-1 rounded-full font-medium ${intimateScene === 'pass' ? 'bg-green-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}
+                            >Pass</button>
+                            <button onClick={() => setIntimateScene('fail')}
+                              className={`text-xs px-2.5 py-1 rounded-full font-medium ${intimateScene === 'fail' ? 'bg-red-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}
+                            >Fail</button>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm text-slate-700 dark:text-slate-300">Gore Scene</span>
+                          <div className="flex gap-1">
+                            <button onClick={() => setGoreScene('pass')}
+                              className={`text-xs px-2.5 py-1 rounded-full font-medium ${goreScene === 'pass' ? 'bg-green-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}
+                            >Pass</button>
+                            <button onClick={() => setGoreScene('fail')}
+                              className={`text-xs px-2.5 py-1 rounded-full font-medium ${goreScene === 'fail' ? 'bg-red-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}
+                            >Fail</button>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">Rating Usia</label>
+                        <select
+                          value={ratingAge}
+                          onChange={e => setRatingAge(e.target.value)}
+                          className="w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">â Pilih Rating â</option>
+                          {['SU', 'P', '13+', '17+', '21+', 'D'].map(r => (
+                            <option key={r} value={r}>{r}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">Final Result</label>
+                        <div className="flex gap-2">
+                          {(['PASS', 'CONDITIONAL', 'FAIL'] as const).map(r => (
+                            <button
+                              key={r}
+                              onClick={() => setFinalResult(r)}
+                              className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                                finalResult === r
+                                  ? r === 'PASS' ? 'bg-green-500 text-white' : r === 'FAIL' ? 'bg-red-500 text-white' : 'bg-yellow-500 text-white'
+                                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                              }`}
+                            >{r}</button>
+                          ))}
+                        </div>
+                        {finalResult === 'CONDITIONAL' && (
+                          <textarea
+                            value={conditionNote}
+                            onChange={e => setConditionNote(e.target.value)}
+                            placeholder="Catatan kondisi..."
+                            className="mt-2 w-full border border-slate-200 dark:border-slate-600 rounded-lg p-3 text-sm h-20 resize-none bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        )}
+                      </div>
+                      <div className="flex gap-2 pt-1">
+                        <button
+                          onClick={autoPass}
+                          disabled={submittingQC}
+                          className="px-4 py-2 rounded-lg border border-green-500 text-green-600 dark:text-green-400 text-sm font-medium disabled:opacity-50"
+                        >Auto Pass</button>
+                        <button
+                          onClick={submitQCResult}
+                          disabled={submittingQC}
+                          className="flex-1 py-2 rounded-lg bg-blue-500 text-white text-sm font-semibold disabled:opacity-50"
+                        >{submittingQC ? 'Submitting...' : 'Submit QC'}</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Action buttons */}
             <div className="space-y-2">
               {item && STATUS_ORDER.indexOf(item.status as StatusEnum) >= 0 &&
@@ -698,7 +640,7 @@ function QCDetailPanel({ id, onClose, onListRefresh }: {
                   className="w-full py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {advancing && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {advancing ? 'Memproses...' : `Lanjut -> ${STATUS_ORDER[STATUS_ORDER.indexOf(item.status as StatusEnum) + 1] ?? ''}`}
+                  {advancing ? 'Memproses...' : `Lanjut â ${STATUS_ORDER[STATUS_ORDER.indexOf(item.status as StatusEnum) + 1] ?? ''}`}
                 </button>
               )}
               {item.status === 'Need Revised' && isSupervisor && (
@@ -738,7 +680,7 @@ function QCDetailPanel({ id, onClose, onListRefresh }: {
                           <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
                           <div>
                             <p className="font-medium text-slate-700 dark:text-slate-300">{h.status}</p>
-                            <p className="text-slate-400">{h.changed_by ?? '-'} - {h.changed_at ? new Date(h.changed_at).toLocaleString('id-ID') : '-'}</p>
+                            <p className="text-slate-400">{h.changed_by ?? 'â'} Â· {h.changed_at ? new Date(h.changed_at).toLocaleString('id-ID') : 'â'}</p>
                           </div>
                         </div>
                       ))}
@@ -759,23 +701,15 @@ function QCDetailPanel({ id, onClose, onListRefresh }: {
           mode={['QC Process', 'QC Done'].includes(item?.status ?? '') ? 'return' : 'revise'}
         />
       )}
-
-      {showQCForm && item && (
-        <QCFormPanel
-          item={item}
-          onClose={() => setShowQCForm(false)}
-          onSubmitted={() => { mutate(); onListRefresh() }}
-        />
-      )}
     </div>
   )
 }
 
-// -- Main QCListPage -----------------------------------------------------------
+// ââ Main QCListPage âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 export default function QCListPage() {
-  const [search, setSearch] = useState('')
-  const [status, setStatus] = useState<StatusEnum | ''>('')
-  const [result, setResult] = useState<'PASS' | 'NOT PASS' | ''>('')
+  const [search, setSearch]         = useState('')
+  const [status, setStatus]         = useState<StatusEnum | ''>('')
+  const [result, setResult]         = useState<'PASS' | 'NOT PASS' | ''>('')
   const [showFilter, setShowFilter] = useState(false)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const { user } = useAuth()
@@ -851,7 +785,7 @@ export default function QCListPage() {
             <div>
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">QC Result</p>
               <div className="flex gap-1.5">
-                {([['', 'Semua'], ['PASS', 'PASS'], ['NOT PASS', 'NOT PASS']] as const).map(([v, label]) => (
+                {[['', 'Semua'], ['PASS', 'PASS'], ['NOT PASS', 'NOT PASS']].map(([v, label]) => (
                   <button key={v} onClick={() => setResult(v as 'PASS' | 'NOT PASS' | '')}
                     className={`text-xs px-3 py-1 rounded-full ${result === v ? 'bg-blue-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
                   >{label}</button>
@@ -883,7 +817,7 @@ export default function QCListPage() {
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-mono text-slate-400 dark:text-slate-500">{item.qcid ?? '-'}</p>
+                    <p className="text-xs font-mono text-slate-400 dark:text-slate-500">{item.qcid ?? 'â'}</p>
                     <p className="font-medium text-slate-900 dark:text-slate-100 truncate">{item.title}</p>
                     {item.season && (
                       <p className="text-xs text-slate-500 dark:text-slate-400">S{item.season} E{item.episode}</p>
@@ -894,8 +828,8 @@ export default function QCListPage() {
                     {item.qc_result && (
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                         item.qc_result === 'PASS' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                          : item.qc_result === 'FAIL' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                          : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                        : item.qc_result === 'FAIL' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                        : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
                       }`}>{item.qc_result}</span>
                     )}
                   </div>
@@ -921,4 +855,3 @@ export default function QCListPage() {
     </div>
   )
 }
-        
