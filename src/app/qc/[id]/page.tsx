@@ -9,7 +9,7 @@ import BottomNav from '@/components/layout/BottomNav'
 import StatusBadge from '@/components/ui/StatusBadge'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
-import { ArrowRight, Loader2, ChevronDown, RefreshCw, X, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { ArrowRight, Loader2, ChevronDown, RefreshCw, X, AlertCircle, ClipboardList, CheckCircle2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 const fetcher = (url: string) => api.get(url).then(r => r.data)
@@ -61,7 +61,6 @@ export default function QCDetailPage() {
   const [advancing, setAdvancing] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const [showReviseModal, setShowReviseModal] = useState(false)
-  const [showQCPanel, setShowQCPanel] = useState(false)
   const [revising, setRevising] = useState(false)
   const [editingNaming, setEditingNaming] = useState(false)
   const [namingVal, setNamingVal] = useState('')
@@ -78,7 +77,8 @@ export default function QCDetailPage() {
   const [editingDubbPic, setEditingDubbPic] = useState<number | null>(null)
   const [dubbPicVal, setDubbPicVal] = useState('')
   const [withDubbEditing, setWithDubbEditing] = useState(false)
-  // QC Form state
+  // QC Panel + Form state
+  const [showQCPanel, setShowQCPanel] = useState(false)
   const [qcErrorTypes, setQcErrorTypes] = useState<Record<string, any[]>>({})
   const [qcItems, setQcItems] = useState<Record<number, 'pass' | 'fail'>>({})
   const [intimateScene, setIntimateScene] = useState<'pass' | 'fail'>('pass')
@@ -129,6 +129,7 @@ export default function QCDetailPage() {
     setWithDubbEditing(false)
   }
 
+  // Load QC error types when status = QC Process
   useEffect(() => {
     if (item?.status === 'QC Process' && (role === 'editor' || role === 'chef_editor' || role === 'admin')) {
       setLoadingErrorTypes(true)
@@ -141,6 +142,30 @@ export default function QCDetailPage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item?.status])
+
+  const submitQCResult = async (autoPass = false) => {
+    setSubmittingQC(true)
+    try {
+      const itemsPayload = Object.entries(qcItems).map(([eid, st]) => ({ error_type_id: Number(eid), status: st }))
+      await api.post('/qc-results/', {
+        library_id: (item as any)?.library_id || null,
+        qc_content_id: Number(id),
+        intimate_scene: autoPass ? 'pass' : intimateScene,
+        gore_scene: autoPass ? 'pass' : goreScene,
+        rating_age: ratingAge || null,
+        final_result: autoPass ? 'PASS' : finalResult,
+        condition_note: finalResult === 'CONDITIONAL' && !autoPass ? conditionNote : null,
+        auto_pass: autoPass,
+        items: autoPass ? [] : itemsPayload,
+      })
+      mutate(`/qc/${id}`)
+      setShowQCPanel(false)
+    } catch (err: any) {
+      alert(err?.response?.data?.detail || 'Gagal submit QC result.')
+    } finally {
+      setSubmittingQC(false)
+    }
+  }
 
   const STATUS_COLORS: Record<string, string> = {
     pending: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
@@ -226,45 +251,19 @@ export default function QCDetailPage() {
 
   // CMS revise (via cms router, QCID-based) — only from detail page
   const handleRevise = async (notes: string) => {
+    if (!item?.qcid) return
     setRevising(true)
     try {
-      if (item?.qcid) {
-        await api.patch(`/cms/item/${item.qcid}/revised`, {
-          operator_name: user?.name ?? 'CMS',
-          revised_notes: notes,
-        })
-      } else {
-        await api.patch(`/qc/${id}/revise`, { revised_notes: notes })
-      }
+      await api.patch(`/cms/item/${item.qcid}/revised`, {
+        operator_name: user?.name ?? 'CMS',
+        revised_notes: notes,
+      })
       mutate(`/qc/${id}`)
       setShowReviseModal(false)
     } catch (err: any) {
       alert(err?.response?.data?.detail || 'Gagal mengirim revisi.')
     } finally {
       setRevising(false)
-    }
-  }
-
-  const submitQCResult = async (autoPass = false) => {
-    setSubmittingQC(true)
-    try {
-      const itemsPayload = Object.entries(qcItems).map(([eid, st]) => ({ error_type_id: Number(eid), status: st }))
-      await api.post('/qc-results/', {
-        library_id: (item as any)?.library_id || null,
-        qc_content_id: Number(id),
-        intimate_scene: autoPass ? 'pass' : intimateScene,
-        gore_scene: autoPass ? 'pass' : goreScene,
-        rating_age: ratingAge || null,
-        final_result: autoPass ? 'PASS' : finalResult,
-        condition_note: finalResult === 'CONDITIONAL' && !autoPass ? conditionNote : null,
-        auto_pass: autoPass,
-        items: autoPass ? [] : itemsPayload,
-      })
-      mutate(`/qc/${id}`)
-    } catch (err: any) {
-      alert(err?.response?.data?.detail || 'Gagal submit QC result.')
-    } finally {
-      setSubmittingQC(false)
     }
   }
 
@@ -638,18 +637,7 @@ export default function QCDetailPage() {
           )}
         </div>
 
-        {/* Buka QC Intake — side panel */}
-          {item.status === 'QC Process' && (role === 'editor' || role === 'chef_editor' || role === 'admin') && (
-          <button
-            onClick={() => setShowQCPanel(true)}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-600 py-3.5 font-semibold text-white transition hover:bg-brand-700 shadow-sm"
-          >
-            <CheckCircle2 size={18} />
-            Buka Form QC Intake
-          </button>
-          )}
-
-          {/* Action buttons */}
+        {/* Action buttons */}
         <div className="flex flex-col gap-2">
 
           {/* Normal advance */}
@@ -721,6 +709,17 @@ export default function QCDetailPage() {
               Kembalikan ke Editor (Revisi)
             </button>
           )}
+
+          {/* QC Intake Form button */}
+          {item.status === 'QC Process' && (role === 'editor' || role === 'chef_editor' || role === 'admin') && (
+            <button
+              onClick={() => setShowQCPanel(true)}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-300 bg-brand-50 py-3 text-sm font-semibold text-brand-700 transition hover:bg-brand-100 dark:border-brand-700 dark:bg-brand-900/20 dark:text-brand-300"
+            >
+              <ClipboardList size={16} />
+              Buka Form QC Intake
+            </button>
+          )}
         </div>
 
         {/* Activity Log */}
@@ -770,36 +769,26 @@ export default function QCDetailPage() {
       </main>
       <BottomNav />
 
-      {showReviseModal && (
-        <ReviseModal
-          onConfirm={showReturnToMH ? returnToMH : handleRevise}
-          onClose={() => setShowReviseModal(false)}
-          loading={revising}
-        />
-      )}
-
-      {/* ── QC Intake Side Panel ── */}
+      {/* QC Intake Side Panel */}
       {showQCPanel && (
         <div className="fixed inset-0 z-50 flex">
           <div className="flex-1 bg-black/40" onClick={() => setShowQCPanel(false)} />
-          <div className="w-full max-w-sm h-full bg-white dark:bg-slate-900 shadow-2xl flex flex-col overflow-hidden animate-slide-in-right">
+          <div className="w-full max-w-sm bg-white dark:bg-slate-900 flex flex-col shadow-2xl animate-slide-in-right">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
               <div>
                 <p className="text-sm font-semibold text-slate-800 dark:text-white">QC Intake Form</p>
                 <p className="text-xs text-slate-400 mt-0.5">Tandai item yang FAIL — default semua PASS</p>
               </div>
-              <button onClick={() => setShowQCPanel(false)} className="text-slate-400 hover:text-slate-600 p-1">
-                <X size={20} />
-              </button>
-            </div>
-            <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
-              <button onClick={() => submitQCResult(true)} disabled={submittingQC}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
-                {submittingQC ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-                Auto PASS — semua item lolos
-              </button>
+              <button onClick={() => setShowQCPanel(false)} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
             </div>
             <div className="flex-1 overflow-y-auto">
+              <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+                <button onClick={() => submitQCResult(true)} disabled={submittingQC}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
+                  {submittingQC ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                  Auto PASS — semua item lolos
+                </button>
+              </div>
               <div className="px-4 py-3 space-y-3 border-b border-slate-100 dark:border-slate-800">
                 <div>
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Rating Usia</p>
@@ -873,10 +862,18 @@ export default function QCDetailPage() {
                 {submittingQC ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
                 Submit QC Result
               </button>
-              {!ratingAge && <p className="text-center text-xs text-amber-500 mt-1.5">⚠ Pilih Rating Usia dahulu</p>}
+              {!ratingAge && <p className="text-center text-xs text-amber-500 mt-1.5">Pilih Rating Usia dahulu</p>}
             </div>
           </div>
         </div>
+      )}
+
+      {showReviseModal && (
+        <ReviseModal
+          onConfirm={showReturnToMH ? returnToMH : handleRevise}
+          onClose={() => setShowReviseModal(false)}
+          loading={revising}
+        />
       )}
     </div>
   )
