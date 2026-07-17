@@ -61,6 +61,7 @@ export default function QCDetailPage() {
   const [advancing, setAdvancing] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const [showReviseModal, setShowReviseModal] = useState(false)
+  const [showQCPanel, setShowQCPanel] = useState(false)
   const [revising, setRevising] = useState(false)
   const [editingNaming, setEditingNaming] = useState(false)
   const [namingVal, setNamingVal] = useState('')
@@ -637,95 +638,15 @@ export default function QCDetailPage() {
           )}
         </div>
 
-        {/* QC Intake Form */}
+        {/* Buka QC Intake — side panel */}
           {item.status === 'QC Process' && (role === 'editor' || role === 'chef_editor' || role === 'admin') && (
-          <div className="rounded-2xl bg-white shadow-sm dark:bg-slate-900 overflow-hidden">
-            <div className="px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800">
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">QC Intake Form</p>
-              <p className="text-xs text-slate-400 mt-0.5">Tandai item yang FAIL — default semua PASS</p>
-            </div>
-            <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
-              <button onClick={() => submitQCResult(true)} disabled={submittingQC}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
-                {submittingQC ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-                Auto PASS — semua item lolos
-              </button>
-            </div>
-            <div className="px-4 py-3 space-y-3 border-b border-slate-100 dark:border-slate-800">
-              <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Rating Usia</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {['SU', '2+', '7+', '13+', '17+', '21+'].map(r => (
-                    <button key={r} onClick={() => setRatingAge(r)} className={`px-3 py-1 rounded-full text-xs font-semibold border ${ratingAge === r ? 'bg-brand-600 text-white border-brand-600' : 'border-slate-200 text-slate-500 dark:border-slate-700'}`}>{r}</button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-600 dark:text-slate-400">Adegan Intim</span>
-                <div className="flex gap-1.5">
-                  {(['pass', 'fail'] as const).map(v => (
-                    <button key={v} onClick={() => setIntimateScene(v)} className={`px-3 py-1 rounded-full text-xs font-bold ${intimateScene === v ? (v === 'pass' ? 'bg-green-500 text-white' : 'bg-red-500 text-white') : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>{v.toUpperCase()}</button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-600 dark:text-slate-400">Adegan Gore/Kekerasan</span>
-                <div className="flex gap-1.5">
-                  {(['pass', 'fail'] as const).map(v => (
-                    <button key={v} onClick={() => setGoreScene(v)} className={`px-3 py-1 rounded-full text-xs font-bold ${goreScene === v ? (v === 'pass' ? 'bg-green-500 text-white' : 'bg-red-500 text-white') : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>{v.toUpperCase()}</button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-600 dark:text-slate-400">Final Result</span>
-                <div className="flex gap-1.5">
-                  {(['PASS', 'CONDITIONAL', 'FAIL'] as const).map(v => (
-                    <button key={v} onClick={() => setFinalResult(v)} className={`px-2.5 py-1 rounded-full text-xs font-bold ${finalResult === v ? (v === 'PASS' ? 'bg-green-500 text-white' : v === 'CONDITIONAL' ? 'bg-amber-500 text-white' : 'bg-red-500 text-white') : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>{v}</button>
-                  ))}
-                </div>
-              </div>
-              {finalResult === 'CONDITIONAL' && (
-                <textarea value={conditionNote} onChange={e => setConditionNote(e.target.value)} placeholder="Kondisi yang harus dipenuhi..." rows={2}
-                  className="w-full rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 dark:text-white px-3 py-2 text-xs focus:outline-none resize-none" />
-              )}
-            </div>
-            {loadingErrorTypes ? (
-              <div className="flex h-20 items-center justify-center"><Loader2 size={20} className="animate-spin text-slate-400" /></div>
-            ) : (
-              <div>
-                {Object.entries(qcErrorTypes).map(([cat, errors]) => (
-                  <div key={cat}>
-                    <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-y border-slate-100 dark:border-slate-700">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{cat}</p>
-                    </div>
-                    <div className="divide-y divide-slate-50 dark:divide-slate-800/50">
-                      {errors.map((et: any) => (
-                        <div key={et.id} className="flex items-center gap-3 px-4 py-2.5">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-slate-800 dark:text-slate-200">{et.error_name}</p>
-                            <p className="text-[10px] text-slate-400 mt-0.5">{et.short_description}</p>
-                          </div>
-                          <div className="flex gap-1 shrink-0">
-                            {(['pass', 'fail'] as const).map(v => (
-                              <button key={v} onClick={() => setQcItems(prev => ({...prev, [et.id]: v}))} className={`w-8 py-0.5 rounded text-[10px] font-bold ${qcItems[et.id] === v ? (v === 'pass' ? 'bg-green-500 text-white' : 'bg-red-500 text-white') : 'bg-slate-100 dark:bg-slate-700 text-slate-400'}`}>{v === 'pass' ? 'P' : 'F'}</button>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-800">
-              <button onClick={() => submitQCResult(false)} disabled={submittingQC || !ratingAge}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-brand-600 py-3 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50">
-                {submittingQC ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
-                Submit QC Result
-              </button>
-              {!ratingAge && <p className="text-center text-xs text-amber-500 mt-1.5">⚠ Pilih Rating Usia dahulu</p>}
-            </div>
-          </div>
+          <button
+            onClick={() => setShowQCPanel(true)}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-600 py-3.5 font-semibold text-white transition hover:bg-brand-700 shadow-sm"
+          >
+            <CheckCircle2 size={18} />
+            Buka Form QC Intake
+          </button>
           )}
 
           {/* Action buttons */}
@@ -855,6 +776,107 @@ export default function QCDetailPage() {
           onClose={() => setShowReviseModal(false)}
           loading={revising}
         />
+      )}
+
+      {/* ── QC Intake Side Panel ── */}
+      {showQCPanel && (
+        <div className="fixed inset-0 z-50 flex">
+          <div className="flex-1 bg-black/40" onClick={() => setShowQCPanel(false)} />
+          <div className="w-full max-w-sm h-full bg-white dark:bg-slate-900 shadow-2xl flex flex-col overflow-hidden animate-slide-in-right">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+              <div>
+                <p className="text-sm font-semibold text-slate-800 dark:text-white">QC Intake Form</p>
+                <p className="text-xs text-slate-400 mt-0.5">Tandai item yang FAIL — default semua PASS</p>
+              </div>
+              <button onClick={() => setShowQCPanel(false)} className="text-slate-400 hover:text-slate-600 p-1">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+              <button onClick={() => submitQCResult(true)} disabled={submittingQC}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
+                {submittingQC ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                Auto PASS — semua item lolos
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <div className="px-4 py-3 space-y-3 border-b border-slate-100 dark:border-slate-800">
+                <div>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Rating Usia</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {['SU', '2+', '7+', '13+', '17+', '21+'].map(r => (
+                      <button key={r} onClick={() => setRatingAge(r)} className={`px-3 py-1 rounded-full text-xs font-semibold border ${ratingAge === r ? 'bg-brand-600 text-white border-brand-600' : 'border-slate-200 text-slate-500 dark:border-slate-700'}`}>{r}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-600 dark:text-slate-400">Adegan Intim</span>
+                  <div className="flex gap-1.5">
+                    {(['pass', 'fail'] as const).map(v => (
+                      <button key={v} onClick={() => setIntimateScene(v)} className={`px-3 py-1 rounded-full text-xs font-bold ${intimateScene === v ? (v === 'pass' ? 'bg-green-500 text-white' : 'bg-red-500 text-white') : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>{v.toUpperCase()}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-600 dark:text-slate-400">Adegan Gore/Kekerasan</span>
+                  <div className="flex gap-1.5">
+                    {(['pass', 'fail'] as const).map(v => (
+                      <button key={v} onClick={() => setGoreScene(v)} className={`px-3 py-1 rounded-full text-xs font-bold ${goreScene === v ? (v === 'pass' ? 'bg-green-500 text-white' : 'bg-red-500 text-white') : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>{v.toUpperCase()}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-600 dark:text-slate-400">Final Result</span>
+                  <div className="flex gap-1.5">
+                    {(['PASS', 'CONDITIONAL', 'FAIL'] as const).map(v => (
+                      <button key={v} onClick={() => setFinalResult(v)} className={`px-2.5 py-1 rounded-full text-xs font-bold ${finalResult === v ? (v === 'PASS' ? 'bg-green-500 text-white' : v === 'CONDITIONAL' ? 'bg-amber-500 text-white' : 'bg-red-500 text-white') : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>{v}</button>
+                    ))}
+                  </div>
+                </div>
+                {finalResult === 'CONDITIONAL' && (
+                  <textarea value={conditionNote} onChange={e => setConditionNote(e.target.value)} placeholder="Kondisi yang harus dipenuhi..." rows={2}
+                    className="w-full rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 dark:text-white px-3 py-2 text-xs focus:outline-none resize-none" />
+                )}
+              </div>
+              {loadingErrorTypes ? (
+                <div className="flex h-20 items-center justify-center"><Loader2 size={20} className="animate-spin text-slate-400" /></div>
+              ) : (
+                <div>
+                  {Object.entries(qcErrorTypes).map(([cat, errors]) => (
+                    <div key={cat}>
+                      <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-y border-slate-100 dark:border-slate-700">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{cat}</p>
+                      </div>
+                      <div className="divide-y divide-slate-50 dark:divide-slate-800/50">
+                        {errors.map((et: any) => (
+                          <div key={et.id} className="flex items-center gap-3 px-4 py-2.5">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-slate-800 dark:text-slate-200">{et.error_name}</p>
+                              <p className="text-[10px] text-slate-400 mt-0.5">{et.short_description}</p>
+                            </div>
+                            <div className="flex gap-1 shrink-0">
+                              {(['pass', 'fail'] as const).map(v => (
+                                <button key={v} onClick={() => setQcItems(prev => ({...prev, [et.id]: v}))} className={`w-8 py-0.5 rounded text-[10px] font-bold ${qcItems[et.id] === v ? (v === 'pass' ? 'bg-green-500 text-white' : 'bg-red-500 text-white') : 'bg-slate-100 dark:bg-slate-700 text-slate-400'}`}>{v === 'pass' ? 'P' : 'F'}</button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-800 shrink-0">
+              <button onClick={() => submitQCResult(false)} disabled={submittingQC || !ratingAge}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-brand-600 py-3 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50">
+                {submittingQC ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+                Submit QC Result
+              </button>
+              {!ratingAge && <p className="text-center text-xs text-amber-500 mt-1.5">⚠ Pilih Rating Usia dahulu</p>}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
