@@ -7,7 +7,7 @@ import { QCContent, StatusEnum } from '@/types'
 import TopBar from '@/components/layout/TopBar'
 import BottomNav from '@/components/layout/BottomNav'
 import StatusBadge from '@/components/ui/StatusBadge'
-import { Search, Filter, Loader2, Download, Archive } from 'lucide-react'
+import { Search, Filter, Loader2, Download, Archive, BookOpen } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 const fetcher = (url: string) => api.get(url).then(r => r.data)
@@ -72,6 +72,12 @@ export default function QCListPage() {
               <Download className="w-4 h-4" />
             </button>
           )}
+                  <button
+                              onClick={() => router.push('/logbook')}
+                              className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800"
+                            >
+                            <BookOpen className="w-4 h-4" />
+                  </button>
         </div>
 
         {showFilter && (
