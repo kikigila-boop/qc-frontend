@@ -132,10 +132,10 @@ setLogging(null)
         ) : (
           <div className="space-y-2">
             {data.map(item => (
-              <div key={item.id} className="relative">
+              <div key={item.id} className="flex items-stretch gap-2">
               <button
                 onClick={() => router.push(`/qc/${item.id}`)}
-                className="w-full text-left bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
+                className="flex-1 text-left bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
@@ -161,7 +161,7 @@ setLogging(null)
                 )}
               </button>
               {canLog && item.status === 'Done Ingest' && (
-              <button onClick={e => { e.stopPropagation(); moveToLog(item.id) }} disabled={logging === item.id} className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-[10px] font-semibold border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 disabled:opacity-50">
+              <button onClick={e => { e.stopPropagation(); moveToLog(item.id) }} disabled={logging === item.id} className="self-center flex-shrink-0 flex flex-col items-center justify-center gap-1 px-3 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-[10px] font-semibold border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 disabled:opacity-50">
               {logging === item.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Archive className="w-3 h-3" />}
               Log
               </button>
