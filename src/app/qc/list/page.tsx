@@ -7,7 +7,7 @@ import { QCContent, StatusEnum } from '@/types'
 import TopBar from '@/components/layout/TopBar'
 import BottomNav from '@/components/layout/BottomNav'
 import StatusBadge from '@/components/ui/StatusBadge'
-import { Search, Filter, Loader2, Download, Archive, BookOpen } from 'lucide-react'
+import { Search, Filter, Loader2, Download, Archive } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 const fetcher = (url: string) => api.get(url).then(r => r.data)
@@ -23,8 +23,10 @@ export default function QCListPage() {
   const [status, setStatus] = useState<StatusEnum | ''>('')
   const [result, setResult] = useState<'PASS' | 'NOT PASS' | ''>('')
   const [showFilter, setShowFilter] = useState(false)
+  const [logging, setLogging] = useState<number | null>(null)
   const { user } = useAuth()
   const role = user?.role ?? ''
+  const canLog = role === 'admin' || role === 'material_handling'
 
   const buildKey = () => {
     const p = new URLSearchParams()
@@ -33,7 +35,7 @@ export default function QCListPage() {
     if (result) p.set('result', result)
     return `/qc?${p.toString()}`
   }
-  const { data, isLoading } = useSWR<QCContent[]>(buildKey(), fetcher, { revalidateOnFocus: false })
+  const { data, isLoading, mutate } = useSWR<QCContent[]>(buildKey(), fetcher, { revalidateOnFocus: false })
 
   const exportExcel = async () => {
     try {
@@ -45,6 +47,19 @@ export default function QCListPage() {
     } catch { alert('Gagal export Excel') }
   }
 
+
+const moveToLog = async (id: number) => {
+if (!confirm('Pindahkan konten ini ke Log QC? Item tidak akan muncul lagi di QC List.')) return
+setLogging(id)
+try {
+await api.post(`/logbook/${id}/move`)
+mutate()
+} catch (e: any) {
+alert(e?.response?.data?.detail || 'Gagal memindah ke Log QC')
+} finally {
+setLogging(null)
+}
+}
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24">
       <TopBar title="QC List" />
@@ -72,12 +87,6 @@ export default function QCListPage() {
               <Download className="w-4 h-4" />
             </button>
           )}
-                  <button
-                              onClick={() => router.push('/logbook')}
-                              className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800"
-                            >
-                            <BookOpen className="w-4 h-4" />
-                  </button>
         </div>
 
         {showFilter && (
@@ -123,8 +132,8 @@ export default function QCListPage() {
         ) : (
           <div className="space-y-2">
             {data.map(item => (
+              <div key={item.id} className="relative">
               <button
-                key={item.id}
                 onClick={() => router.push(`/qc/${item.id}`)}
                 className="w-full text-left bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
               >
@@ -151,6 +160,13 @@ export default function QCListPage() {
                   <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{item.pic_editor_name}</p>
                 )}
               </button>
+              {canLog && item.status === 'Done Ingest' && (
+              <button onClick={e => { e.stopPropagation(); moveToLog(item.id) }} disabled={logging === item.id} className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-[10px] font-semibold border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 disabled:opacity-50">
+              {logging === item.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Archive className="w-3 h-3" />}
+              Log
+              </button>
+              )}
+              </div>
             ))}
           </div>
         )}
