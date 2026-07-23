@@ -192,8 +192,10 @@ function QCLogTab() {
                 <tr key={r.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
                   <td className="px-3 py-2.5 font-mono text-[10px] text-slate-500">{r.qcid || '-'}</td>
                   <td className="px-3 py-2.5 max-w-[180px]">
-                    <p className="font-medium text-slate-800 dark:text-white leading-snug">{r.title}</p>
-                    <p className="text-slate-400">S{r.season} E{r.episode}</p>
+                    <Link href={`/qc/${r.id}`} className="group">
+                      <p className="font-medium text-slate-800 dark:text-white leading-snug group-hover:text-brand-500 group-hover:underline transition-colors">{r.title}</p>
+                      <p className="text-slate-400">S{r.season} E{r.episode}</p>
+                    </Link>
                   </td>
                   <td className="px-3 py-2.5 text-slate-500 whitespace-nowrap">{r.content_type || '-'}</td>
                   <td className="px-3 py-2.5 font-mono text-slate-600 whitespace-nowrap">{r.duration || '-'}</td>
