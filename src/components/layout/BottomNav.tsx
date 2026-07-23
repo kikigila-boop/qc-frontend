@@ -14,7 +14,7 @@ function getNav(role: string): NavItem[] {
   const Dashboard  = { href: '/dashboard',      label: 'Dashboard',  icon: LayoutDashboard }
   const QCList     = { href: '/qc/list',         label: 'QC List',    icon: ListVideo }
   const Avail      = { href: '/material/queue',  label: 'Avail',      icon: PackageSearch }
-  const Tambah     = { href: '/qc/create',       label: 'Tambah',     icon: PlusCircle }
+  const Tambah     = { href: '/qc/create',       label: 'Add',     icon: PlusCircle }
   const LogBook    = { href: '/logbook',         label: 'Log Book',   icon: BookOpen }
   const SubDubb    = { href: '/subs',            label: 'Sub & Dubb', icon: Captions }
   const OnAir      = { href: '/on-air',          label: 'On Air',     icon: Tv }
