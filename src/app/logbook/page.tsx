@@ -1,12 +1,13 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 import useSWR from 'swr'
 import api from '@/lib/api'
 import TopBar from '@/components/layout/TopBar'
 import BottomNav from '@/components/layout/BottomNav'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import NextLink from 'next/link'
+const Link = (props: any) => <NextLink {...props} prefetch={false} />
 import {
   Loader2, RefreshCw, Sheet, Truck, ClipboardList,
   X, ChevronDown, ChevronUp, RotateCcw, Tv, Tv2, CheckCircle2
