@@ -88,6 +88,8 @@ export default function QCDetailPage() {
   const [conditionNote, setConditionNote] = useState('')
   const [submittingQC, setSubmittingQC] = useState(false)
   const [loadingErrorTypes, setLoadingErrorTypes] = useState(false)
+  const [qcResultData, setQcResultData] = useState<any>(null)
+  const [loadingQcResult, setLoadingQcResult] = useState(false)
 
   // Subtitle helpers
   const loadSubtasks = async () => {
@@ -142,6 +144,17 @@ export default function QCDetailPage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item?.status])
+
+  // Load QC result when past QC Process
+  useEffect(() => {
+    if (!item || !id) return
+    const pastQC = ['QC Done', 'Ready To Ingest', 'Uploading', 'Ingesting', 'Done Ingest', 'Need Revised', 'Revised']
+    if (pastQC.includes(item.status)) {
+      setLoadingQcResult(true)
+      api.get(`/qc-results/${id}`).then(r => setQcResultData(r.data)).catch(() => {}).finally(() => setLoadingQcResult(false))
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item?.status, id])
 
   const submitQCResult = async (autoPass = false) => {
     setSubmittingQC(true)
@@ -637,7 +650,74 @@ export default function QCDetailPage() {
           )}
         </div>
 
-        {/* Action buttons */}
+        {/* Hasil QC — read only */}
+      {qcResultData && (
+        <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Hasil QC</p>
+            <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+              qcResultData.final_result === 'PASS'
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                : qcResultData.final_result === 'CONDITIONAL'
+                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+            }`}>
+              {qcResultData.final_result}
+            </span>
+          </div>
+          <div className="space-y-1.5 mb-3">
+            {[
+              ['Rating Usia', qcResultData.rating_age || '-'],
+              ['Adegan Intim', (qcResultData.intimate_scene || '-').toUpperCase()],
+              ['Adegan Gore', (qcResultData.gore_scene || '-').toUpperCase()],
+              ['Di-submit oleh', qcResultData.submitted_by_name || '-'],
+              ['Waktu Submit', qcResultData.submitted_at ? fmt(qcResultData.submitted_at) : '-'],
+            ].map(([label, value]) => (
+              <div key={label} className="flex justify-between py-1 border-b border-slate-50 last:border-0 dark:border-slate-800">
+                <span className="text-xs text-slate-500">{label}</span>
+                <span className={`text-xs font-medium ${value === 'FAIL' ? 'text-red-600 dark:text-red-400' : value === 'PASS' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-800 dark:text-slate-200'}`}>{value}</span>
+              </div>
+            ))}
+          </div>
+          {qcResultData.condition_note && (
+            <div className="mb-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 dark:bg-amber-900/20 dark:border-amber-800">
+              <p className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 mb-0.5">Catatan Kondisi</p>
+              <p className="text-xs text-amber-800 dark:text-amber-300">{qcResultData.condition_note}</p>
+            </div>
+          )}
+          {qcResultData.auto_pass ? (
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 italic">✓ Auto-passed — semua item lolos otomatis</p>
+          ) : qcResultData.items?.filter((i: any) => i.status === 'fail').length > 0 ? (
+            <details className="mt-1">
+              <summary className="cursor-pointer text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400">
+                {qcResultData.items.filter((i: any) => i.status === 'fail').length} item fail — klik untuk detail
+              </summary>
+              <div className="mt-2 space-y-1">
+                {Object.entries(
+                  qcResultData.items.filter((i: any) => i.status === 'fail').reduce((acc: any, ei: any) => {
+                    const cat = ei.category || 'Lainnya'
+                    if (!acc[cat]) acc[cat] = []
+                    acc[cat].push(ei)
+                    return acc
+                  }, {} as Record<string, any[]>)
+                ).map(([cat, eis]) => (
+                  <div key={cat} className="mt-1.5">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">{cat}</p>
+                    {(eis as any[]).map((ei: any) => (
+                      <div key={ei.id} className="flex items-center gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 px-2.5 py-1.5 mb-1">
+                        <span className="text-[10px] font-bold text-red-600 dark:text-red-400">FAIL</span>
+                        <span className="text-xs text-slate-700 dark:text-slate-300">{ei.error_name}</span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </details>
+          ) : null}
+        </div>
+      )}
+
+      {/* Action buttons */}
         <div className="flex flex-col gap-2">
 
           {/* Normal advance */}
